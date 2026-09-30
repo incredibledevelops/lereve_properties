@@ -1,0 +1,442 @@
+{% extends "super-admin/base.html" %}
+
+{% block title %}{{ 'Edit' if category else 'Add' }} Category — Admin Console{% endblock %}
+
+{% set active_section = 'categories' %}
+
+{% block page_title %}{{ 'Edit Category' if category else 'Add New Category' }}{% endblock %}
+{% block page_subtitle %}{{ 'Update category details' if category else 'Create a new estate category' }}{% endblock %}
+
+{% block content %}
+
+<!-- ============ BREADCRUMB ============ -->
+<nav class="flex items-center gap-2 text-xs text-charcoal/60 mb-5" aria-label="Breadcrumb">
+  <a href="{{ url_for('super_admin.dashboard') }}" class="hover:text-gold transition-colors">Dashboard</a>
+  <i class="fa-solid fa-chevron-right text-[9px] text-charcoal/30" aria-hidden="true"></i>
+  <a href="{{ url_for('super_admin.categories') }}" class="hover:text-gold transition-colors">Categories</a>
+  <i class="fa-solid fa-chevron-right text-[9px] text-charcoal/30" aria-hidden="true"></i>
+  <span class="text-primary font-semibold">{{ 'Edit' if category else 'New' }}</span>
+</nav>
+
+<!-- ============ FORM CARD ============ -->
+<div class="max-w-2xl mx-auto bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
+
+  <!-- Header -->
+  <div class="px-6 sm:px-8 py-5 border-b border-charcoal/5 bg-ivory/40">
+    <h2 class="font-serif text-2xl font-semibold text-primary truncate">
+      {{ category.name|e if category and category.name else 'New Category' }}
+    </h2>
+    <p class="text-xs text-charcoal/50 mt-0.5">
+      {% if category %}
+        Created
+        <span title="{{ category.created_at or '—' }}">
+          {{ category.created_at|relative_time if category.created_at else '—' }}
+        </span>
+      {% else %}
+        Fields marked <span class="text-gold font-bold">*</span> are required
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- CSRF error banner -->
+  {% if form.csrf_token and form.csrf_token.errors %}
+    <div class="mx-6 sm:mx-8 mt-4 p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-xs flex items-start gap-2" role="alert">
+      <i class="fa-solid fa-triangle-exclamation mt-0.5" aria-hidden="true"></i>
+      <div>
+        <p class="font-bold">Session expired</p>
+        <p class="mt-0.5">Please reload the page and try again.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- General error banner -->
+  {% if form.errors and not (form.csrf_token and form.csrf_token.errors) %}
+    <div class="mx-6 sm:mx-8 mt-4 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs flex items-start gap-2" role="alert">
+      <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+      <div>
+        <p class="font-bold">Please fix the errors below</p>
+        <p class="mt-0.5">{{ form.errors.values()|map('first')|join(' • ') }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="POST"
+        id="categoryForm"
+        class="p-6 sm:p-8 space-y-5"
+        novalidate>
+    {{ form.hidden_tag() }}
+
+    <!-- ============ NAME ============ -->
+    <div>
+      <label for="{{ form.name.id }}"
+             class="block text-xs font-bold uppercase tracking-wider mb-1.5
+               {% if form.name.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+        Name <span class="text-gold">*</span>
+      </label>
+      {{ form.name(
+          id=form.name.id,
+          maxlength="80",
+          autocomplete="off",
+          class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm transition-all
+            " + ("border-red-300 bg-red-50" if form.name.errors else "border-charcoal/15"),
+          placeholder="e.g. Beachfront Bungalows"
+      ) }}
+      <div class="flex items-center justify-between mt-1">
+        <span class="text-[10px] text-charcoal/50">Must be unique across all categories.</span>
+        <span class="text-[10px] text-charcoal/50" id="nameCount">0 / 80</span>
+      </div>
+      {% if form.name.errors %}
+        <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+          {% for err in form.name.errors %}
+            <li class="flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    <!-- ============ DESCRIPTION ============ -->
+    <div>
+      <label for="{{ form.description.id }}"
+             class="block text-xs font-bold uppercase tracking-wider mb-1.5
+               {% if form.description.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+        Description
+      </label>
+      {{ form.description(
+          id=form.description.id,
+          rows=3,
+          maxlength="500",
+          class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm resize-none transition-all
+            " + ("border-red-300 bg-red-50" if form.description.errors else "border-charcoal/15"),
+          placeholder="Short description shown on the public site..."
+      ) }}
+      <div class="flex items-center justify-between mt-1">
+        <span class="text-[10px] text-charcoal/50">Optional — shown in the portfolio overview.</span>
+        <span class="text-[10px] text-charcoal/50" id="descCount">0 / 500</span>
+      </div>
+      {% if form.description.errors %}
+        <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+          {% for err in form.description.errors %}
+            <li class="flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    <!-- ============ ICON + ORDER ============ -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label for="{{ form.icon.id }}"
+               class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                 {% if form.icon.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+          Icon <span class="text-charcoal/40 font-normal normal-case">(Font Awesome class)</span>
+        </label>
+        {{ form.icon(
+            id=form.icon.id,
+            maxlength="80",
+            autocomplete="off",
+            class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm font-mono transition-all
+              " + ("border-red-300 bg-red-50" if form.icon.errors else "border-charcoal/15"),
+            placeholder="fa-house-chimney"
+        ) }}
+        <div class="mt-1 flex items-center gap-2 text-[10px] text-charcoal/60">
+          <i class="fa-solid fa-info-circle text-gold" aria-hidden="true"></i>
+          <span>Preview:</span>
+          <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gold/10">
+            <i id="iconPreview" class="fa-solid fa-house-chimney text-gold text-sm" aria-hidden="true"></i>
+          </span>
+          <a href="https://fontawesome.com/search?o=r&m=free"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="ml-auto text-gold hover:underline font-semibold">
+            Browse icons
+            <i class="fa-solid fa-arrow-up-right-from-square text-[8px] ml-0.5" aria-hidden="true"></i>
+          </a>
+        </div>
+        {% if form.icon.errors %}
+          <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+            {% for err in form.icon.errors %}
+              <li class="flex items-center gap-1">
+                <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.order.id }}"
+               class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                 {% if form.order.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+          Display Order
+        </label>
+        {{ form.order(
+            id=form.order.id,
+            min="0",
+            step="1",
+            class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm transition-all
+              " + ("border-red-300 bg-red-50" if form.order.errors else "border-charcoal/15"),
+            placeholder="0"
+        ) }}
+        <p class="mt-1 text-[10px] text-charcoal/50">Lower numbers appear first in the filter bar.</p>
+        {% if form.order.errors %}
+          <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+            {% for err in form.order.errors %}
+              <li class="flex items-center gap-1">
+                <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ============ SLUG PREVIEW ============ -->
+    <div class="p-3 rounded-xl bg-ivory/60 border border-charcoal/5 flex items-center gap-2 text-[11px] text-charcoal/60">
+      <i class="fa-solid fa-link text-gold" aria-hidden="true"></i>
+      <span>Auto slug:</span>
+      <code id="slugPreview" class="font-mono text-primary font-semibold">
+        {{ category.slug|e if category and category.slug else '—' }}
+      </code>
+    </div>
+
+    <!-- ============ ACTIONS ============ -->
+    <div class="pt-4 border-t border-charcoal/10 flex flex-col sm:flex-row gap-3 sm:justify-end">
+      <a href="{{ url_for('super_admin.categories') }}"
+         class="px-5 py-3 rounded-xl border border-charcoal/15 text-center text-sm font-semibold hover:bg-ivory transition-all">
+        Cancel
+      </a>
+
+      {% if not category %}
+        <button type="submit"
+                name="action"
+                value="save_and_new"
+                data-submit-btn="secondary"
+                class="border border-primary text-primary hover:bg-primary hover:text-gold px-5 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all">
+          <i class="fa-solid fa-plus mr-1" aria-hidden="true"></i> Save &amp; Add Another
+        </button>
+      {% endif %}
+
+      <button type="submit"
+              id="submitBtn"
+              data-submit-btn="primary"
+              class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2">
+        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+        <span>{{ 'Update' if category else 'Create' }} Category</span>
+      </button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+/* ============================================================
+   CATEGORY FORM — interactive helpers
+   ============================================================ */
+
+(function () {
+  'use strict';
+
+  const DEFAULT_ICON = 'fa-house-chimney';
+
+  // Field IDs rendered by WTForms
+  const IDS = {
+    name:        '{{ form.name.id }}',
+    description: '{{ form.description.id }}',
+    icon:        '{{ form.icon.id }}',
+    order:       '{{ form.order.id }}',
+  };
+
+  // Initial slug from server (only on edit)
+  const INITIAL_SLUG = {{ (category.slug if category and category.slug else '')|tojson }};
+  const INITIAL_NAME = {{ (category.name if category and category.name else '')|tojson }};
+
+  let isDirty = false;
+  let isSubmitting = false;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('categoryForm');
+    if (!form) return;
+
+    // Track dirtiness
+    form.addEventListener('input', () => { isDirty = true; });
+    form.addEventListener('change', () => { isDirty = true; });
+
+    // Wire live previews
+    bindField(IDS.name,        updateNameCount);
+    bindField(IDS.description, updateDescCount);
+    bindField(IDS.icon,        updateIconPreview);
+    bindField(IDS.name,        updateSlugPreview);
+
+    // Initial render
+    requestAnimationFrame(() => {
+      updateNameCount();
+      updateDescCount();
+      updateIconPreview();
+      updateSlugPreview();
+    });
+
+    // Submit guard
+    form.addEventListener('submit', handleSubmit);
+
+    // Focus first input
+    const nameInput = document.getElementById(IDS.name);
+    if (nameInput) nameInput.focus();
+  });
+
+  /* --------------------------------------------------
+     Helpers
+  -------------------------------------------------- */
+  function getValue(id) {
+    const el = document.getElementById(id);
+    return el ? el.value : '';
+  }
+
+  function bindField(id, fn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', fn);
+    el.addEventListener('change', fn);
+  }
+
+  function normalizeIconClass(raw) {
+    const trimmed = (raw || '').trim();
+    if (!trimmed) return DEFAULT_ICON;
+    // Take the last token (handles "fas fa-x" or "fa-solid fa-x")
+    const parts = trimmed.split(/\s+/).filter(Boolean);
+    const last = parts[parts.length - 1] || '';
+    // If already prefixed, use as-is
+    if (last.startsWith('fa-')) return last;
+    // Otherwise prefix with fa-
+    return 'fa-' + last.replace(/^fa-?/, '');
+  }
+
+  function slugify(text) {
+    const slug = (text || '')
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return slug || '—';
+  }
+
+  /* --------------------------------------------------
+     Live renders
+  -------------------------------------------------- */
+  function updateNameCount() {
+    const val = getValue(IDS.name);
+    const counter = document.getElementById('nameCount');
+    if (counter) counter.textContent = `${val.length} / 80`;
+  }
+
+  function updateDescCount() {
+    const val = getValue(IDS.description);
+    const counter = document.getElementById('descCount');
+    if (counter) counter.textContent = `${val.length} / 500`;
+  }
+
+  function updateIconPreview() {
+    const raw = getValue(IDS.icon);
+    const preview = document.getElementById('iconPreview');
+    if (!preview) return;
+    const cls = normalizeIconClass(raw);
+    preview.className = `fa-solid ${cls} text-gold text-sm`;
+  }
+
+  function updateSlugPreview() {
+    const val = getValue(IDS.name).trim();
+
+    // On edit: if the name hasn't changed, show the server's original slug
+    if (val && val === INITIAL_NAME && INITIAL_SLUG) {
+      setSlugText(INITIAL_SLUG);
+      return;
+    }
+
+    setSlugText(val ? slugify(val) : '—');
+  }
+
+  function setSlugText(text) {
+    const slugEl = document.getElementById('slugPreview');
+    if (slugEl) slugEl.textContent = text;
+  }
+
+  /* --------------------------------------------------
+     Submit guard
+  -------------------------------------------------- */
+  function handleSubmit(e) {
+    if (isSubmitting) {
+      e.preventDefault();
+      return false;
+    }
+
+    // Client-side sanity check (server still validates)
+    const name = getValue(IDS.name).trim();
+    if (!name) {
+      e.preventDefault();
+      const nameInput = document.getElementById(IDS.name);
+      if (nameInput) {
+        nameInput.focus();
+        nameInput.classList.add('border-red-300', 'bg-red-50');
+        setTimeout(() => {
+          nameInput.classList.remove('border-red-300', 'bg-red-50');
+        }, 3000);
+      }
+      if (window.toast) window.toast('Category name is required.', 'error');
+      return false;
+    }
+
+    isSubmitting = true;
+    isDirty = false;
+
+    // Disable ALL submit buttons to prevent double-submit
+    document.querySelectorAll('[data-submit-btn]').forEach(btn => {
+      btn.disabled = true;
+      btn.classList.add('opacity-70', 'cursor-wait');
+    });
+
+    // Only the primary button shows a spinner
+    const primary = document.getElementById('submitBtn');
+    if (primary) {
+      primary.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Saving…</span>';
+    }
+    return true;
+  }
+
+  /* --------------------------------------------------
+     Unsaved changes guard
+  -------------------------------------------------- */
+  window.addEventListener('beforeunload', (e) => {
+    if (isDirty && !isSubmitting) {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    }
+  });
+
+  /* --------------------------------------------------
+     Reset UI on bfcache restore (user pressed back)
+  -------------------------------------------------- */
+  window.addEventListener('pageshow', () => {
+    isSubmitting = false;
+    isDirty = false;
+
+    document.querySelectorAll('[data-submit-btn]').forEach(btn => {
+      btn.disabled = false;
+      btn.classList.remove('opacity-70', 'cursor-wait');
+    });
+
+    const primary = document.getElementById('submitBtn');
+    if (primary) {
+      primary.innerHTML = '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>{{ "Update" if category else "Create" }} Category</span>';
+    }
+  });
+})();
+</script>
+{% endblock %}

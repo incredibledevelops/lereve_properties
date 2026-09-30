@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — {{ SITE_NAME }}{% endblock %}
+{% block body_class %}bg-primary{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-4 relative">
+  <!-- Background -->
+  <div class="absolute inset-0 opacity-20 bg-cover bg-center pointer-events-none"
+       style="background-image:url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=2000&q=80');"
+       aria-hidden="true"></div>
+
+  <div class="relative z-10 w-full max-w-md my-8">
+    <!-- Brand -->
+    <div class="text-center mb-6">
+      <div class="w-14 h-14 mx-auto rounded-full bg-gold flex items-center justify-center text-primary border border-gold/40 mb-4">
+        <span class="font-serif text-2xl font-bold italic">R</span>
+      </div>
+      <h1 class="font-serif text-3xl font-semibold text-ivory">Sign In</h1>
+      <p class="text-xs text-ivory/60 mt-1 tracking-widest uppercase">{{ SITE_NAME }}</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-ivory rounded-3xl shadow-2xl border border-gold/30 p-8 sm:p-10">
+      <!-- Tabs -->
+      <div class="flex bg-ivory-dark rounded-full p-1.5 mb-6" role="tablist">
+        <a href="{{ url_for('auth.login') }}"
+           role="tab"
+           aria-current="page"
+           class="flex-1 py-2.5 rounded-full text-center text-xs font-bold uppercase tracking-widest bg-primary text-gold transition-all">
+          Sign In
+        </a>
+        <a href="{{ url_for('auth.register') }}"
+           role="tab"
+           class="flex-1 py-2.5 rounded-full text-center text-xs font-bold uppercase tracking-widest text-charcoal/60 hover:text-primary transition-all">
+          Register
+        </a>
+      </div>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-4 space-y-2" role="status" aria-live="polite">
+            {% for cat, msg in messages %}
+              <div class="text-xs px-3 py-2 rounded-lg border flex items-start gap-2
+                {% if cat == 'error' %}bg-red-50 text-red-600 border-red-200
+                {% elif cat == 'info' %}bg-blue-50 text-blue-600 border-blue-200
+                {% else %}bg-emerald-50 text-emerald-600 border-emerald-200{% endif %}">
+                <i class="fa-solid mt-0.5
+                  {% if cat == 'error' %}fa-circle-exclamation
+                  {% elif cat == 'info' %}fa-circle-info
+                  {% else %}fa-circle-check{% endif %}"
+                  aria-hidden="true"></i>
+                <span>{{ msg|e }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- CSRF error -->
+      {% if form.csrf_token and form.csrf_token.errors %}
+        <div class="mb-4 p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-xs flex items-start gap-2" role="alert">
+          <i class="fa-solid fa-triangle-exclamation mt-0.5" aria-hidden="true"></i>
+          <div>
+            <p class="font-bold">Session expired</p>
+            <p class="mt-0.5">Please reload the page and try again.</p>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- General errors -->
+      {% if form.errors and not (form.csrf_token and form.csrf_token.errors) %}
+        <div class="mb-4 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs flex items-start gap-2" role="alert">
+          <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+          <div>
+            <p class="font-bold">Please fix the errors below</p>
+            <ul class="mt-1 list-disc list-inside space-y-0.5">
+              {% for field, errs in form.errors.items() %}
+                {% for err in errs %}
+                  <li>{{ err|e }}</li>
+                {% endfor %}
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Form -->
+      <form method="POST" id="loginForm" class="space-y-4" novalidate>
+        {{ form.hidden_tag() }}
+
+        <!-- Email -->
+        <div>
+          <label for="{{ form.email.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1
+                   {% if form.email.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Email <span class="text-gold">*</span>
+          </label>
+          {{ form.email(
+              id=form.email.id,
+              autocomplete="email",
+              autofocus=true,
+              class="w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:ring-gold text-sm transition-all
+                " + ("border-red-300 bg-red-50" if form.email.errors else "border-charcoal/15"),
+              placeholder="you@domain.com"
+          ) }}
+          {% if form.email.errors %}
+            <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+              {% for err in form.email.errors %}
+                <li class="flex items-center gap-1">
+                  <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label for="{{ form.password.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1
+                   {% if form.password.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Password <span class="text-gold">*</span>
+          </label>
+          <div class="relative">
+            {{ form.password(
+                id=form.password.id,
+                autocomplete="current-password",
+                class="w-full px-4 py-3 pr-12 rounded-xl border bg-white focus:ring-2 focus:ring-gold text-sm transition-all
+                  " + ("border-red-300 bg-red-50" if form.password.errors else "border-charcoal/15"),
+                placeholder="••••••••"
+            ) }}
+            <button type="button"
+                    onclick="togglePassword('{{ form.password.id }}', 'loginPwIcon')"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/40 hover:text-gold focus:outline-none focus:text-gold transition-colors"
+                    aria-label="Toggle password visibility"
+                    aria-controls="{{ form.password.id }}">
+              <i id="loginPwIcon" class="fa-regular fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+          {% if form.password.errors %}
+            <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+              {% for err in form.password.errors %}
+                <li class="flex items-center gap-1">
+                  <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- Remember + Forgot -->
+        <div class="flex items-center justify-between text-xs">
+          <label class="flex items-center gap-2 text-charcoal/70 cursor-pointer">
+            {{ form.remember(class="accent-gold") }}
+            <span>Remember me</span>
+          </label>
+          <button type="button"
+                  onclick="showForgotToast()"
+                  class="text-gold hover:text-gold-dark font-semibold transition-colors">
+            Forgot password?
+          </button>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit"
+                id="loginSubmitBtn"
+                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury flex items-center justify-center gap-2">
+          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+          <span>Access Portal</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Back -->
+    <div class="text-center mt-6">
+      <a href="{{ url_for('public.home') }}"
+         class="text-ivory/60 hover:text-gold text-xs uppercase tracking-widest transition-colors">
+        <i class="fa-solid fa-arrow-left mr-1" aria-hidden="true"></i> Return to Public Site
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="authToast" class="fixed top-20 right-5 z-[60] flex flex-col gap-3 pointer-events-none max-w-sm" role="status" aria-live="polite"></div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Password visibility toggle ---------- */
+  window.togglePassword = function (inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (!input || !icon) return;
+
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'fa-regular fa-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'fa-regular fa-eye';
+    }
+    // Keep focus on input for smooth UX
+    input.focus();
+  };
+
+  /* ---------- Forgot password toast ---------- */
+  window.showForgotToast = function () {
+    showAuthToast('Password reset is handled by your concierge. Please contact support.', 'info');
+  };
+
+  /* ---------- Toast helper ---------- */
+  function showAuthToast(message, type) {
+    const container = document.getElementById('authToast');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    const bg = type === 'error' ? 'bg-red-600 text-white border-red-400'
+             : type === 'info'  ? 'bg-gold text-primary border-primary'
+             :                    'bg-primary text-gold border-gold';
+    const icon = type === 'error' ? 'fa-circle-exclamation'
+               : type === 'info'  ? 'fa-circle-info'
+               :                    'fa-circle-check';
+
+    toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-fade-in ${bg}`;
+    toast.innerHTML = `<i class="fa-solid ${icon} text-lg" aria-hidden="true"></i><span>${escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+  }
+
+  /* ---------- Submit guard ---------- */
+  let isSubmitting = false;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('loginForm');
+    if (!form) return;
+
+    form.addEventListener('submit', (e) => {
+      if (isSubmitting) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Client-side sanity checks
+      const email = form.querySelector('input[name="email"]');
+      const password = form.querySelector('input[name="password"]');
+
+      if (!email?.value.trim()) {
+        e.preventDefault();
+        email?.focus();
+        showAuthToast('Please enter your email.', 'error');
+        return false;
+      }
+      if (!password?.value) {
+        e.preventDefault();
+        password?.focus();
+        showAuthToast('Please enter your password.', 'error');
+        return false;
+      }
+
+      isSubmitting = true;
+      const btn = document.getElementById('loginSubmitBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-70', 'cursor-wait');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Signing in…</span>';
+      }
+      return true;
+    });
+  });
+
+  /* ---------- Reset state on bfcache restore ---------- */
+  window.addEventListener('pageshow', () => {
+    isSubmitting = false;
+    const btn = document.getElementById('loginSubmitBtn');
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('opacity-70', 'cursor-wait');
+      btn.innerHTML = '<i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span>Access Portal</span>';
+    }
+  });
+})();
+</script>
+{% endblock %}

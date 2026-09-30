@@ -1,0 +1,497 @@
+{% extends "super-admin/base.html" %}
+
+{% block title %}Properties — Admin Console{% endblock %}
+
+{% set active_section = 'properties' %}
+
+{% block page_title %}Properties{% endblock %}
+{% block page_subtitle %}Manage all estate listings across the portfolio{% endblock %}
+
+{% block content %}
+
+<!-- ============ SUMMARY CARDS ============ -->
+{% set total = pagination.total if pagination else properties|length %}
+{% set avg_price = namespace(sum=0, count=0) %}
+{% for p in properties %}
+  {% set avg_price.sum = avg_price.sum + ((p.price or 0)|float) %}
+  {% set avg_price.count = avg_price.count + 1 %}
+{% endfor %}
+{% set avg = (avg_price.sum / avg_price.count) if avg_price.count > 0 else 0 %}
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Total Listings</span>
+      <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+        <i class="fa-solid fa-house-chimney text-xs"></i>
+      </div>
+    </div>
+    <p class="font-serif text-2xl font-bold text-primary">{{ total }}</p>
+    <p class="text-[11px] text-charcoal/50 mt-1">Live in portfolio</p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Avg. Nightly</span>
+      <div class="w-8 h-8 rounded-lg bg-gold/20 text-gold-dark flex items-center justify-center">
+        <i class="fa-solid fa-tag text-xs"></i>
+      </div>
+    </div>
+    <p class="font-serif text-2xl font-bold text-primary">
+      {{ CURRENCY_SYMBOL }}{{ '{:,.0f}'.format(avg) }}
+    </p>
+    <p class="text-[11px] text-charcoal/50 mt-1">Across visible listings</p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Categories</span>
+      <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+        <i class="fa-solid fa-layer-group text-xs"></i>
+      </div>
+    </div>
+    <p class="font-serif text-2xl font-bold text-primary">
+      {{ (PROPERTY_CATEGORIES or [])|length if PROPERTY_CATEGORIES else 4 }}
+    </p>
+    <p class="text-[11px] text-charcoal/50 mt-1">Estate types</p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Actions</span>
+      <div class="w-8 h-8 rounded-lg bg-gold/20 text-gold-dark flex items-center justify-center">
+        <i class="fa-solid fa-bolt text-xs"></i>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-1">
+      <a href="{{ url_for('super_admin.property_create') }}"
+         class="flex-1 text-center bg-primary text-gold hover:bg-gold hover:text-primary py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all">
+        <i class="fa-solid fa-plus mr-1"></i> Add
+      </a>
+      <button onclick="window.location.reload()"
+              class="flex-1 text-center border border-charcoal/15 hover:bg-ivory py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all">
+        <i class="fa-solid fa-rotate mr-1"></i> Refresh
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FILTER BAR ============ -->
+<div class="flex flex-col lg:flex-row gap-3 mb-4">
+
+  <!-- Search -->
+  <form method="GET" id="searchForm" class="relative flex-1">
+    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40 text-sm"></i>
+    <input type="text"
+           name="q"
+           id="propertySearch"
+           value="{{ q or '' }}"
+           oninput="debouncedLiveFilter(this.value)"
+           placeholder="Search by title, location, or category…"
+           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-white focus:ring-2 focus:ring-gold text-sm">
+    {% if q %}
+      <a href="{{ url_for('super_admin.properties') }}"
+         class="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/40 hover:text-gold transition-colors"
+         title="Clear search"
+         aria-label="Clear search">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </a>
+    {% endif %}
+  </form>
+
+  <!-- Category filter pills -->
+  <div class="flex flex-wrap gap-2">
+    {% set cats = [
+      ('', 'All', 'fa-list'),
+      ('Oceanfront Villas', 'Oceanfront', 'fa-water'),
+      ('Penthouses', 'Penthouses', 'fa-building'),
+      ('Country Estates', 'Country Estates', 'fa-tree'),
+      ('Alpine Chalets', 'Alpine', 'fa-mountain-sun'),
+    ] %}
+
+    {% for value, label, icon in cats %}
+      <button onclick="filterByCategory('{{ value }}', this)"
+              data-category="{{ value }}"
+              class="category-filter-btn px-3 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5
+                {% if not value %}
+                  bg-primary text-gold shadow-md
+                {% else %}
+                  border border-primary/20 bg-white text-primary hover:border-gold hover:bg-gold/5
+                {% endif %}">
+        <i class="fa-solid {{ icon }} text-[10px]"></i>
+        {{ label }}
+      </button>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ============ PROPERTIES TABLE ============ -->
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-ivory-dark/60 text-primary">
+        <tr class="text-left text-[11px] uppercase tracking-wider">
+          <th class="px-5 py-3 font-bold">Property</th>
+          <th class="px-5 py-3 font-bold">Category</th>
+          <th class="px-5 py-3 font-bold">Location</th>
+          <th class="px-5 py-3 font-bold">Price / night</th>
+          <th class="px-5 py-3 font-bold">Rating</th>
+          <th class="px-5 py-3 font-bold text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="propertiesTableBody" class="divide-y divide-charcoal/5">
+
+        {% for p in properties %}
+          {% set price = (p.price or 0)|float %}
+          {% set original_price = (p.original_price or 0)|float %}
+          {% set rating = (p.rating or 0)|float %}
+          {% set reviews_count = p.reviews_count or 0 %}
+          {% set savings_pct = ((original_price - price) / original_price * 100)|round|int if original_price > 0 and price < original_price else 0 %}
+
+          <tr class="property-row hover:bg-ivory/50 transition-colors"
+              data-category="{{ (p.category or '')|lower }}"
+              data-search="{{ ((p.title or '') ~ ' ' ~ (p.location or '') ~ ' ' ~ (p.category or ''))|lower }}">
+
+            <!-- Property -->
+            <td class="px-5 py-3">
+              <div class="flex items-center gap-3">
+                {% if p.image %}
+                  <div class="relative flex-shrink-0 group">
+                    <img src="{{ p.image }}"
+                         alt="{{ p.title or 'Property' }}"
+                         class="w-14 h-14 rounded-lg object-cover border border-gold/20 group-hover:scale-105 transition-transform cursor-zoom-in"
+                         loading="lazy"
+                         onclick="openImagePreview('{{ p.image }}', '{{ (p.title or 'Property')|e }}')"
+                         title="Click to preview">
+                    {% if savings_pct > 0 %}
+                      <span class="absolute -top-1 -right-1 bg-gold text-primary text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-white shadow-sm">
+                        -{{ savings_pct }}%
+                      </span>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="w-14 h-14 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-house-chimney text-sm"></i>
+                  </div>
+                {% endif %}
+
+                <div class="min-w-0">
+                  <p class="font-semibold text-primary text-sm truncate max-w-[200px]">
+                    {{ p.title or 'Untitled Property' }}
+                  </p>
+                  <p class="text-[11px] text-charcoal/50 whitespace-nowrap">
+                    <i class="fa-solid fa-bed text-gold/70 text-[9px]"></i> {{ p.beds or 0 }}
+                    · <i class="fa-solid fa-bath text-gold/70 text-[9px]"></i> {{ p.baths or 0 }}
+                    · <i class="fa-solid fa-users text-gold/70 text-[9px]"></i> {{ p.guests or 0 }}
+                  </p>
+                  {% if p.id %}
+                    <p class="text-[9px] text-charcoal/40 font-mono mt-0.5 truncate max-w-[120px]">
+                      ID: {{ p.id }}
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+
+            <!-- Category -->
+            <td class="px-5 py-3">
+              <span class="text-[10px] font-bold uppercase text-primary bg-gold/15 px-2.5 py-1 rounded-full border border-gold/30 whitespace-nowrap">
+                {{ p.category or '—' }}
+              </span>
+            </td>
+
+            <!-- Location -->
+            <td class="px-5 py-3">
+              <p class="text-xs text-charcoal/70 truncate max-w-[160px]">
+                <i class="fa-solid fa-location-dot text-gold/70 mr-1"></i>
+                {{ p.location or '—' }}
+              </p>
+            </td>
+
+            <!-- Price -->
+            <td class="px-5 py-3">
+              {% if original_price > 0 and original_price > price %}
+                <p class="text-[10px] text-charcoal/40 line-through">
+                  {{ CURRENCY_SYMBOL }}{{ '{:,.0f}'.format(original_price) }}
+                </p>
+              {% endif %}
+              <p class="font-serif text-base font-bold text-primary whitespace-nowrap">
+                {{ CURRENCY_SYMBOL }}{{ '{:,.0f}'.format(price) }}
+              </p>
+              {% if savings_pct > 0 %}
+                <p class="text-[10px] text-emerald-600 mt-0.5">
+                  Save {{ savings_pct }}%
+                </p>
+              {% endif %}
+            </td>
+
+            <!-- Rating -->
+            <td class="px-5 py-3">
+              <div class="flex items-center gap-1">
+                <span class="text-xs font-bold text-primary">
+                  <i class="fa-solid fa-star text-gold mr-1"></i>{{ '{:.1f}'.format(rating) }}
+                </span>
+              </div>
+              {% if reviews_count > 0 %}
+                <p class="text-[10px] text-charcoal/50 mt-0.5">
+                  {{ reviews_count }} review{{ 's' if reviews_count != 1 else '' }}
+                </p>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td class="px-5 py-3">
+              <div class="flex items-center justify-end gap-1.5">
+
+                <!-- View on public site -->
+                <a href="{{ url_for('public.home') }}#listings"
+                   target="_blank"
+                   rel="noopener"
+                   class="w-8 h-8 rounded-lg bg-ivory hover:bg-gold text-primary flex items-center justify-center transition-all"
+                   title="View on public site"
+                   aria-label="View on public site">
+                  <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+
+                <!-- Edit -->
+                <a href="{{ url_for('super_admin.property_edit', pid=p.id) }}"
+                   class="w-8 h-8 rounded-lg bg-ivory hover:bg-gold text-primary flex items-center justify-center transition-all"
+                   title="Edit property"
+                   aria-label="Edit property">
+                  <i class="fa-solid fa-pen text-[10px]"></i>
+                </a>
+
+                <!-- Delete -->
+                <form method="POST"
+                      action="{{ url_for('super_admin.property_delete', pid=p.id) }}"
+                      onsubmit="return confirm('Permanently delete &quot;{{ (p.title or 'this property')|e }}&quot;?\n\nThis cannot be undone.');"
+                      class="inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit"
+                          class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-500 hover:text-white text-red-500 flex items-center justify-center transition-all"
+                          title="Delete property"
+                          aria-label="Delete property">
+                    <i class="fa-solid fa-trash text-[10px]"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+
+        {% else %}
+          <tr>
+            <td colspan="6" class="px-5 py-16 text-center">
+              <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+                <i class="fa-solid fa-house-chimney text-gold text-2xl"></i>
+              </div>
+              <p class="text-sm font-semibold text-primary mb-1">
+                {% if q %}No properties match "{{ q }}"{% else %}No properties yet{% endif %}
+              </p>
+              <p class="text-xs text-charcoal/50 mb-4">
+                {% if q %}
+                  Try a different search or <a href="{{ url_for('super_admin.properties') }}" class="text-gold hover:underline">clear filters</a>.
+                {% else %}
+                  Add your first estate to begin building the portfolio.
+                {% endif %}
+              </p>
+              {% if not q %}
+                <a href="{{ url_for('super_admin.property_create') }}"
+                   class="inline-flex items-center gap-2 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
+                  <i class="fa-solid fa-plus"></i> Add First Property
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+
+        <!-- No search results (JS-driven) -->
+        <tr id="noSearchResults" class="hidden">
+          <td colspan="6" class="px-5 py-12 text-center">
+            <i class="fa-solid fa-magnifying-glass text-charcoal/20 text-3xl mb-3"></i>
+            <p class="text-sm text-charcoal/60 font-medium">No properties match your search</p>
+            <button onclick="clearFilters()"
+                    class="mt-3 text-xs text-gold hover:underline font-semibold">
+              Clear all filters
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ PAGINATION ============ -->
+{% if pagination and pagination.pages > 1 %}
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-5">
+
+    <p class="text-xs text-charcoal/60">
+      Showing <span class="font-bold text-primary">{{ pagination.items|length }}</span>
+      of <span class="font-bold text-primary">{{ pagination.total }}</span> properties
+    </p>
+
+    <div class="flex items-center gap-2">
+      <a href="?page={{ pagination.page - 1 }}{% if q %}&q={{ q }}{% endif %}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white text-primary text-xs font-bold uppercase tracking-wider hover:border-gold hover:bg-gold/5 transition-all
+           {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}">
+        <i class="fa-solid fa-chevron-left mr-1"></i> Prev
+      </a>
+
+      <span class="px-3 py-2 text-xs font-semibold text-charcoal/60">
+        Page {{ pagination.page }} / {{ pagination.pages }}
+      </span>
+
+      <a href="?page={{ pagination.page + 1 }}{% if q %}&q={{ q }}{% endif %}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white text-primary text-xs font-bold uppercase tracking-wider hover:border-gold hover:bg-gold/5 transition-all
+           {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}">
+        Next <i class="fa-solid fa-chevron-right ml-1"></i>
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+<!-- ============ IMAGE PREVIEW MODAL ============ -->
+<div id="imagePreviewModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/90 backdrop-blur-md"
+     onclick="if (event.target === this) closeImagePreview();">
+  <div class="relative max-w-4xl w-full">
+    <button onclick="closeImagePreview()"
+            class="absolute -top-12 right-0 w-10 h-10 rounded-full bg-white/10 text-ivory hover:bg-gold hover:text-primary transition-all flex items-center justify-center"
+            aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <img id="imagePreviewImg"
+         src=""
+         alt=""
+         class="w-full max-h-[85vh] object-contain rounded-2xl border border-gold/40 shadow-2xl">
+    <p id="imagePreviewCaption"
+       class="text-center text-ivory/80 text-sm mt-4 font-serif"></p>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+/* ============================================================
+   PROPERTIES PAGE — interactive helpers
+   ============================================================ */
+
+let debounceTimer = null;
+let activeCategory = '';
+
+/* ---------- Debounced search (300ms) ---------- */
+function debouncedLiveFilter(value) {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    liveFilter(value, activeCategory);
+  }, 300);
+}
+
+/* ---------- Live filter by search + category ---------- */
+function liveFilter(query, category) {
+  const q = (query || '').toLowerCase().trim();
+  const cat = (category || '').toLowerCase().trim();
+
+  const rows = document.querySelectorAll('.property-row');
+  let visible = 0;
+
+  rows.forEach(row => {
+    const haystack = row.dataset.search || '';
+    const rowCat = row.dataset.category || '';
+
+    const matchesSearch = !q || haystack.includes(q);
+    const matchesCategory = !cat || rowCat === cat;
+
+    if (matchesSearch && matchesCategory) {
+      row.style.display = '';
+      visible++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+
+  const noResults = document.getElementById('noSearchResults');
+  if (noResults) {
+    const shouldShow = (q || cat) && visible === 0 && rows.length > 0;
+    noResults.classList.toggle('hidden', !shouldShow);
+  }
+}
+
+/* ---------- Category filter buttons ---------- */
+function filterByCategory(category, btn) {
+  activeCategory = category;
+
+  document.querySelectorAll('.category-filter-btn').forEach(b => {
+    b.classList.remove('bg-primary', 'text-gold', 'shadow-md');
+    b.classList.add('border', 'border-primary/20', 'bg-white', 'text-primary', 'hover:border-gold', 'hover:bg-gold/5');
+  });
+
+  if (btn) {
+    btn.classList.remove('border', 'border-primary/20', 'bg-white', 'text-primary', 'hover:border-gold', 'hover:bg-gold/5');
+    btn.classList.add('bg-primary', 'text-gold', 'shadow-md');
+  }
+
+  const searchInput = document.getElementById('propertySearch');
+  liveFilter(searchInput?.value || '', category);
+}
+
+/* ---------- Clear all filters ---------- */
+function clearFilters() {
+  activeCategory = '';
+  const searchInput = document.getElementById('propertySearch');
+  if (searchInput) searchInput.value = '';
+  liveFilter('', '');
+
+  // Reset category button highlight
+  const firstBtn = document.querySelector('.category-filter-btn');
+  if (firstBtn) {
+    document.querySelectorAll('.category-filter-btn').forEach(b => {
+      b.classList.remove('bg-primary', 'text-gold', 'shadow-md');
+      b.classList.add('border', 'border-primary/20', 'bg-white', 'text-primary', 'hover:border-gold', 'hover:bg-gold/5');
+    });
+    firstBtn.classList.remove('border', 'border-primary/20', 'bg-white', 'text-primary', 'hover:border-gold', 'hover:bg-gold/5');
+    firstBtn.classList.add('bg-primary', 'text-gold', 'shadow-md');
+  }
+}
+
+/* ---------- Image preview ---------- */
+function openImagePreview(src, caption) {
+  const modal = document.getElementById('imagePreviewModal');
+  const img = document.getElementById('imagePreviewImg');
+  const cap = document.getElementById('imagePreviewCaption');
+
+  img.src = src;
+  img.alt = caption || 'Property image';
+  cap.textContent = caption || '';
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.body.classList.add('modal-open');
+}
+
+function closeImagePreview() {
+  const modal = document.getElementById('imagePreviewModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.body.classList.remove('modal-open');
+}
+
+/* ---------- Escape key closes preview ---------- */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeImagePreview();
+});
+
+/* ---------- Persist filters across page loads ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  // Restore category from URL/session if needed
+  const urlParams = new URLSearchParams(window.location.search);
+  const catParam = urlParams.get('category');
+  if (catParam) {
+    const btn = document.querySelector(`.category-filter-btn[data-category="${catParam}"]`);
+    if (btn) filterByCategory(catParam, btn);
+  }
+});
+</script>
+{% endblock %}

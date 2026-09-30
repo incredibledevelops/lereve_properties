@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+
+{% block title %}Register — {{ SITE_NAME }}{% endblock %}
+{% block body_class %}bg-primary{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-4 relative">
+  <!-- Background -->
+  <div class="absolute inset-0 opacity-20 bg-cover bg-center pointer-events-none"
+       style="background-image:url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=80');"
+       aria-hidden="true"></div>
+
+  <div class="relative z-10 w-full max-w-md my-8">
+    <!-- Brand -->
+    <div class="text-center mb-6">
+      <div class="w-14 h-14 mx-auto rounded-full bg-gold flex items-center justify-center text-primary border border-gold/40 mb-4">
+        <span class="font-serif text-2xl font-bold italic">R</span>
+      </div>
+      <h1 class="font-serif text-3xl font-semibold text-ivory">Client Portal</h1>
+      <p class="text-xs text-ivory/60 mt-1 tracking-widest uppercase">{{ SITE_NAME }}</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-ivory rounded-3xl shadow-2xl border border-gold/30 p-8 sm:p-10">
+      <!-- Tabs -->
+      <div class="flex bg-ivory-dark rounded-full p-1.5 mb-6" role="tablist">
+        <a href="{{ url_for('auth.login') }}"
+           role="tab"
+           class="flex-1 py-2.5 rounded-full text-center text-xs font-bold uppercase tracking-widest text-charcoal/60 hover:text-primary transition-all">
+          Sign In
+        </a>
+        <a href="{{ url_for('auth.register') }}"
+           role="tab"
+           aria-current="page"
+           class="flex-1 py-2.5 rounded-full text-center text-xs font-bold uppercase tracking-widest bg-primary text-gold transition-all">
+          Register
+        </a>
+      </div>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-4 space-y-2" role="status" aria-live="polite">
+            {% for cat, msg in messages %}
+              <div class="text-xs px-3 py-2 rounded-lg border flex items-start gap-2
+                {% if cat == 'error' %}bg-red-50 text-red-600 border-red-200
+                {% elif cat == 'info' %}bg-blue-50 text-blue-600 border-blue-200
+                {% else %}bg-emerald-50 text-emerald-600 border-emerald-200{% endif %}">
+                <i class="fa-solid mt-0.5
+                  {% if cat == 'error' %}fa-circle-exclamation
+                  {% elif cat == 'info' %}fa-circle-info
+                  {% else %}fa-circle-check{% endif %}"
+                  aria-hidden="true"></i>
+                <span>{{ msg|e }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- CSRF error -->
+      {% if form.csrf_token and form.csrf_token.errors %}
+        <div class="mb-4 p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-xs flex items-start gap-2" role="alert">
+          <i class="fa-solid fa-triangle-exclamation mt-0.5" aria-hidden="true"></i>
+          <div>
+            <p class="font-bold">Session expired</p>
+            <p class="mt-0.5">Please reload the page and try again.</p>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- General errors -->
+      {% if form.errors and not (form.csrf_token and form.csrf_token.errors) %}
+        <div class="mb-4 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs flex items-start gap-2" role="alert">
+          <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+          <div>
+            <p class="font-bold">Please fix the errors below</p>
+            <ul class="mt-1 list-disc list-inside space-y-0.5">
+              {% for field, errs in form.errors.items() %}
+                {% for err in errs %}
+                  <li>{{ err|e }}</li>
+                {% endfor %}
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Form -->
+      <form method="POST" id="registerForm" class="space-y-4" novalidate>
+        {{ form.hidden_tag() }}
+
+        <!-- Full Name -->
+        <div>
+          <label for="{{ form.name.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1
+                   {% if form.name.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Full Name <span class="text-gold">*</span>
+          </label>
+          {{ form.name(
+              id=form.name.id,
+              autocomplete="name",
+              autofocus=true,
+              class="w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:ring-gold text-sm transition-all
+                " + ("border-red-300 bg-red-50" if form.name.errors else "border-charcoal/15"),
+              placeholder="Lord / Lady / Mr / Ms"
+          ) }}
+          {% if form.name.errors %}
+            <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+              {% for err in form.name.errors %}
+                <li class="flex items-center gap-1">
+                  <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label for="{{ form.email.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1
+                   {% if form.email.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Email <span class="text-gold">*</span>
+          </label>
+          {{ form.email(
+              id=form.email.id,
+              autocomplete="email",
+              class="w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:ring-gold text-sm transition-all
+                " + ("border-red-300 bg-red-50" if form.email.errors else "border-charcoal/15"),
+              placeholder="you@domain.com"
+          ) }}
+          {% if form.email.errors %}
+            <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+              {% for err in form.email.errors %}
+                <li class="flex items-center gap-1">
+                  <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- Password + Confirm -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="{{ form.password.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1
+                     {% if form.password.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Password <span class="text-gold">*</span>
+            </label>
+            <div class="relative">
+              {{ form.password(
+                  id=form.password.id,
+                  autocomplete="new-password",
+                  minlength="6",
+                  maxlength="200",
+                  class="w-full px-4 py-3 pr-12 rounded-xl border bg-white focus:ring-2 focus:ring-gold text-sm transition-all
+                    " + ("border-red-300 bg-red-50" if form.password.errors else "border-charcoal/15"),
+                  placeholder="Min 6 chars"
+              ) }}
+              <button type="button"
+                      onclick="togglePassword('{{ form.password.id }}', 'regPwIcon')"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/40 hover:text-gold focus:outline-none focus:text-gold transition-colors"
+                      aria-label="Toggle password visibility"
+                      aria-controls="{{ form.password.id }}">
+                <i id="regPwIcon" class="fa-regular fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            {% if form.password.errors %}
+              <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+                {% for err in form.password.errors %}
+                  <li class="flex items-center gap-1">
+                    <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+
+          <div>
+            <label for="{{ form.confirm.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1
+                     {% if form.confirm.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Confirm <span class="text-gold">*</span>
+            </label>
+            <div class="relative">
+              {{ form.confirm(
+                  id=form.confirm.id,
+                  autocomplete="new-password",
+                  minlength="6",
+                  maxlength="200",
+                  class="w-full px-4 py-3 pr-12 rounded-xl border bg-white focus:ring-2 focus:ring-gold text-sm transition-all
+                    " + ("border-red-300 bg-red-50" if form.confirm.errors else "border-charcoal/15"),
+                  placeholder="Repeat password"
+              ) }}
+              <button type="button"
+                      onclick="togglePassword('{{ form.confirm.id }}', 'regPwConfirmIcon')"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/40 hover:text-gold focus:outline-none focus:text-gold transition-colors"
+                      aria-label="Toggle password confirmation visibility"
+                      aria-controls="{{ form.confirm.id }}">
+                <i id="regPwConfirmIcon" class="fa-regular fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            {% if form.confirm.errors %}
+              <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+                {% for err in form.confirm.errors %}
+                  <li class="flex items-center gap-1">
+                    <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Password strength meter -->
+        <div id="pwStrengthBox" class="hidden">
+          <div class="flex items-center justify-between text-[10px] mb-1">
+            <span class="text-charcoal/60 font-semibold uppercase tracking-wider">Password strength</span>
+            <span id="pwStrengthLabel" class="font-bold">—</span>
+          </div>
+          <div class="w-full h-1.5 bg-ivory-dark rounded-full overflow-hidden">
+            <div id="pwStrengthBar" class="h-full transition-all duration-300 rounded-full" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div>
+          <label for="{{ form.phone.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1
+                   {% if form.phone.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Phone <span class="text-charcoal/40 font-normal normal-case">(optional)</span>
+          </label>
+          {{ form.phone(
+              id=form.phone.id,
+              autocomplete="tel",
+              maxlength="40",
+              class="w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:ring-gold text-sm transition-all
+                " + ("border-red-300 bg-red-50" if form.phone.errors else "border-charcoal/15"),
+              placeholder="+233 30 000 0000"
+          ) }}
+          {% if form.phone.errors %}
+            <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+              {% for err in form.phone.errors %}
+                <li class="flex items-center gap-1">
+                  <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- Terms -->
+        <div>
+          <label for="{{ form.agree.id }}" class="flex items-start gap-2 text-[11px] text-charcoal/70 cursor-pointer">
+            {{ form.agree(
+                id=form.agree.id,
+                class="accent-gold mt-0.5"
+            ) }}
+            <span>
+              I agree to the
+              <a href="{{ url_for('public.home') }}#terms" target="_blank" rel="noopener" class="text-gold underline underline-offset-2 hover:text-gold-dark">Terms of Privilege</a>
+              and
+              <a href="{{ url_for('public.home') }}#privacy" target="_blank" rel="noopener" class="text-gold underline underline-offset-2 hover:text-gold-dark">Privacy Policy</a>.
+            </span>
+          </label>
+          {% if form.agree.errors %}
+            <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+              {% for err in form.agree.errors %}
+                <li class="flex items-center gap-1">
+                  <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- Submit -->
+        <button type="submit"
+                id="registerSubmitBtn"
+                class="w-full bg-gold text-primary hover:bg-primary hover:text-gold py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury flex items-center justify-center gap-2">
+          <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
+          <span>Create Account</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Back -->
+    <div class="text-center mt-6">
+      <a href="{{ url_for('public.home') }}"
+         class="text-ivory/60 hover:text-gold text-xs uppercase tracking-widest transition-colors">
+        <i class="fa-solid fa-arrow-left mr-1" aria-hidden="true"></i> Return to Public Site
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="authToast" class="fixed top-20 right-5 z-[60] flex flex-col gap-3 pointer-events-none max-w-sm" role="status" aria-live="polite"></div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Password visibility toggle ---------- */
+  window.togglePassword = function (inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (!input || !icon) return;
+
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'fa-regular fa-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'fa-regular fa-eye';
+    }
+    input.focus();
+  };
+
+  /* ---------- Toast helper ---------- */
+  function showAuthToast(message, type) {
+    const container = document.getElementById('authToast');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    const bg = type === 'error' ? 'bg-red-600 text-white border-red-400'
+             : type === 'info'  ? 'bg-gold text-primary border-primary'
+             :                    'bg-primary text-gold border-gold';
+    const icon = type === 'error' ? 'fa-circle-exclamation'
+               : type === 'info'  ? 'fa-circle-info'
+               :                    'fa-circle-check';
+
+    toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-fade-in ${bg}`;
+    toast.innerHTML = `<i class="fa-solid ${icon} text-lg" aria-hidden="true"></i><span>${escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+  }
+
+  /* ---------- Password strength meter ---------- */
+  function scorePassword(pw) {
+    if (!pw) return 0;
+    let score = 0;
+    if (pw.length >= 6)  score++;
+    if (pw.length >= 10) score++;
+    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+    if (/\d/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    return Math.min(score, 5);
+  }
+
+  function updateStrength() {
+    const input = document.getElementById('{{ form.password.id }}');
+    const box = document.getElementById('pwStrengthBox');
+    const bar = document.getElementById('pwStrengthBar');
+    const label = document.getElementById('pwStrengthLabel');
+    if (!input || !box || !bar || !label) return;
+
+    const pw = input.value || '';
+    if (!pw) {
+      box.classList.add('hidden');
+      return;
+    }
+
+    box.classList.remove('hidden');
+
+    const score = scorePassword(pw);
+    const percent = (score / 5) * 100;
+    bar.style.width = percent + '%';
+
+    const map = {
+      0: { text: 'Very weak', color: 'bg-red-500 text-red-600' },
+      1: { text: 'Weak',      color: 'bg-red-500 text-red-600' },
+      2: { text: 'Fair',      color: 'bg-amber-500 text-amber-600' },
+      3: { text: 'Good',      color: 'bg-gold text-gold-dark' },
+      4: { text: 'Strong',    color: 'bg-emerald-500 text-emerald-600' },
+      5: { text: 'Excellent', color: 'bg-emerald-600 text-emerald-700' },
+    };
+    const info = map[score] || map[0];
+
+    bar.className = `h-full transition-all duration-300 rounded-full ${info.color.split(' ')[0]}`;
+    label.textContent = info.text;
+    label.className = `font-bold ${info.color.split(' ')[1] || 'text-charcoal'}`;
+  }
+
+  /* ---------- Submit guard ---------- */
+  let isSubmitting = false;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('registerForm');
+    if (!form) return;
+
+    // Live password strength
+    const pwInput = document.getElementById('{{ form.password.id }}');
+    if (pwInput) {
+      pwInput.addEventListener('input', updateStrength);
+      pwInput.addEventListener('change', updateStrength);
+    }
+
+    // Client-side password match check
+    const confirmInput = document.getElementById('{{ form.confirm.id }}');
+    if (confirmInput) {
+      confirmInput.addEventListener('input', () => {
+        if (!confirmInput.value) {
+          confirmInput.classList.remove('border-red-300', 'bg-red-50');
+          return;
+        }
+        if (confirmInput.value !== pwInput.value) {
+          confirmInput.classList.add('border-red-300', 'bg-red-50');
+        } else {
+          confirmInput.classList.remove('border-red-300', 'bg-red-50');
+        }
+      });
+    }
+
+    form.addEventListener('submit', (e) => {
+      if (isSubmitting) {
+        e.preventDefault();
+        return false;
+      }
+
+      const name = form.querySelector('input[name="name"]');
+      const email = form.querySelector('input[name="email"]');
+      const password = form.querySelector('input[name="password"]');
+      const confirm = form.querySelector('input[name="confirm"]');
+      const agree = form.querySelector('input[name="agree"]');
+
+      if (!name?.value.trim()) {
+        e.preventDefault();
+        name?.focus();
+        showAuthToast('Please enter your full name.', 'error');
+        return false;
+      }
+      if (!email?.value.trim()) {
+        e.preventDefault();
+        email?.focus();
+        showAuthToast('Please enter your email.', 'error');
+        return false;
+      }
+      if (!password?.value || password.value.length < 6) {
+        e.preventDefault();
+        password?.focus();
+        showAuthToast('Password must be at least 6 characters.', 'error');
+        return false;
+      }
+      if (password.value !== confirm?.value) {
+        e.preventDefault();
+        confirm?.focus();
+        showAuthToast('Passwords do not match.', 'error');
+        return false;
+      }
+      if (agree && !agree.checked) {
+        e.preventDefault();
+        agree?.focus();
+        showAuthToast('You must agree to the Terms of Privilege.', 'error');
+        return false;
+      }
+
+      isSubmitting = true;
+      const btn = document.getElementById('registerSubmitBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-70', 'cursor-wait');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Creating account…</span>';
+      }
+      return true;
+    });
+  });
+
+  /* ---------- Reset state on bfcache restore ---------- */
+  window.addEventListener('pageshow', () => {
+    isSubmitting = false;
+    const btn = document.getElementById('registerSubmitBtn');
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('opacity-70', 'cursor-wait');
+      btn.innerHTML = '<i class="fa-solid fa-user-plus" aria-hidden="true"></i><span>Create Account</span>';
+    }
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,574 @@
+{% extends "super-admin/base.html" %}
+
+{% block title %}Settings — Admin Console{% endblock %}
+
+{% set active_section = 'settings' %}
+
+{% block page_title %}Settings{% endblock %}
+{% block page_subtitle %}Site configuration, data management &amp; system diagnostics{% endblock %}
+
+{% block content %}
+
+<!-- ============ QUICK STATS ROW ============ -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Storage</span>
+      <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+        <i class="fa-solid fa-database text-xs"></i>
+      </div>
+    </div>
+    <p class="font-serif text-xl font-bold text-primary">MongoDB</p>
+    <p class="text-[11px] text-charcoal/50 mt-1">Connected &amp; indexed</p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Currency</span>
+      <div class="w-8 h-8 rounded-lg bg-gold/20 text-gold-dark flex items-center justify-center">
+        <i class="fa-solid fa-coins text-xs"></i>
+      </div>
+    </div>
+    <p class="font-serif text-xl font-bold text-primary">
+      {{ CURRENCY_SYMBOL }} {{ CURRENCY }}
+    </p>
+    <p class="text-[11px] text-charcoal/50 mt-1">Ghana Cedis (via Paystack)</p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Environment</span>
+      <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+        <i class="fa-solid fa-shield-halved text-xs"></i>
+      </div>
+    </div>
+    <p class="font-serif text-xl font-bold text-primary">
+      {{ config.FLASK_ENV|default('production')|title }}
+    </p>
+    <p class="text-[11px] text-charcoal/50 mt-1">
+      {{ 'Debug enabled' if config.DEBUG else 'Production mode' }}
+    </p>
+  </div>
+</div>
+
+<!-- ============ MAIN GRID ============ -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+  <!-- ============ SITE CONFIGURATION ============ -->
+  <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+
+    <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full bg-primary text-gold flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-sliders text-sm"></i>
+      </div>
+      <div>
+        <h3 class="font-serif text-lg font-semibold text-primary leading-none">Site Configuration</h3>
+        <p class="text-[11px] text-charcoal/50 mt-1">Public-facing contact &amp; branding</p>
+      </div>
+    </div>
+
+    <form method="POST"
+          id="settingsForm"
+          class="p-6 space-y-4"
+          onsubmit="return handleSettingsSubmit(this);">
+      {{ form.hidden_tag() }}
+
+      <!-- Site Name -->
+      <div>
+        <label for="{{ form.site_name.id }}"
+               class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                 {% if form.site_name.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+          Site Name <span class="text-gold">*</span>
+        </label>
+        {{ form.site_name(
+            id=form.site_name.id,
+            class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm transition-all
+              " + ("border-red-300 bg-red-50" if form.site_name.errors else "border-charcoal/15"),
+            placeholder="Le Rêve Properties"
+        ) }}
+        {% if form.site_name.errors %}
+          <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+            {% for err in form.site_name.errors %}
+              <li class="flex items-center gap-1">
+                <i class="fa-solid fa-circle-exclamation"></i>{{ err }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <!-- Contact Email -->
+      <div>
+        <label for="{{ form.contact_email.id }}"
+               class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                 {% if form.contact_email.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+          Contact Email <span class="text-gold">*</span>
+        </label>
+        {{ form.contact_email(
+            id=form.contact_email.id,
+            class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm transition-all
+              " + ("border-red-300 bg-red-50" if form.contact_email.errors else "border-charcoal/15"),
+            placeholder="concierge@lereveproperties.com"
+        ) }}
+        {% if form.contact_email.errors %}
+          <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+            {% for err in form.contact_email.errors %}
+              <li class="flex items-center gap-1">
+                <i class="fa-solid fa-circle-exclamation"></i>{{ err }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <!-- WhatsApp -->
+      <div>
+        <label for="{{ form.whatsapp.id }}"
+               class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                 {% if form.whatsapp.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+          WhatsApp Number
+        </label>
+        <div class="relative">
+          <i class="fa-brands fa-whatsapp absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 text-sm pointer-events-none"></i>
+          {{ form.whatsapp(
+              id=form.whatsapp.id,
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm transition-all
+                " + ("border-red-300 bg-red-50" if form.whatsapp.errors else "border-charcoal/15"),
+              placeholder="+233 30 000 0000"
+          ) }}
+        </div>
+        {% if form.whatsapp.errors %}
+          <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+            {% for err in form.whatsapp.errors %}
+              <li class="flex items-center gap-1">
+                <i class="fa-solid fa-circle-exclamation"></i>{{ err }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <!-- Instagram -->
+      <div>
+        <label for="{{ form.instagram.id }}"
+               class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                 {% if form.instagram.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+          Instagram Handle
+        </label>
+        <div class="relative">
+          <i class="fa-brands fa-instagram absolute left-4 top-1/2 -translate-y-1/2 text-pink-500 text-sm pointer-events-none"></i>
+          {{ form.instagram(
+              id=form.instagram.id,
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm transition-all
+                " + ("border-red-300 bg-red-50" if form.instagram.errors else "border-charcoal/15"),
+              placeholder="@lereveproperties"
+          ) }}
+        </div>
+        <p class="mt-1 text-[10px] text-charcoal/50">
+          <i class="fa-solid fa-info-circle mr-1"></i>
+          Include the @ symbol
+        </p>
+        {% if form.instagram.errors %}
+          <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
+            {% for err in form.instagram.errors %}
+              <li class="flex items-center gap-1">
+                <i class="fa-solid fa-circle-exclamation"></i>{{ err }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <!-- Submit -->
+      <div class="pt-2 flex flex-wrap gap-3">
+        <button type="submit"
+                id="settingsSubmitBtn"
+                class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-md">
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span>Save Settings</span>
+        </button>
+
+        <a href="{{ url_for('public.home') }}"
+           target="_blank"
+           rel="noopener"
+           class="border border-charcoal/15 hover:bg-ivory px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2">
+          <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+          <span>Preview Site</span>
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- ============ DATA MANAGEMENT ============ -->
+  <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+
+    <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full bg-gold text-primary flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-hard-drive text-sm"></i>
+      </div>
+      <div>
+        <h3 class="font-serif text-lg font-semibold text-primary leading-none">Data Management</h3>
+        <p class="text-[11px] text-charcoal/50 mt-1">Export, backup, or reset the database</p>
+      </div>
+    </div>
+
+    <div class="p-6 space-y-3">
+
+      <!-- Export JSON -->
+      <a href="{{ url_for('super_admin.export_data') }}"
+         onclick="showExportLoading(this);"
+         class="group w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-charcoal/15 hover:border-gold hover:bg-gold/5 transition-all">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <i class="fa-solid fa-download text-sm"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-primary">Export Full Backup</p>
+            <p class="text-[10px] text-charcoal/50">Download all data as JSON</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-charcoal/40 text-xs group-hover:text-gold group-hover:translate-x-0.5 transition-all flex-shrink-0"></i>
+      </a>
+
+      <!-- Copy API-style stats -->
+      <button type="button"
+              onclick="copyBackupInfo(this)"
+              class="group w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-charcoal/15 hover:border-gold hover:bg-gold/5 transition-all">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+            <i class="fa-solid fa-clipboard text-sm"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-primary">Copy Backup Metadata</p>
+            <p class="text-[10px] text-charcoal/50">Timestamp, counts, version to clipboard</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-copy text-charcoal/40 text-xs group-hover:text-gold transition-all flex-shrink-0"></i>
+      </button>
+
+      <!-- Reset (destructive) -->
+      <div class="pt-2 border-t border-charcoal/5">
+        <button type="button"
+                onclick="openResetModal()"
+                class="w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-red-200 hover:border-red-400 hover:bg-red-50 transition-all group">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 rounded-lg bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+            </div>
+            <div class="min-w-0 text-left">
+              <p class="text-sm font-semibold text-red-600">Reset All Data</p>
+              <p class="text-[10px] text-red-400">Wipe database &amp; restore defaults</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-red-400 text-xs group-hover:translate-x-0.5 transition-all flex-shrink-0"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CURRENT PUBLIC SITE PREVIEW ============ -->
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+
+  <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40 flex items-center justify-between gap-3 flex-wrap">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-eye text-sm"></i>
+      </div>
+      <div>
+        <h3 class="font-serif text-lg font-semibold text-primary leading-none">Live Public Site Data</h3>
+        <p class="text-[11px] text-charcoal/50 mt-1">Currently visible on your public homepage</p>
+      </div>
+    </div>
+
+    <a href="{{ url_for('public.home') }}"
+       target="_blank"
+       rel="noopener"
+       class="text-xs font-semibold text-gold hover:text-gold-dark flex items-center gap-1.5">
+      Open Live Site
+      <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+    </a>
+  </div>
+
+  <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <div class="p-4 rounded-xl bg-ivory border border-charcoal/5">
+      <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold mb-1">Site Name</p>
+      <p class="text-sm font-semibold text-primary truncate">
+        {{ form.site_name.data or '—' }}
+      </p>
+    </div>
+
+    <div class="p-4 rounded-xl bg-ivory border border-charcoal/5">
+      <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold mb-1">Contact Email</p>
+      <p class="text-sm font-semibold text-primary truncate">
+        {{ form.contact_email.data or '—' }}
+      </p>
+    </div>
+
+    <div class="p-4 rounded-xl bg-ivory border border-charcoal/5">
+      <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold mb-1">WhatsApp</p>
+      <p class="text-sm font-semibold text-primary truncate">
+        {{ form.whatsapp.data or '—' }}
+      </p>
+    </div>
+
+    <div class="p-4 rounded-xl bg-ivory border border-charcoal/5">
+      <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold mb-1">Instagram</p>
+      <p class="text-sm font-semibold text-primary truncate">
+        {{ form.instagram.data or '—' }}
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RESET CONFIRMATION MODAL ============ -->
+<div id="resetModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md"
+     onclick="if (event.target === this) closeResetModal();">
+  <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-red-200 relative animate-fade-in overflow-hidden">
+
+    <!-- Header -->
+    <div class="bg-red-50 px-6 py-5 border-b border-red-100 flex items-start gap-3">
+      <div class="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h3 class="font-serif text-xl font-semibold text-red-700 leading-tight">Danger Zone</h3>
+        <p class="text-xs text-red-500 mt-1">This action cannot be undone</p>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6">
+      <p class="text-sm text-charcoal/80 leading-relaxed mb-4">
+        This will <strong class="text-red-600">permanently delete</strong>:
+      </p>
+
+      <ul class="text-xs text-charcoal/70 space-y-1.5 mb-6 pl-4 list-disc marker:text-red-400">
+        <li>All properties</li>
+        <li>All bookings &amp; payment records</li>
+        <li>All inquiries &amp; owner submissions</li>
+        <li>All reviews &amp; journal subscribers</li>
+        <li>All concierge messages &amp; wishlists</li>
+      </ul>
+
+      <p class="text-sm text-charcoal/80 mb-3">
+        Type <code class="bg-red-100 text-red-700 px-2 py-0.5 rounded font-mono font-bold text-xs">RESET</code> to confirm:
+      </p>
+
+      <input type="text"
+             id="resetConfirmInput"
+             autocomplete="off"
+             oninput="checkResetConfirm(this.value)"
+             placeholder="Type RESET here…"
+             class="w-full px-4 py-3 rounded-xl border-2 border-charcoal/15 focus:border-red-400 focus:outline-none text-sm font-mono uppercase tracking-widest text-center transition-all mb-4">
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-ivory/40 border-t border-charcoal/5 flex gap-3">
+
+      <button type="button"
+              onclick="closeResetModal()"
+              class="flex-1 px-4 py-3 rounded-xl border border-charcoal/15 text-charcoal hover:bg-white text-sm font-semibold transition-all">
+        Cancel
+      </button>
+
+      <!-- Actual reset form — hidden, submitted by JS -->
+      <form method="POST"
+            action="{{ url_for('super_admin.reset_data') }}"
+            id="resetForm"
+            class="flex-1">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="confirm" id="resetConfirmField" value="">
+        <button type="submit"
+                id="resetSubmitBtn"
+                disabled
+                class="w-full px-4 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-trash"></i>
+          <span>Reset Everything</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+/* ============================================================
+   SETTINGS PAGE — interactive helpers
+   ============================================================ */
+
+(function () {
+  'use strict';
+
+  /* --------------------------------------------------
+     SETTINGS FORM SUBMIT
+  -------------------------------------------------- */
+  let settingsSubmitting = false;
+
+  window.handleSettingsSubmit = function (form) {
+    if (settingsSubmitting) return false;
+    settingsSubmitting = true;
+
+    const btn = document.getElementById('settingsSubmitBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('opacity-70', 'cursor-wait');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Saving…</span>';
+    }
+    return true;
+  };
+
+  // Reset submit flag if page re-renders after server-side error
+  window.addEventListener('pageshow', () => {
+    settingsSubmitting = false;
+    const btn = document.getElementById('settingsSubmitBtn');
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('opacity-70', 'cursor-wait');
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>Save Settings</span>';
+    }
+  });
+
+  /* --------------------------------------------------
+     EXPORT FEEDBACK
+  -------------------------------------------------- */
+  window.showExportLoading = function (anchor) {
+    const original = anchor.innerHTML;
+    anchor.classList.add('opacity-60', 'pointer-events-none');
+
+    // Restore after a moment (download starts immediately anyway)
+    setTimeout(() => {
+      anchor.classList.remove('opacity-60', 'pointer-events-none');
+    }, 2000);
+
+    if (window.toast) {
+      window.toast('Preparing backup download…', 'info');
+    }
+  };
+
+  /* --------------------------------------------------
+     COPY BACKUP METADATA
+  -------------------------------------------------- */
+  window.copyBackupInfo = function (btn) {
+    const payload = {
+      site: '{{ form.site_name.data|e }}',
+      timestamp: new Date().toISOString(),
+      environment: '{{ config.FLASK_ENV|default("production")|e }}',
+      currency: '{{ CURRENCY|e }}',
+    };
+
+    const text = JSON.stringify(payload, null, 2);
+
+    navigator.clipboard.writeText(text).then(() => {
+      const icon = btn.querySelector('i.fa-copy');
+      if (icon) {
+        const original = icon.className;
+        icon.className = 'fa-solid fa-check text-emerald-500 text-xs';
+        setTimeout(() => { icon.className = original; }, 1500);
+      }
+      if (window.toast) window.toast('Metadata copied to clipboard', 'success');
+    }).catch(() => {
+      if (window.toast) window.toast('Could not copy to clipboard', 'error');
+    });
+  };
+
+  /* --------------------------------------------------
+     RESET MODAL
+  -------------------------------------------------- */
+  window.openResetModal = function () {
+    const modal = document.getElementById('resetModal');
+    const input = document.getElementById('resetConfirmInput');
+    if (!modal || !input) return;
+
+    input.value = '';
+    document.getElementById('resetConfirmField').value = '';
+    document.getElementById('resetSubmitBtn').disabled = true;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.classList.add('modal-open');
+
+    // Focus the confirmation input
+    setTimeout(() => input.focus(), 100);
+  };
+
+  window.closeResetModal = function () {
+    const modal = document.getElementById('resetModal');
+    if (!modal) return;
+
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.classList.remove('modal-open');
+
+    // Clear sensitive input
+    const input = document.getElementById('resetConfirmInput');
+    if (input) input.value = '';
+  };
+
+  /* --------------------------------------------------
+     RESET CONFIRMATION TYPED MATCH
+  -------------------------------------------------- */
+  window.checkResetConfirm = function (value) {
+    const submitBtn = document.getElementById('resetSubmitBtn');
+    const hiddenField = document.getElementById('resetConfirmField');
+    const input = document.getElementById('resetConfirmInput');
+
+    const normalized = (value || '').trim().toUpperCase();
+    const matches = normalized === 'RESET';
+
+    if (hiddenField) hiddenField.value = matches ? 'RESET' : '';
+    if (submitBtn) submitBtn.disabled = !matches;
+
+    // Visual feedback on input
+    if (input) {
+      if (matches) {
+        input.classList.remove('border-charcoal/15', 'border-red-300');
+        input.classList.add('border-emerald-400', 'bg-emerald-50');
+      } else if (normalized.length > 0) {
+        input.classList.remove('border-emerald-400', 'bg-emerald-50');
+        input.classList.add('border-red-300');
+      } else {
+        input.classList.remove('border-red-300', 'border-emerald-400', 'bg-emerald-50');
+        input.classList.add('border-charcoal/15');
+      }
+    }
+  };
+
+  /* --------------------------------------------------
+     KEYBOARD: ESC closes modal
+  -------------------------------------------------- */
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('resetModal');
+      if (modal && !modal.classList.contains('hidden')) {
+        closeResetModal();
+      }
+    }
+  });
+
+  /* --------------------------------------------------
+     SAFETY: prevent Enter key from submitting the reset
+     form directly if user hasn't typed RESET
+  -------------------------------------------------- */
+  document.addEventListener('DOMContentLoaded', () => {
+    const resetForm = document.getElementById('resetForm');
+    if (!resetForm) return;
+
+    resetForm.addEventListener('submit', (e) => {
+      const confirmValue = document.getElementById('resetConfirmField')?.value;
+      if (confirmValue !== 'RESET') {
+        e.preventDefault();
+        if (window.toast) window.toast('Type RESET to confirm', 'error');
+        return false;
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

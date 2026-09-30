@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="theme-color" content="#1a3a2a">
+
+<title>{% block title %}Admin Console — {{ SITE_NAME }}{% endblock %}</title>
+
+<!-- Inline SVG favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%231a3a2a'/><text x='50' y='68' font-size='60' font-family='Georgia' font-style='italic' font-weight='bold' fill='%23c9a84c' text-anchor='middle'>R</text></svg>">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#1a3a2a',
+        'primary-dark': '#122b1e',
+        'primary-light': '#28543e',
+        ivory: '#f7f3ed',
+        'ivory-dark': '#ebe3d5',
+        gold: '#c9a84c',
+        'gold-dark': '#a88938',
+        'gold-light': '#e5cb7a',
+        charcoal: '#2c2c2a',
+      },
+      fontFamily: {
+        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
+      boxShadow: {
+        luxury: '0 20px 40px -15px rgba(26, 58, 42, 0.12)',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideIn: {
+          '0%': { opacity: '0', transform: 'translateX(20px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fadeIn .3s ease-out forwards',
+        'slide-in': 'slideIn .3s ease-out forwards',
+      },
+    },
+  },
+};
+</script>
+
+<style>
+  body { background: #f7f3ed; color: #2c2c2a; font-family: 'Inter', sans-serif; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #f7f3ed; }
+  ::-webkit-scrollbar-thumb { background: #1a3a2a; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #c9a84c; }
+
+  .sidebar-link { border-left: 3px solid transparent; transition: all .2s ease; }
+  .sidebar-link.active {
+    background: rgba(201, 168, 76, .15);
+    color: #c9a84c;
+    border-left-color: #c9a84c;
+  }
+
+  @media (max-width: 1023px) {
+    .sidebar { transform: translateX(-100%); transition: transform .3s ease; }
+    .sidebar.open { transform: translateX(0); }
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #c9a84c;
+    border-color: #c9a84c;
+  }
+
+  body.modal-open { overflow: hidden; }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Skip-to-content link */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 8px;
+    background: #1a3a2a;
+    color: #c9a84c;
+    padding: 8px 16px;
+    border-radius: 8px;
+    z-index: 100;
+    transition: top .2s ease;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .skip-link:focus { top: 8px; }
+</style>
+</head>
+<body class="bg-ivory text-charcoal antialiased">
+
+<!-- Skip to main content (a11y) -->
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<div class="min-h-screen flex">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside id="sidebar"
+         class="sidebar fixed lg:static inset-y-0 left-0 z-40 w-64 bg-primary text-ivory flex flex-col"
+         aria-label="Admin sidebar">
+    <div class="h-20 px-6 flex items-center gap-3 border-b border-gold/20">
+      <div class="w-9 h-9 rounded-full bg-gold flex items-center justify-center text-primary font-serif font-bold text-lg">R</div>
+      <div>
+        <span class="font-serif text-lg tracking-widest text-ivory block leading-none">LE RÊVE</span>
+        <span class="text-[9px] tracking-[0.25em] uppercase text-gold">Admin</span>
+      </div>
+    </div>
+
+    {# Default active_section so child templates don't have to define it #}
+    {% set active_section = active_section|default('dashboard') %}
+
+    <nav class="flex-1 py-4 overflow-y-auto" aria-label="Admin navigation">
+
+      {# ============================================================
+         NAV ITEMS
+         Jinja2 does NOT support Python's *rest unpacking.
+         Use flat 4-tuples only: (key, label, icon, url)
+         Categories are dynamic (managed via /super-admin/categories).
+         Owner Submissions have been removed — admins manage the
+         portfolio directly via Properties.
+         ============================================================ #}
+      {% set nav = [
+        ('dashboard',   'Dashboard',      'fa-chart-pie',      url_for('super_admin.dashboard')),
+        ('properties',  'Properties',     'fa-house-chimney',  url_for('super_admin.properties')),
+        ('categories',  'Categories',     'fa-layer-group',    url_for('super_admin.categories')),
+        ('bookings',    'Bookings',       'fa-calendar-check', url_for('super_admin.bookings')),
+        ('inquiries',   'Inquiries',      'fa-envelope',       url_for('super_admin.inquiries')),
+        ('reviews',     'Reviews',        'fa-star',           url_for('super_admin.reviews')),
+        ('journal',     'Journal Subs',   'fa-pen-nib',        url_for('super_admin.journal')),
+        ('settings',    'Settings',       'fa-gear',           url_for('super_admin.settings')),
+      ] %}
+
+      {% for key, label, icon, link in nav %}
+        <a href="{{ link }}" data-section="{{ key }}"
+           class="sidebar-link {% if active_section == key %}active{% endif %} flex items-center gap-3 px-6 py-3 text-sm hover:bg-gold/10"
+           {% if active_section == key %}aria-current="page"{% endif %}>
+          <i class="fa-solid {{ icon }} w-5 text-center text-gold" aria-hidden="true"></i>
+          <span>{{ label }}</span>
+
+          {# Pending badge — only shown for inquiries #}
+          {% if key == 'inquiries' and (pending_inquiries|default(0)) > 0 %}
+            <span class="ml-auto bg-gold text-primary text-[10px] font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center"
+                  aria-label="{{ pending_inquiries }} new inquiries">
+              {{ pending_inquiries }}
+            </span>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </nav>
+
+    <div class="p-4 border-t border-gold/20 space-y-2">
+      <a href="{{ url_for('public.home') }}"
+         class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-ivory/70 hover:text-gold hover:bg-gold/10 transition-all">
+        <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> View Public Site
+      </a>
+      <a href="{{ url_for('auth.logout') }}"
+         class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-ivory/70 hover:text-red-300 hover:bg-red-500/10 transition-all">
+        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign Out
+      </a>
+    </div>
+  </aside>
+
+  <!-- Mobile overlay -->
+  <div id="sidebarOverlay"
+       onclick="toggleSidebar()"
+       class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"
+       aria-hidden="true"></div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="flex-1 flex flex-col min-w-0">
+
+    <!-- Top Bar -->
+    <header class="h-20 bg-white border-b border-gold/20 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleSidebar()"
+                id="sidebarToggleBtn"
+                class="lg:hidden p-2 text-primary focus:outline-none"
+                aria-label="Toggle sidebar"
+                aria-controls="sidebar"
+                aria-expanded="false">
+          <i class="fa-solid fa-bars text-xl" aria-hidden="true"></i>
+        </button>
+        <div>
+          <h1 class="font-serif text-2xl font-semibold text-primary leading-none">
+            {% block page_title %}Dashboard{% endblock %}
+          </h1>
+          <p class="text-xs text-charcoal/50 mt-1">
+            {% block page_subtitle %}Welcome back, Admin{% endblock %}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="goToSection('inquiries')"
+                class="relative w-10 h-10 rounded-full border border-charcoal/10 hover:border-gold text-primary flex items-center justify-center transition-all"
+                aria-label="View pending inquiries">
+          <i class="fa-regular fa-bell" aria-hidden="true"></i>
+          {% if (pending_inquiries|default(0)) > 0 %}
+            <span class="absolute top-2 right-2 w-2 h-2 bg-gold rounded-full" aria-hidden="true"></span>
+          {% endif %}
+        </button>
+
+        <div class="hidden sm:flex items-center gap-3 pl-3 border-l border-charcoal/10">
+          <div class="w-10 h-10 rounded-full bg-primary text-gold flex items-center justify-center font-semibold text-sm"
+               aria-hidden="true">
+            {% if current_user.is_authenticated and current_user.initials %}
+              {{ current_user.initials }}
+            {% elif current_user.is_authenticated and current_user.name %}
+              {{ current_user.name[0]|upper }}
+            {% else %}
+              AD
+            {% endif %}
+          </div>
+          <div class="hidden md:block">
+            <p class="text-sm font-semibold text-primary leading-none">
+              {{ current_user.name if current_user.is_authenticated else 'Admin' }}
+            </p>
+            <p class="text-[11px] text-charcoal/50 mt-0.5">Super User</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main id="main-content" class="flex-1 p-4 sm:p-6 overflow-x-hidden">
+
+      {# ---------- Flash Messages ---------- #}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div id="flashContainer" class="mb-6 space-y-3" role="status" aria-live="polite">
+            {% for cat, msg in messages %}
+              <div class="flash-msg text-xs px-4 py-3 rounded-xl border flex items-start gap-3 animate-fade-in
+                  {% if cat == 'error' %}bg-red-50 text-red-600 border-red-200
+                  {% elif cat == 'info' %}bg-blue-50 text-blue-600 border-blue-200
+                  {% else %}bg-emerald-50 text-emerald-600 border-emerald-200{% endif %}">
+                <i class="fa-solid mt-0.5
+                    {% if cat == 'error' %}fa-circle-exclamation
+                    {% elif cat == 'info' %}fa-circle-info
+                    {% else %}fa-circle-check{% endif %}" aria-hidden="true"></i>
+                <span>{{ msg }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<!-- ============ TOASTS ============ -->
+<div id="adminToast"
+     class="fixed top-24 right-5 z-[60] flex flex-col gap-3 pointer-events-none max-w-sm"
+     role="status"
+     aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   ADMIN SHELL HELPERS
+   ============================================================ */
+
+/* ---------- Sidebar ---------- */
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  const btn = document.getElementById('sidebarToggleBtn');
+  if (!sb || !ov) return;
+
+  const isOpen = sb.classList.toggle('open');
+  ov.classList.toggle('hidden', !isOpen);
+
+  if (btn) btn.setAttribute('aria-expanded', String(isOpen));
+  ov.setAttribute('aria-hidden', String(!isOpen));
+}
+
+function closeSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  const btn = document.getElementById('sidebarToggleBtn');
+  if (!sb || !ov) return;
+
+  sb.classList.remove('open');
+  ov.classList.add('hidden');
+  ov.setAttribute('aria-hidden', 'true');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+/* ---------- Section navigation (used by bell + child templates) ---------- */
+function goToSection(name) {
+  const routes = {
+    dashboard:  '/super-admin/',
+    properties: '/super-admin/properties',
+    categories: '/super-admin/categories',
+    bookings:   '/super-admin/bookings',
+    inquiries:  '/super-admin/inquiries',
+    reviews:    '/super-admin/reviews',
+    journal:    '/super-admin/journal',
+    settings:   '/super-admin/settings',
+  };
+  if (routes[name]) window.location.href = routes[name];
+}
+
+/* ---------- Toast ---------- */
+function toast(msg, type = 'success') {
+  const c = document.getElementById('adminToast');
+  if (!c) return;
+
+  const bg = type === 'error'
+    ? 'bg-red-600 text-white border-red-400'
+    : type === 'info'
+      ? 'bg-gold text-primary border-primary'
+      : 'bg-primary text-gold border-gold';
+
+  const icon = type === 'error'
+    ? 'fa-circle-exclamation'
+    : type === 'info'
+      ? 'fa-circle-info'
+      : 'fa-circle-check';
+
+  const t = document.createElement('div');
+  t.className = `pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-slide-in ${bg}`;
+  t.innerHTML = `<i class="fa-solid ${icon} text-lg" aria-hidden="true"></i><span>${escapeHtml(msg)}</span>`;
+  c.appendChild(t);
+
+  setTimeout(() => {
+    t.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+    setTimeout(() => t.remove(), 300);
+  }, 4000);
+}
+
+/* ---------- Helpers ---------- */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[m]));
+}
+
+/* ---------- Auto-dismiss flashes ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  const flashes = document.querySelectorAll('.flash-msg');
+  if (flashes.length) {
+    setTimeout(() => {
+      flashes.forEach(el => {
+        el.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+        setTimeout(() => el.remove(), 500);
+      });
+    }, 6000);
+  }
+});
+
+/* ---------- Keyboard: ESC closes sidebar & modals ---------- */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeSidebar();
+    document.body.classList.remove('modal-open');
+  }
+});
+
+/* ---------- Auto-close mobile sidebar when a link is clicked ---------- */
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('.sidebar-link');
+  if (link && window.innerWidth < 1024) {
+    closeSidebar();
+  }
+});
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,23 @@
+Those are the three screens a pharmacist would use all day: the dashboard, the sell screen, and inventory.
+
+The rest of the MVP fits in a handful of simpler screens that reuse the same layout:
+
+| Screen | What's on it |
+|---|---|
+| Receive stock | Choose the supplier, add line items (drug, quantity, batch number, expiry date, cost price), then confirm. Confirming writes stock ledger entries and updates inventory. |
+| Suppliers and purchase orders | A supplier list with contacts, and a PO list with draft, ordered, and received statuses. A "reorder" button on low-stock items creates a draft PO. |
+| Sales history | A searchable list of past sales with a detail view, a reprint receipt button, and a refund or void action that asks for a reason. |
+| Reports | Sales by day, product, and staff member, plus stock valuation, with a date range and CSV or PDF export. |
+| Staff and roles | Invite users and assign owner, pharmacist, cashier, or stock clerk. |
+| Settings and billing | Pharmacy profile, receipt header and footer, low-stock thresholds, current plan, and payment history through Paystack. |
+| Onboarding wizard | Three steps: pharmacy details, import stock from CSV, then make a first test sale. |
+| Login and signup | Signup starts the trial. |
+
+A few design decisions I made in the wireframes:
+
+- **Sell is a single screen** with search on the left and the cart on the right. It should work entirely by keyboard and barcode scanner, since speed at the counter decides whether pharmacies adopt it.
+- **Batch choice is automatic.** When a cashier adds an item, the system picks the batch with the earliest expiry (FEFO). The cashier shouldn't have to choose.
+- **Status badges do the work of alerts.** Low, expiring, and in-stock states use color and text together, so they stay readable for color-blind users and on cheap screens.
+- **Cashiers don't see cost prices or margins.** Role-based visibility shows up here in the UI, not just in the permissions table.
+
+If you'd like, I can mock up the receive-stock screen next, since it's the most form-heavy one, or turn these into Flask/Jinja templates with Tailwind.

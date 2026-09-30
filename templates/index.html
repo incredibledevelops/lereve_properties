@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="description" content="Le Rêve Properties — Curated luxury stays & extraordinary estates.">
+<meta name="theme-color" content="#1a3a2a">
+
+<title>Le Rêve Properties | Curated Luxury Stays &amp; Extraordinary Estates</title>
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%231a3a2a'/><text x='50' y='68' font-size='60' font-family='Georgia' font-style='italic' font-weight='bold' fill='%23c9a84c' text-anchor='middle'>R</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      primary:'#1a3a2a','primary-dark':'#122b1e','primary-light':'#28543e',
+      ivory:'#f7f3ed','ivory-dark':'#ebe3d5',
+      gold:'#c9a84c','gold-dark':'#a88938','gold-light':'#e5cb7a',
+      charcoal:'#2c2c2a','soft-white':'#ffffff'
+    },
+    fontFamily:{ serif:['Cormorant Garamond','Georgia','serif'], sans:['Inter','sans-serif'] },
+    boxShadow:{ 'luxury':'0 20px 40px -15px rgba(26,58,42,0.12)' },
+    keyframes: {
+      fadeIn: { '0%': { opacity: '0', transform: 'translateY(12px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+      slideIn: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+      scrollLeft: { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
+    },
+    animation: {
+      'fade-in': 'fadeIn .4s ease-out forwards',
+      'slide-in': 'slideIn .3s ease-out forwards',
+      'scroll-left': 'scrollLeft 45s linear infinite',
+    }
+  }}
+}
+</script>
+
+<style>
+  body { background:#f7f3ed; color:#2c2c2a; font-family:'Inter',sans-serif; overflow-x:hidden; }
+  ::-webkit-scrollbar { width:8px; }
+  ::-webkit-scrollbar-track { background:#f7f3ed; }
+  ::-webkit-scrollbar-thumb { background:#1a3a2a; border-radius:4px; }
+  .glass-nav { background: rgba(247,243,237,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  html { scroll-padding-top: 90px; }
+  input[type=range] { accent-color:#c9a84c; }
+  body.modal-open { overflow:hidden; }
+  .line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+  /* Carousel */
+  .carousel-track {
+    display: flex;
+    gap: 1.5rem;
+    width: max-content;
+    animation: scrollLeft 45s linear infinite;
+    will-change: transform;
+  }
+  .carousel-track:hover,
+  .carousel-track:focus-within { animation-play-state: paused; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .carousel-track { animation: none; }
+  }
+</style>
+</head>
+<body class="bg-ivory text-charcoal font-sans antialiased selection:bg-gold selection:text-primary">
+
+<!-- ============ FLASH MESSAGES ============ -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div id="flashContainer" class="fixed top-24 right-5 z-[70] flex flex-col gap-3 pointer-events-none max-w-sm" role="status" aria-live="polite">
+      {% for category, message in messages %}
+        <div class="pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-slide-in
+          {% if category == 'error' %}bg-red-600 text-white border-red-400
+          {% elif category == 'info' %}bg-gold text-primary border-primary
+          {% else %}bg-primary text-gold border-gold{% endif %}">
+          <i class="fa-solid {% if category == 'error' %}fa-circle-exclamation{% elif category == 'info' %}fa-circle-info{% else %}fa-circle-check{% endif %} text-lg" aria-hidden="true"></i>
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div id="toastContainer" class="fixed top-20 right-5 z-50 flex flex-col gap-3 pointer-events-none max-w-sm" role="status" aria-live="polite"></div>
+
+<!-- ============ HEADER ============ -->
+<header class="fixed top-0 left-0 w-full z-40 glass-nav border-b border-gold/20 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    <a href="#hero" class="flex items-center gap-3 group">
+      <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-gold border border-gold/40 group-hover:bg-gold group-hover:text-primary transition-all">
+        <span class="font-serif text-xl font-bold italic">R</span>
+      </div>
+      <div>
+        <span class="font-serif text-2xl tracking-widest font-semibold text-primary block leading-none">LE RÊVE</span>
+        <span class="text-[10px] tracking-[0.25em] uppercase text-gold font-medium block">Properties</span>
+      </div>
+    </a>
+
+    <nav class="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest font-medium text-charcoal/80">
+      <a href="#hero" class="hover:text-gold transition-colors">Home</a>
+      <a href="#services" class="hover:text-gold transition-colors">Services</a>
+      <a href="#listings" class="hover:text-gold transition-colors">Stays</a>
+      <a href="#reviews" class="hover:text-gold transition-colors">Reviews</a>
+      <a href="#contact" class="hover:text-gold transition-colors">Contact</a>
+    </nav>
+
+    <div class="hidden md:flex items-center gap-3">
+      {% if current_user.is_authenticated %}
+        {% if current_user.is_admin %}
+          <a href="{{ url_for('super_admin.dashboard') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary transition-all text-xs font-bold uppercase tracking-widest">
+            <i class="fa-solid fa-shield-halved mr-1" aria-hidden="true"></i> Admin
+          </a>
+        {% else %}
+          <a href="{{ url_for('client.dashboard') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary transition-all text-xs font-bold uppercase tracking-widest">
+            <i class="fa-solid fa-user mr-1" aria-hidden="true"></i> Portal
+          </a>
+        {% endif %}
+      {% else %}
+        <a href="{{ url_for('auth.login') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary transition-all text-xs font-bold uppercase tracking-widest">
+          <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
+        </a>
+      {% endif %}
+    </div>
+
+    <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-primary" aria-label="Open menu">
+      <i class="fa-solid fa-bars text-2xl" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div id="mobileDrawer" class="hidden md:hidden bg-primary text-ivory border-b border-gold/30 px-6 py-6">
+    <div class="flex flex-col gap-4 text-base tracking-wider uppercase font-medium">
+      <a href="#hero" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Home</a>
+      <a href="#services" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Services</a>
+      <a href="#listings" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Stays</a>
+      <a href="#reviews" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Reviews</a>
+      <a href="#contact" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Contact</a>
+      <div class="pt-4">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('client.dashboard') if not current_user.is_admin else url_for('super_admin.dashboard') }}"
+             class="w-full text-center bg-gold text-primary py-2.5 rounded-full font-bold uppercase tracking-wider text-xs block">
+            <i class="fa-solid fa-user mr-1" aria-hidden="true"></i> {{ 'Admin Console' if current_user.is_admin else 'Client Portal' }}
+          </a>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}"
+             class="w-full text-center bg-gold text-primary py-2.5 rounded-full font-bold uppercase tracking-wider text-xs block">
+            <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section id="hero" class="relative pt-32 pb-20 md:pt-40 md:pb-28 min-h-[90vh] flex flex-col justify-between bg-primary text-soft-white overflow-hidden">
+  <div class="absolute inset-0 opacity-25 bg-cover bg-center" style="background-image:url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=80');"></div>
+  <div class="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/95 to-primary"></div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center my-auto">
+    <span class="inline-block py-1 px-4 rounded-full border border-gold/40 text-gold text-xs uppercase tracking-[0.25em] mb-6 backdrop-blur-sm bg-primary/40">
+      The Pinnacle of Private Luxury
+    </span>
+    <h1 class="font-serif text-4xl sm:text-6xl md:text-7xl font-light text-ivory tracking-wide leading-tight max-w-5xl mx-auto mb-6">
+      Where <span class="italic text-gold font-normal">Africa</span> feels like home
+    </h1>
+    <p class="text-ivory/80 text-base sm:text-lg md:text-xl font-light max-w-2xl mx-auto mb-10 leading-relaxed">
+      Quality short-stay accommodation in the heart of Accra - affordable, comfortable and close to everything that matters
+    </p>
+
+    <div class="glass-card text-charcoal rounded-3xl p-4 sm:p-6 shadow-luxury border border-gold/30 max-w-5xl mx-auto text-left">
+      <form onsubmit="event.preventDefault(); applyHeroFilters();" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <div class="flex flex-col">
+          <label class="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-location-dot text-gold" aria-hidden="true"></i> Destination
+          </label>
+          <input type="text" id="filterLocation" oninput="debouncedRender()" placeholder="e.g., Amalfi, Zermatt" class="w-full px-4 py-3 rounded-xl border border-charcoal/10 bg-ivory/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+        </div>
+        <div class="flex flex-col">
+          <label class="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-house-chimney text-gold" aria-hidden="true"></i> Estate Type
+          </label>
+          <select id="filterType" onchange="debouncedRender()" class="w-full px-4 py-3 rounded-xl border border-charcoal/10 bg-ivory/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+            <option value="all">All Categories</option>
+            {% for c in categories %}
+              <option value="{{ c.name }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="flex flex-col">
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-[11px] font-bold uppercase tracking-widest text-primary/70 flex items-center gap-1.5">
+              <i class="fa-solid fa-tag text-gold" aria-hidden="true"></i> Max Nightly
+            </label>
+            <span id="priceDisplay" class="text-xs font-bold text-primary">₵50,000</span>
+          </div>
+          <input type="range" id="filterPrice" min="1000" max="50000" step="500" value="50000" oninput="updatePriceLabel(this.value)" class="w-full cursor-pointer h-2">
+        </div>
+        <div>
+          <button type="submit" class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3 px-6 rounded-xl font-semibold uppercase tracking-wider text-xs transition-all shadow-md flex items-center justify-center gap-2">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Explore Stays
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SERVICES ============ -->
+<section id="services" class="py-20 md:py-28 bg-ivory relative">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-2">For property owners</span>
+      <h2 class="font-serif text-3xl sm:text-5xl font-light text-primary tracking-wide">Turn your <span class="italic text-gold">Property </span>into income
+      </h2>
+      <div class="w-16 h-[2px] bg-gold mx-auto mt-4"></div>
+    </div>
+    <div class="max-w-3xl mx-auto text-center">
+      <p class="text-charcoal/80 leading-relaxed font-light text-base mb-6">
+        Have an apartment, house or villa in Ghana? LE RÊVE can manage the hospitality side so you earn without the operational burden.
+      </p>
+      <a href="#listings" class="inline-flex items-center gap-3 bg-primary text-gold px-8 py-4 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gold hover:text-primary transition-all shadow-luxury">
+        <span>Explore Luxury Stays</span>
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LISTINGS ============ -->
+<section id="listings" class="py-20 bg-ivory-dark/40 relative">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
+      <div>
+        <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-2">Exclusive Portfolio</span>
+        <h2 class="font-serif text-3xl sm:text-5xl font-light text-primary">
+          Featured <span class="italic text-gold">Sanctuaries</span>
+        </h2>
+        <p id="propertyCount" class="text-xs text-charcoal/60 mt-2 font-light"></p>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button onclick="filterCategory('all', this)" class="category-btn active border border-primary bg-primary text-gold px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all">All Stays</button>
+        {% for c in categories %}
+          {% set icon = c.icon or 'fa-house-chimney' %}
+          {% set icon_class = icon if icon.startswith('fa-') else 'fa-' ~ icon %}
+          <button onclick="filterCategory({{ c.name|tojson }}, this)"
+                  data-category="{{ c.name|e }}"
+                  class="category-btn border border-primary/20 hover:border-primary bg-white/60 text-primary px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5">
+            <i class="fa-solid {{ icon_class|e }} text-[10px]" aria-hidden="true"></i>
+            {{ c.name|e }}
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="propertyGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+
+    <div id="noResults" class="hidden text-center py-16 bg-white/50 rounded-3xl border border-dashed border-gold/40">
+      <i class="fa-solid fa-house-circle-xmark text-4xl text-gold mb-3" aria-hidden="true"></i>
+      <h3 class="font-serif text-2xl font-semibold text-primary mb-2">No Matching Estates Found</h3>
+      <p class="text-charcoal/70 text-sm max-w-md mx-auto mb-6">Try adjusting your filters or price range.</p>
+      <button onclick="resetAllFilters()" class="bg-primary text-gold px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gold hover:text-primary transition-all">Reset All Filters</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REVIEWS CAROUSEL ============ -->
+<section id="reviews" class="py-20 md:py-28 bg-ivory relative overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+    <div class="text-center max-w-3xl mx-auto">
+      <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-2">Guest Testimonials</span>
+      <h2 class="font-serif text-3xl sm:text-5xl font-light text-primary">
+        Verified <span class="italic text-gold">Guest Reflections</span>
+      </h2>
+      <div class="w-16 h-[2px] bg-gold mx-auto mt-4"></div>
+      {% if reviews|length > 1 %}
+        <p class="text-xs text-charcoal/50 mt-3">
+          <i class="fa-solid fa-pause text-gold mr-1" aria-hidden="true"></i>
+          Hover or focus to pause · {{ reviews|length }} verified stays
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if reviews %}
+    <div class="relative">
+      <div class="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-ivory to-transparent z-10" aria-hidden="true"></div>
+      <div class="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-ivory to-transparent z-10" aria-hidden="true"></div>
+
+      <div class="overflow-hidden px-4">
+        <div class="carousel-track">
+          {% if reviews|length > 1 %}
+            {# Two passes for seamless loop #}
+            {% for pass in [1, 2] %}
+              {% for r in reviews %}
+                {% set rating = (r.rating or 0)|int %}
+                {% set avatar_url = r.avatar or ('https://ui-avatars.com/api/?name=' ~ ((r.name or 'Guest')|urlencode) ~ '&background=c9a84c&color=1a3a2a') %}
+                <article class="w-[320px] sm:w-[380px] flex-shrink-0 bg-white rounded-3xl p-7 border border-gold/20 shadow-luxury flex flex-col justify-between relative"
+                         {% if pass == 2 %}aria-hidden="true"{% endif %}>
+                  <i class="fa-solid fa-quote-left text-4xl text-gold/20 absolute top-5 right-5" aria-hidden="true"></i>
+                  <div>
+                    <div class="flex items-center gap-1 text-gold text-xs mb-4">
+                      {% for i in range(5) %}
+                        <i class="fa-solid fa-star {% if i < rating %}text-gold{% else %}text-charcoal/20{% endif %}" aria-hidden="true"></i>
+                      {% endfor %}
+                      <span class="text-charcoal/60 text-[11px] ml-2 font-medium">Verified</span>
+                    </div>
+                    <p class="text-charcoal/80 text-sm leading-relaxed italic mb-6 line-clamp-2">"{{ r.text|e }}"</p>
+                  </div>
+                  <div class="flex items-center gap-4 pt-4 border-t border-charcoal/5">
+                    <img src="{{ avatar_url|e }}"
+                         alt="{{ r.name or 'Guest' }}"
+                         class="w-12 h-12 rounded-full object-cover border-2 border-gold"
+                         loading="lazy"
+                         onerror="this.src='https://ui-avatars.com/api/?name={{ (r.name or 'Guest')|urlencode }}&amp;background=c9a84c&amp;color=1a3a2a';">
+                    <div class="min-w-0">
+                      <h4 class="font-serif text-base font-semibold text-primary truncate">{{ r.name|e or 'Anonymous' }}</h4>
+                      <p class="text-xs text-gold truncate">{{ r.property|e or '—' }}</p>
+                    </div>
+                  </div>
+                </article>
+              {% endfor %}
+            {% endfor %}
+          {% else %}
+            {# Single review — no animation #}
+            {% set r = reviews[0] %}
+            {% set rating = (r.rating or 0)|int %}
+            {% set avatar_url = r.avatar or ('https://ui-avatars.com/api/?name=' ~ ((r.name or 'Guest')|urlencode) ~ '&background=c9a84c&color=1a3a2a') %}
+            <article class="w-[320px] sm:w-[380px] flex-shrink-0 bg-white rounded-3xl p-7 border border-gold/20 shadow-luxury flex flex-col justify-between relative mx-auto">
+              <div class="flex items-center gap-1 text-gold text-xs mb-4">
+                {% for i in range(5) %}
+                  <i class="fa-solid fa-star {% if i < rating %}text-gold{% else %}text-charcoal/20{% endif %}" aria-hidden="true"></i>
+                {% endfor %}
+                <span class="text-charcoal/60 text-[11px] ml-2 font-medium">Verified</span>
+              </div>
+              <p class="text-charcoal/80 text-sm leading-relaxed italic mb-6">"{{ r.text|e }}"</p>
+              <div class="flex items-center gap-4 pt-4 border-t border-charcoal/5">
+                <img src="{{ avatar_url|e }}" alt="{{ r.name or 'Guest' }}"
+                     class="w-12 h-12 rounded-full object-cover border-2 border-gold" loading="lazy">
+                <div class="min-w-0">
+                  <h4 class="font-serif text-base font-semibold text-primary truncate">{{ r.name|e or 'Anonymous' }}</h4>
+                  <p class="text-xs text-gold truncate">{{ r.property|e or '—' }}</p>
+                </div>
+              </div>
+            </article>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="text-center py-12 text-charcoal/50 text-sm">
+      No reviews yet — be the first to share your stay.
+    </div>
+  {% endif %}
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section id="contact" class="py-20 bg-primary text-ivory relative">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-2">Concierge Desk</span>
+      <h2 class="font-serif text-3xl sm:text-5xl font-light text-ivory">
+        Initiate Your <span class="italic text-gold">Reservation</span>
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-4xl mx-auto">
+      <a href="https://wa.me/233300000000" target="_blank" rel="noopener"
+         class="flex items-center gap-4 p-5 rounded-2xl bg-primary-dark/80 border border-gold/30 hover:border-gold transition-all group">
+        <div class="w-14 h-14 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+          <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+        </div>
+        <div>
+          <span class="text-xs uppercase tracking-wider text-gold font-semibold block">Instant Concierge</span>
+          <span class="text-sm font-medium text-ivory">WhatsApp Us</span>
+        </div>
+      </a>
+
+      <a href="tel:+233300000000"
+         class="flex items-center gap-4 p-5 rounded-2xl bg-primary-dark/80 border border-gold/30 hover:border-gold transition-all group">
+        <div class="w-14 h-14 rounded-xl bg-gold/20 text-gold flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+          <i class="fa-solid fa-phone" aria-hidden="true"></i>
+        </div>
+        <div>
+          <span class="text-xs uppercase tracking-wider text-gold font-semibold block">24/7 Global Desk</span>
+          <span class="text-sm font-medium text-ivory">+233 30 000 0000</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="text-center mt-8">
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('client.dashboard') if not current_user.is_admin else url_for('super_admin.dashboard') }}"
+           class="text-gold hover:text-gold-light text-xs uppercase tracking-widest underline-offset-4 hover:underline">
+          <i class="fa-solid fa-user mr-1" aria-hidden="true"></i>
+          Go to your {{ 'admin console' if current_user.is_admin else 'portal' }}
+        </a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}"
+           class="text-gold hover:text-gold-light text-xs uppercase tracking-widest underline-offset-4 hover:underline">
+          <i class="fa-solid fa-user mr-1" aria-hidden="true"></i> Sign in to your portal
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="bg-primary-dark text-ivory border-t border-gold/20 pt-16 pb-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-gold/10">
+      <div class="md:col-span-2 space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-gold flex items-center justify-center text-primary font-serif font-bold text-lg">R</div>
+          <span class="font-serif text-xl tracking-widest text-ivory">LE RÊVE PROPERTIES</span>
+        </div>
+        <p class="text-xs text-ivory/70 leading-relaxed max-w-sm font-light">
+          Curating world-class luxury estates, waterfront villas, and high-altitude sanctuaries for the global traveler seeking uncompromising privacy.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="font-serif text-lg font-semibold text-gold mb-4">Explore</h4>
+        <ul class="space-y-2 text-xs text-ivory/70 font-light">
+          <li><a href="#listings" onclick="filterCategory('all')" class="hover:text-gold transition-colors">Featured Estates</a></li>
+          {% for c in categories %}
+            <li><a href="#listings" onclick="filterCategory({{ c.name|tojson }})" class="hover:text-gold transition-colors">{{ c.name|e }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-serif text-lg font-semibold text-gold mb-4">Private Journal</h4>
+        <p class="text-xs text-ivory/70 mb-3 font-light">Subscribe for off-market estate listings before public release.</p>
+        <form onsubmit="handleJournalSubmit(event)" class="space-y-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="email" name="email" required placeholder="Enter private email" class="w-full px-3 py-2 text-xs rounded-lg border border-gold/30 bg-primary/60 text-ivory placeholder-ivory/40 focus:outline-none focus:border-gold">
+          <button type="submit" class="w-full bg-gold text-primary py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-white transition-all">Subscribe</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="pt-8 text-center text-xs text-ivory/50">
+      &copy; 2026 Le Rêve Properties. All Rights Reserved. Private &amp; Confidential Hospitality.
+    </div>
+  </div>
+</footer>
+
+<!-- ============ QUICK VIEW MODAL ============ -->
+<div id="quickViewModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md" onclick="if (event.target === this) closeQuickViewModal();">
+  <div class="bg-ivory rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative">
+    <button onclick="closeQuickViewModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary transition-all flex items-center justify-center" aria-label="Close">
+      <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
+    </button>
+    <div id="quickViewContent"></div>
+  </div>
+</div>
+
+<!-- ============ BOOKING MODAL ============ -->
+<div id="bookingModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md" onclick="if (event.target === this) closeBookingModal();">
+  <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative">
+    <button onclick="closeBookingModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold transition-all flex items-center justify-center" aria-label="Close">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+    <div id="bookingModalContent"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   LE RÊVE PROPERTIES — PUBLIC SITE SCRIPT
+   ============================================================ */
+
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
+const CURRENCY_SYMBOL = {{ CURRENCY_SYMBOL|tojson }};
+const IS_LOGGED_IN = {{ 'true' if current_user.is_authenticated and not current_user.is_admin else 'false' }};
+const IS_ADMIN = {{ 'true' if current_user.is_authenticated and current_user.is_admin else 'false' }};
+const CURRENT_USER = {
+  name: {{ (current_user.name if current_user.is_authenticated else '')|tojson }},
+  email: {{ (current_user.email if current_user.is_authenticated else '')|tojson }}
+};
+
+const RAW_PROPERTIES = {{ properties|tojson }};
+const WISHLIST_IDS = {{ wishlist_ids|tojson }};
+
+function normalizeProperty(p) {
+  return {
+    id: p.id || p._id,
+    title: p.title || '',
+    category: p.category || '',
+    location: p.location || '',
+    original_price: Number(p.original_price ?? 0),
+    price: Number(p.price ?? 0),
+    rating: Number(p.rating ?? 5),
+    reviews_count: Number(p.reviews_count ?? 0),
+    beds: Number(p.beds ?? 0),
+    baths: Number(p.baths ?? 0),
+    guests: Number(p.guests ?? 0),
+    image: p.image || '',
+    gallery: Array.isArray(p.gallery) ? p.gallery : [],
+    amenities: Array.isArray(p.amenities) ? p.amenities : [],
+    description: p.description || ''
+  };
+}
+
+const PROPERTIES = RAW_PROPERTIES.map(normalizeProperty);
+let favorites = new Set(WISHLIST_IDS.map(String));
+let activeCategory = 'all';
+let debounceTimer = null;
+
+/* ---------- Utilities ---------- */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[m]));
+}
+
+function formatGHS(amount) {
+  const n = Number(amount) || 0;
+  return CURRENCY_SYMBOL + n.toLocaleString('en-GH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function debouncedRender() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(renderPropertyListings, 250);
+}
+
+function toggleMobileMenu() {
+  const drawer = document.getElementById('mobileDrawer');
+  if (drawer) drawer.classList.toggle('hidden');
+}
+
+/* ---------- Init ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  renderPropertyListings();
+  updatePriceLabel('50000');
+  autoDismissFlashes();
+});
+
+function autoDismissFlashes() {
+  const container = document.getElementById('flashContainer');
+  if (!container) return;
+  setTimeout(() => {
+    container.querySelectorAll('div').forEach(el => {
+      el.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+      setTimeout(() => el.remove(), 500);
+    });
+  }, 5000);
+}
+
+/* ---------- Listing Render ---------- */
+function renderPropertyListings() {
+  const grid = document.getElementById('propertyGrid');
+  const noResults = document.getElementById('noResults');
+  const countEl = document.getElementById('propertyCount');
+  if (!grid) return;
+
+  const locationVal = (document.getElementById('filterLocation')?.value || '').toLowerCase().trim();
+  const typeVal = document.getElementById('filterType')?.value || 'all';
+  const maxPriceVal = parseInt(document.getElementById('filterPrice')?.value || '50000', 10);
+
+  const filtered = PROPERTIES.filter(prop => {
+    if (activeCategory !== 'all' && prop.category !== activeCategory) return false;
+    if (typeVal !== 'all' && prop.category !== typeVal) return false;
+    if (prop.price > maxPriceVal) return false;
+    if (locationVal) {
+      const haystack = (prop.location + ' ' + prop.title).toLowerCase();
+      if (!haystack.includes(locationVal)) return false;
+    }
+    return true;
+  });
+
+  if (countEl) {
+    countEl.textContent = filtered.length === 0
+      ? 'No estates available'
+      : `${filtered.length} estate${filtered.length === 1 ? '' : 's'} available`;
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    noResults?.classList.remove('hidden');
+    return;
+  }
+
+  noResults?.classList.add('hidden');
+
+  grid.innerHTML = filtered.map(prop => {
+    const isFav = favorites.has(String(prop.id));
+    const savingsPct = prop.original_price > 0 && prop.original_price > prop.price
+      ? Math.round(((prop.original_price - prop.price) / prop.original_price) * 100)
+      : 0;
+
+    return `
+      <div class="bg-white rounded-3xl overflow-hidden shadow-luxury border border-gold/20 hover:border-gold transition-all group flex flex-col">
+        <div class="relative aspect-[4/3] overflow-hidden bg-primary-dark">
+          <img src="${escapeHtml(prop.image)}" alt="${escapeHtml(prop.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
+          <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-black/20"></div>
+          <span class="absolute top-4 left-4 bg-primary/90 text-gold backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-gold/30">${escapeHtml(prop.category)}</span>
+          <button onclick="toggleFavorite('${prop.id}')" aria-label="Save to wishlist" class="absolute top-4 right-4 w-9 h-9 rounded-full ${isFav ? 'bg-gold text-primary' : 'bg-primary/70 text-white hover:bg-gold hover:text-primary'} backdrop-blur-sm flex items-center justify-center transition-all shadow-md">
+            <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" aria-hidden="true"></i>
+          </button>
+          ${savingsPct > 0 ? `<div class="absolute bottom-4 left-4 bg-gold text-primary font-bold text-xs px-3 py-1 rounded-lg shadow-md">Save ${savingsPct}%</div>` : ''}
+        </div>
+
+        <div class="p-6 flex-1 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs text-charcoal/60 mb-2">
+              <span class="flex items-center gap-1 truncate"><i class="fa-solid fa-location-dot text-gold" aria-hidden="true"></i> ${escapeHtml(prop.location)}</span>
+              <span class="flex items-center gap-1 font-bold text-primary flex-shrink-0"><i class="fa-solid fa-star text-gold" aria-hidden="true"></i> ${prop.rating}</span>
+            </div>
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-3 group-hover:text-gold transition-colors line-clamp-2">${escapeHtml(prop.title)}</h3>
+            <div class="flex flex-wrap gap-3 text-xs text-charcoal/80 mb-4 pb-4 border-b border-charcoal/10">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-bed text-gold" aria-hidden="true"></i> ${prop.beds} Beds</span>
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-bath text-gold" aria-hidden="true"></i> ${prop.baths} Baths</span>
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-users text-gold" aria-hidden="true"></i> ${prop.guests} Guests</span>
+            </div>
+          </div>
+          <div class="pt-2 border-t border-charcoal/5 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              ${prop.original_price > prop.price ? `<span class="text-xs text-charcoal/50 line-through block font-medium">${formatGHS(prop.original_price)}</span>` : ''}
+              <div class="flex items-baseline gap-1">
+                <span class="font-serif text-2xl font-bold text-primary">${formatGHS(prop.price)}</span>
+                <span class="text-[11px] font-medium text-charcoal/70">/ night</span>
+              </div>
+            </div>
+            <div class="flex gap-2 flex-shrink-0">
+              <button onclick="openQuickView('${prop.id}')" class="px-3.5 py-2 rounded-xl bg-ivory text-primary border border-primary/20 hover:border-gold hover:bg-gold hover:text-primary transition-all text-xs font-bold uppercase tracking-wider">Details</button>
+              <button onclick="openBookingModal('${prop.id}')" class="px-3.5 py-2 rounded-xl bg-primary text-gold hover:bg-gold hover:text-primary transition-all text-xs font-bold uppercase tracking-wider">Book</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ---------- Favorites ---------- */
+async function toggleFavorite(id) {
+  id = String(id);
+
+  if (IS_LOGGED_IN) {
+    try {
+      const res = await fetch('/api/wishlist/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+        body: JSON.stringify({ property_id: id })
+      });
+      const data = await res.json();
+      if (!data.success) { showToast(data.error || 'Could not update wishlist.', 'info'); return; }
+      if (data.added) { favorites.add(id); showToast('Saved to your wishlist', 'success'); }
+      else { favorites.delete(id); showToast('Removed from wishlist', 'info'); }
+    } catch (e) {
+      showToast('Network error. Please try again.', 'error');
+      return;
+    }
+  } else {
+    if (favorites.has(id)) { favorites.delete(id); showToast('Removed from saved', 'info'); }
+    else { favorites.add(id); showToast('Saved locally — sign in to sync', 'info'); }
+    try { localStorage.setItem('leReveFavorites', JSON.stringify([...favorites])); } catch(e){}
+  }
+
+  renderPropertyListings();
+}
+
+/* ---------- Filters ---------- */
+function updatePriceLabel(val) {
+  const el = document.getElementById('priceDisplay');
+  if (el) el.textContent = formatGHS(parseInt(val, 10));
+}
+
+function applyHeroFilters() {
+  document.getElementById('listings')?.scrollIntoView({ behavior: 'smooth' });
+  renderPropertyListings();
+}
+
+function filterCategory(cat, btn) {
+  activeCategory = cat;
+
+  // Reset the hero dropdown so it doesn't conflict with the pill
+  const typeSelect = document.getElementById('filterType');
+  if (typeSelect && cat !== 'all') typeSelect.value = 'all';
+
+  document.querySelectorAll('.category-btn').forEach(b => {
+    b.classList.remove('active', 'bg-primary', 'text-gold');
+    b.classList.add('bg-white/60', 'text-primary');
+  });
+
+  let targetBtn = btn;
+  if (!targetBtn) {
+    // Find matching button by data attribute (used by footer + programmatic calls)
+    targetBtn = document.querySelector(`.category-btn[data-category="${CSS.escape(cat)}"]`);
+  }
+  if (!targetBtn && cat === 'all') {
+    targetBtn = document.querySelector('.category-btn');
+  }
+  if (targetBtn) {
+    targetBtn.classList.add('active', 'bg-primary', 'text-gold');
+    targetBtn.classList.remove('bg-white/60');
+  }
+
+  renderPropertyListings();
+}
+
+function resetAllFilters() {
+  activeCategory = 'all';
+  const loc = document.getElementById('filterLocation');
+  const type = document.getElementById('filterType');
+  const price = document.getElementById('filterPrice');
+  if (loc) loc.value = '';
+  if (type) type.value = 'all';
+  if (price) price.value = '50000';
+  updatePriceLabel('50000');
+  document.querySelectorAll('.category-btn').forEach((b, idx) => {
+    if (idx === 0) { b.classList.add('active', 'bg-primary', 'text-gold'); b.classList.remove('bg-white/60'); }
+    else { b.classList.remove('active', 'bg-primary', 'text-gold'); b.classList.add('bg-white/60'); }
+  });
+  renderPropertyListings();
+}
+
+/* ---------- Quick View ---------- */
+function openQuickView(id) {
+  const prop = PROPERTIES.find(p => String(p.id) === String(id));
+  if (!prop) return;
+
+  const modal = document.getElementById('quickViewModal');
+  const content = document.getElementById('quickViewContent');
+
+  content.innerHTML = `
+    <div class="grid grid-cols-1 lg:grid-cols-2">
+      <div class="p-6 bg-primary text-ivory">
+        <div class="aspect-[4/3] rounded-2xl overflow-hidden mb-4 border border-gold/30">
+          <img id="modalMainImg" src="${escapeHtml(prop.image)}" alt="${escapeHtml(prop.title)}" class="w-full h-full object-cover">
+        </div>
+        ${prop.gallery.length > 1 ? `
+          <div class="flex gap-2 flex-wrap">
+            ${prop.gallery.map(imgUrl => `
+              <button onclick="document.getElementById('modalMainImg').src='${escapeHtml(imgUrl)}'" class="w-16 h-16 rounded-lg overflow-hidden border border-gold/30 hover:border-gold">
+                <img src="${escapeHtml(imgUrl)}" class="w-full h-full object-cover" alt="">
+              </button>
+            `).join('')}
+          </div>
+        ` : ''}
+        <div class="mt-6 pt-6 border-t border-gold/20">
+          <span class="text-xs uppercase tracking-widest text-gold block mb-1">Location</span>
+          <p class="font-serif text-xl">${escapeHtml(prop.location)}</p>
+        </div>
+      </div>
+      <div class="p-8 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-2 mb-2 flex-wrap">
+            <span class="bg-gold/20 text-gold-dark text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-gold/40">${escapeHtml(prop.category)}</span>
+            <span class="text-xs font-bold text-primary"><i class="fa-solid fa-star text-gold" aria-hidden="true"></i> ${prop.rating}</span>
+          </div>
+          <h2 class="font-serif text-3xl font-semibold text-primary mb-3">${escapeHtml(prop.title)}</h2>
+          <p class="text-charcoal/80 text-sm leading-relaxed mb-6 font-light">${escapeHtml(prop.description)}</p>
+
+          <div class="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-ivory border border-gold/20 text-center mb-6">
+            <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Beds</span><span class="font-serif text-xl font-bold text-primary">${prop.beds}</span></div>
+            <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Baths</span><span class="font-serif text-xl font-bold text-primary">${prop.baths}</span></div>
+            <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Guests</span><span class="font-serif text-xl font-bold text-primary">${prop.guests}</span></div>
+          </div>
+
+          <h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Privileges</h4>
+          <div class="flex flex-wrap gap-2 mb-8">
+            ${prop.amenities.map(a => `<span class="bg-primary/5 text-primary text-xs px-3 py-1.5 rounded-xl border border-primary/10 flex items-center gap-1.5"><i class="fa-solid fa-check text-gold text-xs" aria-hidden="true"></i> ${escapeHtml(a)}</span>`).join('')}
+          </div>
+        </div>
+        <div class="pt-4 border-t border-charcoal/10 flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <span class="font-serif text-3xl font-bold text-primary">${formatGHS(prop.price)}</span>
+            <span class="text-xs text-charcoal/70">/ night</span>
+          </div>
+          <button onclick="closeQuickViewModal(); openBookingModal('${prop.id}');" class="bg-primary text-gold hover:bg-gold hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+            Book This Estate
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.body.classList.add('modal-open');
+}
+
+function closeQuickViewModal() {
+  const modal = document.getElementById('quickViewModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.body.classList.remove('modal-open');
+}
+
+/* ============================================================
+   BOOKING MODAL
+   ============================================================ */
+function openBookingModal(propertyId) {
+  const prop = PROPERTIES.find(p => String(p.id) === String(propertyId));
+  if (!prop) { showToast('Property not found.', 'error'); return; }
+
+  // Admin shouldn't book via portal
+  if (IS_ADMIN) {
+    showToast('Admins cannot book via the guest portal.', 'info');
+    return;
+  }
+
+  const modal = document.getElementById('bookingModal');
+  const content = document.getElementById('bookingModalContent');
+
+  // Guest → prompt to sign in
+  if (!IS_LOGGED_IN) {
+    content.innerHTML = `
+      <div class="p-8 sm:p-10 text-center">
+        <div class="w-16 h-16 mx-auto rounded-full bg-gold/15 text-gold flex items-center justify-center mb-4">
+          <i class="fa-solid fa-lock text-2xl" aria-hidden="true"></i>
+        </div>
+        <h3 class="font-serif text-3xl font-semibold text-primary mb-2">Sign In to Book</h3>
+        <p class="text-sm text-charcoal/70 mb-6 max-w-sm mx-auto">
+          Create a free account or sign in to reserve <strong>${escapeHtml(prop.title)}</strong>.
+          Your concierge will confirm within 2 hours.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+          <a href="{{ url_for('auth.login') }}"
+             class="flex-1 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+            <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
+          </a>
+          <a href="{{ url_for('auth.register') }}"
+             class="flex-1 bg-gold text-primary hover:bg-primary hover:text-gold px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+            <i class="fa-solid fa-user-plus mr-1" aria-hidden="true"></i> Create Account
+          </a>
+        </div>
+
+        <p class="text-[10px] text-charcoal/40 mt-5">
+          Or
+          <button onclick="switchToGuestInquiry('${prop.id}')" class="text-gold hover:underline font-semibold">
+            submit a guest inquiry without an account
+          </button>
+        </p>
+      </div>
+    `;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.classList.add('modal-open');
+    return;
+  }
+
+  // Logged-in client → show inquiry form
+  switchToLoggedInBooking(prop);
+}
+
+function switchToGuestInquiry(propertyId) {
+  const prop = PROPERTIES.find(p => String(p.id) === String(propertyId));
+  if (!prop) return;
+
+  const content = document.getElementById('bookingModalContent');
+  content.innerHTML = buildInquiryFormHTML(prop, {
+    name: '', email: '', phone: '', isGuest: true,
+  });
+  bindInquiryFormEvents();
+  focusFirstField();
+}
+
+function switchToLoggedInBooking(prop) {
+  const content = document.getElementById('bookingModalContent');
+  content.innerHTML = buildInquiryFormHTML(prop, {
+    name: CURRENT_USER.name || '',
+    email: CURRENT_USER.email || '',
+    phone: '',
+    isGuest: false,
+  });
+  bindInquiryFormEvents();
+  focusFirstField();
+}
+
+function focusFirstField() {
+  requestAnimationFrame(() => {
+    const el = document.querySelector('#bookingInquiryForm input[name="name"]');
+    if (el) el.focus();
+  });
+}
+
+function buildInquiryFormHTML(prop, defaults) {
+  const today = new Date().toISOString().split('T')[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const initials = (prop.title || 'P').trim()[0].toUpperCase();
+
+  return `
+    <div class="p-6 sm:p-8">
+      <div class="flex items-start gap-4 mb-6">
+        <div class="w-16 h-16 rounded-xl border border-gold/30 flex-shrink-0 bg-primary-dark overflow-hidden">
+          <img src="${escapeHtml(prop.image)}" alt="" class="w-full h-full object-cover"
+               onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-gold font-serif text-2xl font-bold\\'>${initials}</div>';">
+        </div>
+        <div class="min-w-0">
+          <span class="text-[10px] uppercase tracking-widest text-gold font-bold">Book This Estate</span>
+          <h3 class="font-serif text-2xl font-semibold text-primary leading-tight mt-1">${escapeHtml(prop.title)}</h3>
+          <p class="text-xs text-charcoal/60 mt-0.5">
+            <i class="fa-solid fa-location-dot text-gold mr-1" aria-hidden="true"></i>${escapeHtml(prop.location)}
+          </p>
+        </div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-ivory border border-gold/20 mb-5 flex items-center justify-between">
+        <span class="text-xs text-charcoal/60">Nightly rate</span>
+        <span class="font-serif text-lg font-bold text-primary">${formatGHS(prop.price)}</span>
+      </div>
+
+      <form id="bookingInquiryForm" class="space-y-4">
+        <input type="hidden" name="property" value="${escapeHtml(prop.title)}">
+        <input type="hidden" name="property_id" value="${escapeHtml(prop.id)}">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Full Name *</label>
+            <input type="text" name="name" required maxlength="120" value="${escapeHtml(defaults.name)}"
+                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Email *</label>
+            <input type="email" name="email" required maxlength="200" value="${escapeHtml(defaults.email)}"
+                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Phone *</label>
+          <input type="tel" name="phone" required maxlength="40" value="${escapeHtml(defaults.phone)}"
+                 placeholder="+233 XX XXX XXXX"
+                 class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Check-In *</label>
+            <input type="date" name="check_in" required min="${today}" value="${tomorrow}"
+                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Check-Out *</label>
+            <input type="date" name="check_out" required min="${tomorrow}"
+                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Guests</label>
+          <select name="guests" class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+            <option value="1-2 Guests">1-2 Guests</option>
+            <option value="3-5 Guests">3-5 Guests</option>
+            <option value="6-10 Guests">6-10 Guests</option>
+            <option value="10+ Guests">10+ Guests (Private Charter)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Special Requests</label>
+          <textarea name="message" rows="3" maxlength="2000"
+                    placeholder="Chef dietary requirements, yacht charters, airport transfers..."
+                    class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm resize-none"></textarea>
+        </div>
+
+        <button type="submit" id="bookingSubmitBtn"
+                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury flex items-center justify-center gap-2">
+          <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+          <span>Submit Reservation Request</span>
+        </button>
+
+        ${defaults.isGuest ? `
+          <p class="text-[10px] text-center text-charcoal/50">
+            <i class="fa-solid fa-info-circle mr-1" aria-hidden="true"></i>
+            Submitting as guest — a concierge will contact you within 2 hours.
+          </p>
+        ` : ''}
+      </form>
+    </div>
+  `;
+}
+
+function bindInquiryFormEvents() {
+  const form = document.getElementById('bookingInquiryForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('bookingSubmitBtn');
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Sending…</span>';
+
+    const fd = new FormData(form);
+    const payload = {
+      name: (fd.get('name') || '').toString().trim(),
+      email: (fd.get('email') || '').toString().trim(),
+      phone: (fd.get('phone') || '').toString().trim(),
+      property: (fd.get('property') || '').toString().trim(),
+      check_in: (fd.get('check_in') || '').toString(),
+      check_out: (fd.get('check_out') || '').toString(),
+      guests: (fd.get('guests') || '1-2 Guests').toString(),
+      message: (fd.get('message') || '').toString().trim(),
+    };
+
+    if (!payload.name || !payload.email || !payload.phone || !payload.check_in || !payload.check_out) {
+      showToast('Please fill in all required fields.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = original;
+      return;
+    }
+    if (payload.check_out <= payload.check_in) {
+      showToast('Check-out must be after check-in.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = original;
+      return;
+    }
+
+    try {
+      const res = await fetch('{{ url_for("public.submit_inquiry") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Thank you, ${payload.name.split(' ')[0]}! Your inquiry has been sent.`, 'success');
+        closeBookingModal();
+      } else {
+        showToast(data.error || 'Submission failed. Please try again.', 'error');
+      }
+    } catch (err) {
+      showToast('Network error. Please try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  });
+}
+
+function closeBookingModal() {
+  const modal = document.getElementById('bookingModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.body.classList.remove('modal-open');
+}
+
+/* ---------- Journal ---------- */
+async function handleJournalSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const email = form.email.value.trim();
+  try {
+    const res = await fetch('{{ url_for("public.journal_subscribe") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Subscribed to the private journal.', 'success');
+      form.reset();
+    } else {
+      showToast(data.error || 'Subscription failed.', 'error');
+    }
+  } catch (err) {
+    showToast('Network error. Please try again.', 'error');
+  }
+}
+
+/* ---------- Toast ---------- */
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+  const toast = document.createElement('div');
+  const bgClass = type === 'success' ? 'bg-primary text-gold border-gold'
+                : type === 'error' ? 'bg-red-600 text-white border-red-400'
+                : 'bg-gold text-primary border-primary';
+  const iconClass = type === 'success' ? 'fa-solid fa-circle-check'
+                  : type === 'error' ? 'fa-solid fa-circle-exclamation'
+                  : 'fa-solid fa-circle-info';
+  toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-fade-in ${bgClass}`;
+  toast.innerHTML = `<i class="${iconClass} text-lg" aria-hidden="true"></i><span>${escapeHtml(message)}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+/* ---------- Escape key ---------- */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeQuickViewModal();
+    closeBookingModal();
+  }
+});
+</script>
+</body>
+</html>

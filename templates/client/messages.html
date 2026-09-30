@@ -1,0 +1,347 @@
+{% extends "client/base.html" %}
+
+{% block title %}Concierge Chat — Client Portal{% endblock %}
+
+{% set active_section = 'messages' %}
+{% set page_title = 'Concierge Chat' %}
+{% set page_subtitle = 'Direct line to your dedicated team' %}
+
+{% block content %}
+
+{% set all_messages = messages|default([]) %}
+
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden flex flex-col relative"
+     style="height:calc(100vh - 200px); min-height:500px;">
+
+  <!-- ============ HEADER ============ -->
+  <div class="px-6 py-4 border-b border-charcoal/10 flex items-center gap-3 flex-shrink-0">
+    <div class="w-10 h-10 rounded-full bg-primary text-gold flex items-center justify-center">
+      <i class="fa-solid fa-bell-concierge" aria-hidden="true"></i>
+    </div>
+    <div class="min-w-0 flex-1">
+      <p class="font-semibold text-primary text-sm">Le Rêve Concierge</p>
+      <p class="text-[11px] text-emerald-600 flex items-center gap-1">
+        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full" aria-hidden="true"></span>
+        Online — typically replies within 5 min
+      </p>
+    </div>
+    <button type="button"
+            onclick="scrollToBottom(true)"
+            class="w-9 h-9 rounded-full bg-ivory hover:bg-gold text-primary flex items-center justify-center transition-all"
+            title="Scroll to latest"
+            aria-label="Scroll to latest message">
+      <i class="fa-solid fa-arrow-down text-xs" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <!-- ============ MESSAGES ============ -->
+  <div id="chatMessages"
+       class="flex-1 overflow-y-auto p-6 space-y-4 bg-ivory/40"
+       role="log"
+       aria-live="polite"
+       aria-label="Chat messages">
+
+    {% if all_messages %}
+      {% for m in all_messages %}
+        {% set is_me = m.from == 'me' %}
+        <div class="flex {% if is_me %}justify-end{% else %}justify-start{% endif %}"
+             data-message-id="{{ m.id|e if m.id else '' }}">
+
+          <div class="max-w-[80%] sm:max-w-[70%]">
+            {% if not is_me %}
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-6 h-6 rounded-full bg-primary text-gold flex items-center justify-center text-[10px]" aria-hidden="true">
+                  <i class="fa-solid fa-bell-concierge"></i>
+                </div>
+                <span class="text-[11px] font-semibold text-primary">Concierge</span>
+              </div>
+            {% endif %}
+
+            <div class="{% if is_me %}bg-primary text-ivory{% else %}bg-white text-charcoal border border-gold/20{% endif %} rounded-2xl px-4 py-3 shadow-sm">
+              <p class="text-sm leading-relaxed whitespace-pre-wrap break-words">{{ m.text|e }}</p>
+            </div>
+
+            <p class="text-[10px] text-charcoal/40 mt-1 {% if is_me %}text-right{% endif %}"
+               title="{{ m.timestamp if m.timestamp else '' }}">
+              {{ m.timestamp|relative_time if m.timestamp else '' }}
+            </p>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div id="emptyChat" class="text-center py-12">
+        <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+          <i class="fa-solid fa-comments text-gold text-2xl" aria-hidden="true"></i>
+        </div>
+        <p class="text-sm font-semibold text-primary mb-1">Start the conversation</p>
+        <p class="text-xs text-charcoal/50 max-w-sm mx-auto">
+          Your dedicated concierge is here to help arrange chefs, chauffeurs, yachts, and bespoke experiences.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ============ TYPING INDICATOR (hidden by default) ============ -->
+  <div id="typingIndicator"
+       class="hidden px-6 py-3 bg-ivory/40 border-t border-charcoal/5 flex items-center gap-2 flex-shrink-0">
+    <div class="w-6 h-6 rounded-full bg-primary text-gold flex items-center justify-center text-[10px]" aria-hidden="true">
+      <i class="fa-solid fa-bell-concierge"></i>
+    </div>
+    <div class="bg-white text-charcoal border border-gold/20 rounded-2xl px-4 py-2.5 shadow-sm flex items-center gap-1">
+      <span class="typing-dot"></span>
+      <span class="typing-dot"></span>
+      <span class="typing-dot"></span>
+    </div>
+  </div>
+
+  <!-- ============ INPUT FORM ============ -->
+  <form id="chatForm"
+        onsubmit="sendMessage(event)"
+        class="border-t border-charcoal/10 p-4 flex gap-2 bg-white flex-shrink-0">
+
+    <label for="chatInput" class="sr-only">Type your message</label>
+    <input type="text"
+           id="chatInput"
+           required
+           maxlength="2000"
+           autocomplete="off"
+           autofocus
+           placeholder="Type your message…"
+           class="flex-1 px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:ring-2 focus:ring-gold text-sm">
+
+    <button type="submit"
+            id="sendBtn"
+            class="bg-primary text-gold hover:bg-gold hover:text-primary px-5 rounded-xl font-bold text-sm transition-all flex items-center justify-center min-w-[56px]"
+            aria-label="Send message">
+      <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+    </button>
+  </form>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<style>
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.4;
+    animation: typingBounce 1.4s infinite ease-in-out both;
+  }
+  .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+  .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes typingBounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const SEND_URL = '{{ url_for("client.send_message") }}';
+
+  /* --------------------------------------------------
+     Utilities
+  -------------------------------------------------- */
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+  }
+
+  function formatTime() {
+    return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /* --------------------------------------------------
+     Build a message bubble (XSS-safe)
+  -------------------------------------------------- */
+  function buildMessageBubble({ text, from, timestamp }) {
+    const isMe = from === 'me';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = `flex ${isMe ? 'justify-end' : 'justify-start'} animate-fade-in`;
+    if (timestamp) wrapper.dataset.timestamp = timestamp;
+
+    const inner = document.createElement('div');
+    inner.className = 'max-w-[80%] sm:max-w-[70%]';
+
+    if (!isMe) {
+      // Concierge label above bubble
+      const label = document.createElement('div');
+      label.className = 'flex items-center gap-2 mb-1';
+      label.innerHTML = `
+        <div class="w-6 h-6 rounded-full bg-primary text-gold flex items-center justify-center text-[10px]" aria-hidden="true">
+          <i class="fa-solid fa-bell-concierge"></i>
+        </div>
+        <span class="text-[11px] font-semibold text-primary">Concierge</span>
+      `;
+      inner.appendChild(label);
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = isMe
+      ? 'bg-primary text-ivory rounded-2xl px-4 py-3 shadow-sm'
+      : 'bg-white text-charcoal border border-gold/20 rounded-2xl px-4 py-3 shadow-sm';
+
+    const p = document.createElement('p');
+    p.className = 'text-sm leading-relaxed whitespace-pre-wrap break-words';
+    p.textContent = text;                // ← XSS-safe
+    bubble.appendChild(p);
+
+    const time = document.createElement('p');
+    time.className = `text-[10px] text-charcoal/40 mt-1 ${isMe ? 'text-right' : ''}`;
+    time.textContent = formatTime();
+    if (timestamp) time.title = timestamp;
+
+    inner.appendChild(bubble);
+    inner.appendChild(time);
+    wrapper.appendChild(inner);
+
+    return wrapper;
+  }
+
+  /* --------------------------------------------------
+     Scroll to bottom
+  -------------------------------------------------- */
+  const chatBox = document.getElementById('chatMessages');
+
+  window.scrollToBottom = function (smooth = false) {
+    if (!chatBox) return;
+    if (smooth) {
+      chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+    } else {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  };
+
+  /* --------------------------------------------------
+     Typing indicator
+  -------------------------------------------------- */
+  const typingIndicator = document.getElementById('typingIndicator');
+
+  function showTyping() {
+    if (typingIndicator) typingIndicator.classList.remove('hidden');
+    scrollToBottom();
+  }
+  function hideTyping() {
+    if (typingIndicator) typingIndicator.classList.add('hidden');
+  }
+
+  /* --------------------------------------------------
+     Toast helper (uses shell's clientToast if available)
+  -------------------------------------------------- */
+  function toast(msg, type) {
+    if (window.clientToast) {
+      window.clientToast(msg, type);
+    } else {
+      console[type === 'error' ? 'error' : 'log'](msg);
+    }
+  }
+
+  /* --------------------------------------------------
+     Send message
+  -------------------------------------------------- */
+  window.sendMessage = async function (event) {
+    if (event) event.preventDefault();
+
+    const input = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    if (!input || !sendBtn) return;
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    // Remove empty state if present
+    const emptyState = document.getElementById('emptyChat');
+    if (emptyState) emptyState.remove();
+
+    // Disable button during send
+    const originalBtnHTML = sendBtn.innerHTML;
+    sendBtn.disabled = true;
+    sendBtn.classList.add('opacity-60', 'cursor-wait');
+    sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
+
+    // Clear input right away (but restore on failure)
+    input.value = '';
+
+    try {
+      const res = await fetch(SEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': CSRF_TOKEN,
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      // Handle non-JSON responses gracefully
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = { success: false, error: 'Unexpected server response.' };
+      }
+
+      if (!res.ok || !data.success) {
+        // Restore input text so user doesn't lose it
+        input.value = text;
+        toast(data.error || 'Could not send message.', 'error');
+        return;
+      }
+
+      // Append user's message (XSS-safe)
+      chatBox.appendChild(buildMessageBubble({
+        text,
+        from: 'me',
+        timestamp: new Date().toISOString(),
+      }));
+      scrollToBottom();
+
+      // Show typing indicator, then append concierge reply
+      showTyping();
+
+      // Simulated delay so it feels natural
+      setTimeout(() => {
+        hideTyping();
+        if (data.reply) {
+          chatBox.appendChild(buildMessageBubble({
+            text: data.reply,
+            from: 'concierge',
+            timestamp: new Date().toISOString(),
+          }));
+          scrollToBottom();
+        }
+      }, 700 + Math.random() * 500);
+
+    } catch (err) {
+      // Restore input on network error
+      input.value = text;
+      toast('Network error. Please try again.', 'error');
+    } finally {
+      // Restore button
+      sendBtn.disabled = false;
+      sendBtn.classList.remove('opacity-60', 'cursor-wait');
+      sendBtn.innerHTML = originalBtnHTML;
+      input.focus();
+    }
+  };
+
+  /* --------------------------------------------------
+     Initialize on load
+  -------------------------------------------------- */
+  document.addEventListener('DOMContentLoaded', () => {
+    if (chatBox) {
+      scrollToBottom();
+    }
+  });
+
+})();
+</script>
+{% endblock %}

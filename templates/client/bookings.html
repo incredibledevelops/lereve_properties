@@ -1,0 +1,264 @@
+{% extends "client/base.html" %}
+
+{% block title %}My Bookings — Client Portal{% endblock %}
+
+{% set active_section = 'bookings' %}
+{% set page_title = 'My Bookings' %}
+{% set page_subtitle = 'Upcoming and past stays' %}
+
+{% block content %}
+
+{% set all_bookings = bookings|default([]) %}
+{% set today_iso = (now or '').strftime('%Y-%m-%d') if now else '' %}
+
+<!-- ============ HEADER + FILTERS ============ -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+
+  <!-- Filter pills -->
+  <div class="flex flex-wrap gap-2" role="tablist" aria-label="Booking filters">
+    <button type="button"
+            onclick="filterBookings('all', this)"
+            data-filter="all"
+            aria-pressed="true"
+            class="booking-filter-btn active bg-primary text-gold px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
+      All <span class="ml-1 opacity-70">({{ all_bookings|length }})</span>
+    </button>
+    <button type="button"
+            onclick="filterBookings('upcoming', this)"
+            data-filter="upcoming"
+            aria-pressed="false"
+            class="booking-filter-btn border border-primary/20 bg-white text-primary hover:border-gold px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
+      Upcoming <span class="ml-1 opacity-70">({{ upcoming|default([])|length }})</span>
+    </button>
+    <button type="button"
+            onclick="filterBookings('past', this)"
+            data-filter="past"
+            aria-pressed="false"
+            class="booking-filter-btn border border-primary/20 bg-white text-primary hover:border-gold px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
+      Past <span class="ml-1 opacity-70">({{ past|default([])|length }})</span>
+    </button>
+  </div>
+
+  <!-- Count label -->
+  <p id="bookingVisibleCount" class="text-xs text-charcoal/60">
+    Showing <span class="font-bold text-primary">{{ all_bookings|length }}</span>
+    of <span class="font-bold text-primary">{{ all_bookings|length }}</span>
+  </p>
+</div>
+
+<!-- ============ BOOKINGS GRID ============ -->
+{% if all_bookings %}
+  <div id="bookingsList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    {% for b in all_bookings %}
+      {% set status_val = (b.status or 'pending')|lower %}
+      {% set is_upcoming = status_val == 'confirmed' and b.check_in and b.check_in >= today_iso %}
+      {% set bucket = 'upcoming' if is_upcoming else 'past' %}
+      {% set nights = ((b.nights|default(0))|int) or 1 %}
+
+      {# Status pill styling #}
+      {% if status_val == 'confirmed' %}
+        {% set pill_class = 'bg-emerald-100 text-emerald-700' %}
+      {% elif status_val == 'completed' %}
+        {% set pill_class = 'bg-blue-100 text-blue-700' %}
+      {% elif status_val == 'pending' %}
+        {% set pill_class = 'bg-amber-100 text-amber-700' %}
+      {% elif status_val == 'cancellation-requested' %}
+        {% set pill_class = 'bg-orange-100 text-orange-700' %}
+      {% elif status_val == 'cancelled' %}
+        {% set pill_class = 'bg-red-100 text-red-700' %}
+      {% else %}
+        {% set pill_class = 'bg-ivory-dark text-charcoal/70' %}
+      {% endif %}
+
+      <article class="booking-card bg-white rounded-2xl overflow-hidden border border-gold/20 shadow-sm hover:border-gold hover:shadow-luxury transition-all flex flex-col"
+               data-bucket="{{ bucket }}"
+               data-status="{{ status_val }}">
+
+        <!-- Image -->
+        <div class="relative aspect-[16/10] overflow-hidden bg-primary-dark">
+          <img src="{{ b.image|e }}"
+               alt="{{ b.property|e if b.property else 'Estate' }}"
+               class="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+               loading="lazy"
+               onerror="this.style.display='none'; this.parentElement.classList.add('flex', 'items-center', 'justify-center'); this.parentElement.insertAdjacentHTML('afterbegin', '<i class=&quot;fa-solid fa-house-chimney text-gold text-3xl opacity-40&quot;></i>');">
+
+          <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent"></div>
+
+          <!-- Status pill -->
+          <span class="absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full {{ pill_class }}">
+            {{ status_val|replace('-', ' ')|e }}
+          </span>
+
+          <!-- Upcoming badge -->
+          {% if is_upcoming %}
+            <span class="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-gold text-primary flex items-center gap-1">
+              <i class="fa-solid fa-sparkles text-[9px]" aria-hidden="true"></i>
+              Upcoming
+            </span>
+          {% endif %}
+
+          <!-- Title overlay -->
+          <div class="absolute bottom-3 left-3 right-3">
+            <h4 class="font-serif text-xl font-semibold text-ivory truncate">
+              {{ b.property|e if b.property else 'Untitled Estate' }}
+            </h4>
+            <p class="text-[11px] text-ivory/80 truncate">
+              <i class="fa-solid fa-location-dot mr-1" aria-hidden="true"></i>{{ b.location|e if b.location else '—' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="p-5 flex-1 flex flex-col justify-between">
+          <div>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs mb-4">
+              <div>
+                <p class="text-[10px] uppercase text-charcoal/50 font-semibold">In</p>
+                <p class="font-bold text-primary text-xs">
+                  {{ b.check_in|format_date if b.check_in else '—' }}
+                </p>
+              </div>
+              <div>
+                <p class="text-[10px] uppercase text-charcoal/50 font-semibold">Out</p>
+                <p class="font-bold text-primary text-xs">
+                  {{ b.check_out|format_date if b.check_out else '—' }}
+                </p>
+              </div>
+              <div>
+                <p class="text-[10px] uppercase text-charcoal/50 font-semibold">Guests</p>
+                <p class="font-bold text-primary text-xs">
+                  {{ (b.guests|string).split(' ')[0]|e if b.guests else '—' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-charcoal/5">
+            <div>
+              <p class="text-[10px] uppercase text-charcoal/50 font-semibold">Total</p>
+              <p class="font-serif text-xl font-bold text-primary">
+                {{ (b.total or 0)|format_currency }}
+              </p>
+            </div>
+            <a href="{{ url_for('client.booking_detail', bid=b.id) }}"
+               class="bg-primary text-gold hover:bg-gold hover:text-primary px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
+              Details
+            </a>
+          </div>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+
+  <!-- Empty state (shown only when a filter yields 0 results) -->
+  <div id="noFilterResults" class="hidden col-span-full text-center py-16 bg-white rounded-2xl border border-dashed border-gold/40">
+    <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+      <i class="fa-solid fa-filter-circle-xmark text-gold text-2xl" aria-hidden="true"></i>
+    </div>
+    <p class="text-sm font-semibold text-primary mb-1" id="noFilterTitle">No bookings in this view</p>
+    <p class="text-xs text-charcoal/50 mb-4" id="noFilterMessage">Try switching filters or clearing your selection.</p>
+    <button type="button"
+            onclick="document.querySelector('.booking-filter-btn[data-filter=\\'all\\']')?.click()"
+            class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
+      Show all bookings
+    </button>
+  </div>
+{% else %}
+  <!-- No bookings at all -->
+  <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gold/40">
+    <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+      <i class="fa-solid fa-suitcase-rolling text-gold text-2xl" aria-hidden="true"></i>
+    </div>
+    <p class="text-sm font-semibold text-primary mb-1">No bookings yet</p>
+    <p class="text-xs text-charcoal/50 mb-4 max-w-sm mx-auto">
+      Your luxury stays will appear here once you make your first reservation.
+    </p>
+    <a href="{{ url_for('public.home') }}#listings"
+       class="inline-flex items-center gap-2 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Browse Estates
+    </a>
+  </div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+/* ============================================================
+   CLIENT BOOKINGS — interactive helpers
+   ============================================================ */
+
+(function () {
+  'use strict';
+
+  let activeFilter = 'all';
+
+  /* ---------- Filter bookings by bucket ---------- */
+  window.filterBookings = function (filter, btn) {
+    activeFilter = filter;
+
+    // Update pill styling
+    document.querySelectorAll('.booking-filter-btn').forEach(b => {
+      const isActive = b.dataset.filter === filter;
+      b.setAttribute('aria-pressed', String(isActive));
+
+      if (isActive) {
+        b.classList.add('active', 'bg-primary', 'text-gold');
+        b.classList.remove('border', 'border-primary/20', 'bg-white', 'text-primary');
+      } else {
+        b.classList.remove('active', 'bg-primary', 'text-gold');
+        b.classList.add('border', 'border-primary/20', 'bg-white', 'text-primary');
+      }
+    });
+
+    // Toggle cards
+    const cards = document.querySelectorAll('.booking-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+      const bucket = card.dataset.bucket || 'past';
+      const matches = filter === 'all' || bucket === filter;
+      card.style.display = matches ? '' : 'none';
+      if (matches) visible++;
+    });
+
+    // Update count label
+    const countEl = document.getElementById('bookingVisibleCount');
+    if (countEl) {
+      countEl.innerHTML = `Showing <span class="font-bold text-primary">${visible}</span> of <span class="font-bold text-primary">${cards.length}</span>`;
+    }
+
+    // Show "no results" state
+    const noResults = document.getElementById('noFilterResults');
+    if (noResults) {
+      const show = visible === 0 && cards.length > 0;
+      noResults.classList.toggle('hidden', !show);
+      if (show) {
+        const titleEl = document.getElementById('noFilterTitle');
+        const msgEl = document.getElementById('noFilterMessage');
+        if (filter === 'upcoming') {
+          if (titleEl) titleEl.textContent = 'No upcoming stays';
+          if (msgEl) msgEl.textContent = 'Book your next luxury escape to see it here.';
+        } else if (filter === 'past') {
+          if (titleEl) titleEl.textContent = 'No past stays yet';
+          if (msgEl) msgEl.textContent = 'Your completed bookings will appear here.';
+        } else {
+          if (titleEl) titleEl.textContent = 'No bookings in this view';
+          if (msgEl) msgEl.textContent = 'Try switching filters or clearing your selection.';
+        }
+      }
+    }
+  };
+
+  /* ---------- Initialize filter state on load ---------- */
+  document.addEventListener('DOMContentLoaded', () => {
+    const initialBtn = document.querySelector('.booking-filter-btn[data-filter="all"]');
+    if (initialBtn) {
+      filterBookings('all', initialBtn);
+    }
+  });
+
+})();
+</script>
+{% endblock %}

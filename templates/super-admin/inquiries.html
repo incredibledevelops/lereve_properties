@@ -1,0 +1,485 @@
+{% extends "super-admin/base.html" %}
+
+{% block title %}Inquiries — Admin Console{% endblock %}
+
+{% set active_section = 'inquiries' %}
+
+{% block page_title %}Inquiries{% endblock %}
+{% block page_subtitle %}Guest reservation requests &amp; bespoke enquiries{% endblock %}
+
+{% block content %}
+
+<!-- ============ SUMMARY CARDS ============ -->
+{% set total_new = inquiries|selectattr('status', 'equalto', 'new')|list|length %}
+{% set total_contacted = inquiries|selectattr('status', 'equalto', 'contacted')|list|length %}
+{% set total_booked = inquiries|selectattr('status', 'equalto', 'booked')|list|length %}
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Total</span>
+      <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+        <i class="fa-solid fa-inbox text-xs"></i>
+      </div>
+    </div>
+    <p class="font-serif text-2xl font-bold text-primary">{{ pagination.total if pagination else inquiries|length }}</p>
+    <p class="text-[11px] text-charcoal/50 mt-1">All inquiries</p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-amber-200 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-amber-700 font-bold">New</span>
+      <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+        <i class="fa-solid fa-sparkles text-xs"></i>
+      </div>
+    </div>
+    <p class="font-serif text-2xl font-bold text-amber-700">{{ total_new }}</p>
+    <p class="text-[11px] text-charcoal/50 mt-1">Awaiting first contact</p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-blue-200 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-blue-700 font-bold">Contacted</span>
+      <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+        <i class="fa-solid fa-comments text-xs"></i>
+      </div>
+    </div>
+    <p class="font-serif text-2xl font-bold text-blue-700">{{ total_contacted }}</p>
+    <p class="text-[11px] text-charcoal/50 mt-1">In conversation</p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-emerald-200 shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] uppercase tracking-widest text-emerald-700 font-bold">Booked</span>
+      <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+        <i class="fa-solid fa-circle-check text-xs"></i>
+      </div>
+    </div>
+    <p class="font-serif text-2xl font-bold text-emerald-700">{{ total_booked }}</p>
+    <p class="text-[11px] text-charcoal/50 mt-1">Converted to stays</p>
+  </div>
+</div>
+
+<!-- ============ FILTER PILLS ============ -->
+<div class="flex flex-wrap gap-2 mb-4">
+  {% set filters = [
+    ('', 'All', 'fa-list'),
+    ('new', 'New', 'fa-sparkles'),
+    ('contacted', 'Contacted', 'fa-comments'),
+    ('booked', 'Booked', 'fa-circle-check'),
+    ('archived', 'Archived', 'fa-box-archive'),
+  ] %}
+
+  {% for value, label, icon in filters %}
+    <a href="{{ url_for('super_admin.inquiries', status=value) if value else url_for('super_admin.inquiries') }}"
+       class="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5
+         {% if (status_filter or '') == value %}
+           bg-primary text-gold shadow-md
+         {% else %}
+           border border-primary/20 bg-white text-primary hover:border-gold hover:bg-gold/5
+         {% endif %}">
+      <i class="fa-solid {{ icon }} text-[10px]"></i>
+      {{ label }}
+    </a>
+  {% endfor %}
+
+  <button onclick="window.location.reload()"
+          class="ml-auto px-4 py-2 rounded-full border border-charcoal/15 hover:bg-ivory text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5">
+    <i class="fa-solid fa-rotate text-[10px]"></i> Refresh
+  </button>
+</div>
+
+<!-- ============ INQUIRIES TABLE ============ -->
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-ivory-dark/60 text-primary">
+        <tr class="text-left text-[11px] uppercase tracking-wider">
+          <th class="px-5 py-3 font-bold">Guest</th>
+          <th class="px-5 py-3 font-bold">Property</th>
+          <th class="px-5 py-3 font-bold">Dates</th>
+          <th class="px-5 py-3 font-bold">Received</th>
+          <th class="px-5 py-3 font-bold">Status</th>
+          <th class="px-5 py-3 font-bold text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-charcoal/5">
+
+        {% for i in inquiries %}
+          {% set status_val = (i.status or 'new')|lower %}
+
+          <tr class="hover:bg-ivory/50 transition-colors {% if status_val == 'new' %}bg-amber-50/30{% endif %}">
+
+            <!-- Guest -->
+            <td class="px-5 py-3">
+              <div class="flex items-center gap-3">
+                <div class="relative flex-shrink-0">
+                  <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+                    {{ (i.name or 'G')[0]|upper }}
+                  </div>
+                  {% if status_val == 'new' %}
+                    <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-500 rounded-full border-2 border-white animate-pulse"></span>
+                  {% endif %}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-semibold text-primary text-sm truncate">
+                    {{ i.name or 'Guest' }}
+                  </p>
+                  <p class="text-[11px] text-charcoal/50 truncate">
+                    {{ i.email or '—' }}
+                  </p>
+                  {% if i.phone %}
+                    <p class="text-[10px] text-charcoal/40 truncate mt-0.5">
+                      <i class="fa-solid fa-phone text-[9px] mr-0.5"></i>{{ i.phone }}
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+
+            <!-- Property -->
+            <td class="px-5 py-3">
+              <p class="text-xs text-primary font-medium truncate max-w-[200px]">
+                {{ i.property or 'General Inquiry' }}
+              </p>
+              {% if i.guests %}
+                <p class="text-[10px] text-charcoal/50 mt-0.5">
+                  <i class="fa-solid fa-user-group text-[9px] mr-0.5"></i>{{ i.guests }}
+                </p>
+              {% endif %}
+            </td>
+
+            <!-- Dates -->
+            <td class="px-5 py-3">
+              {% if i.check_in and i.check_out %}
+                <p class="text-xs text-primary font-medium whitespace-nowrap">
+                  {{ i.check_in }} → {{ i.check_out }}
+                </p>
+                {% set check_in_dt = i.check_in[:10] %}
+                <p class="text-[10px] text-charcoal/50 mt-0.5">
+                  <i class="fa-regular fa-calendar text-[9px] mr-0.5"></i>
+                  {{ i.check_in[:10] }} · {{ i.check_out[:10] }}
+                </p>
+              {% else %}
+                <span class="text-xs text-charcoal/40">Flexible dates</span>
+              {% endif %}
+            </td>
+
+            <!-- Received -->
+            <td class="px-5 py-3">
+              <p class="text-xs text-charcoal/70" title="{{ i.created_at }}">
+                {{ i.created_at|relative_time if i.created_at else '—' }}
+              </p>
+              {% if i.message %}
+                <p class="text-[10px] text-charcoal/40 mt-0.5 flex items-center gap-1">
+                  <i class="fa-regular fa-comment-dots text-[9px]"></i>
+                  Has notes
+                </p>
+              {% endif %}
+            </td>
+
+            <!-- Status (inline editable) -->
+            <td class="px-5 py-3">
+              <form method="POST"
+                    action="{{ url_for('super_admin.inquiry_status', iid=i.id) }}"
+                    onsubmit="return confirmStatusChange(this, '{{ status_val }}');"
+                    class="inline-block">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="status-{{ i.id }}" class="sr-only">Inquiry status</label>
+                <select id="status-{{ i.id }}"
+                        name="status"
+                        onchange="this.form.requestSubmit()"
+                        class="text-[11px] font-bold uppercase px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-gold transition-all
+                          {% if status_val == 'new' %}bg-amber-100 text-amber-700
+                          {% elif status_val == 'contacted' %}bg-blue-100 text-blue-700
+                          {% elif status_val == 'booked' %}bg-emerald-100 text-emerald-700
+                          {% elif status_val == 'archived' %}bg-charcoal/10 text-charcoal/70
+                          {% else %}bg-ivory-dark text-charcoal/70{% endif %}">
+                  <option value="new" {% if status_val == 'new' %}selected{% endif %}>New</option>
+                  <option value="contacted" {% if status_val == 'contacted' %}selected{% endif %}>Contacted</option>
+                  <option value="booked" {% if status_val == 'booked' %}selected{% endif %}>Booked</option>
+                  <option value="archived" {% if status_val == 'archived' %}selected{% endif %}>Archived</option>
+                </select>
+              </form>
+            </td>
+
+            <!-- Actions -->
+            <td class="px-5 py-3">
+              <div class="flex items-center justify-end gap-1.5">
+
+                <!-- Reply by email -->
+                <a href="mailto:{{ i.email or '' }}?subject=Re: Your Le Rêve Inquiry&body=Dear {{ (i.name or 'Guest').split(' ')[0] }},%0D%0A%0D%0AThank you for your interest in Le Rêve Properties.%0D%0A%0D%0A"
+                   class="w-8 h-8 rounded-lg bg-ivory hover:bg-gold text-primary flex items-center justify-center transition-all"
+                   title="Reply by email"
+                   aria-label="Reply by email">
+                  <i class="fa-solid fa-reply text-[10px]"></i>
+                </a>
+
+                <!-- View full details -->
+                <button onclick="viewInquiryDetail('{{ i.id }}')"
+                        class="w-8 h-8 rounded-lg bg-primary text-gold hover:bg-gold hover:text-primary flex items-center justify-center transition-all"
+                        title="View full inquiry"
+                        aria-label="View full inquiry">
+                  <i class="fa-solid fa-eye text-[10px]"></i>
+                </button>
+
+                <!-- Copy email -->
+                <button onclick="copyEmail('{{ i.email or '' }}', this)"
+                        class="w-8 h-8 rounded-lg bg-ivory hover:bg-gold text-primary flex items-center justify-center transition-all"
+                        title="Copy email"
+                        aria-label="Copy email">
+                  <i class="fa-solid fa-copy text-[10px]"></i>
+                </button>
+
+                <!-- Delete -->
+                <form method="POST"
+                      action="{{ url_for('super_admin.inquiry_delete', iid=i.id) }}"
+                      onsubmit="return confirm('Delete this inquiry from {{ (i.name or 'Guest')|e }}? This cannot be undone.');"
+                      class="inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-500 hover:text-white text-red-500 flex items-center justify-center transition-all"
+                          title="Delete inquiry"
+                          aria-label="Delete inquiry">
+                    <i class="fa-solid fa-trash text-[10px]"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+
+        {% else %}
+          <tr>
+            <td colspan="6" class="px-5 py-16 text-center">
+              <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+                <i class="fa-regular fa-envelope text-gold text-2xl"></i>
+              </div>
+              <p class="text-sm font-semibold text-primary mb-1">
+                No inquiries {% if status_filter %}with status "{{ status_filter }}"{% endif %}
+              </p>
+              <p class="text-xs text-charcoal/50 mb-4">
+                {% if status_filter %}
+                  Try a different filter or <a href="{{ url_for('super_admin.inquiries') }}" class="text-gold hover:underline">clear filters</a>.
+                {% else %}
+                  Guest submissions from the public site will appear here.
+                {% endif %}
+              </p>
+            </td>
+          </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============ PAGINATION ============ -->
+{% if pagination and pagination.pages > 1 %}
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-5">
+
+    <p class="text-xs text-charcoal/60">
+      Showing <span class="font-bold text-primary">{{ pagination.items|length }}</span>
+      of <span class="font-bold text-primary">{{ pagination.total }}</span> inquiries
+    </p>
+
+    <div class="flex items-center gap-2">
+      <a href="?page={{ pagination.page - 1 }}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white text-primary text-xs font-bold uppercase tracking-wider hover:border-gold hover:bg-gold/5 transition-all
+           {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}">
+        <i class="fa-solid fa-chevron-left mr-1"></i> Prev
+      </a>
+
+      <span class="px-3 py-2 text-xs font-semibold text-charcoal/60">
+        Page {{ pagination.page }} / {{ pagination.pages }}
+      </span>
+
+      <a href="?page={{ pagination.page + 1 }}{% if status_filter %}&status={{ status_filter }}{% endif %}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white text-primary text-xs font-bold uppercase tracking-wider hover:border-gold hover:bg-gold/5 transition-all
+           {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}">
+        Next <i class="fa-solid fa-chevron-right ml-1"></i>
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+<!-- ============ DETAIL MODAL ============ -->
+<div id="inquiryDetailModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md"
+     onclick="if (event.target === this) closeInquiryDetailModal();">
+  <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative animate-fade-in">
+    <button onclick="closeInquiryDetailModal()"
+            class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold transition-all flex items-center justify-center"
+            aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <div id="inquiryDetailContent" class="p-6 sm:p-8"></div>
+  </div>
+</div>
+
+<!-- Hidden data island: serialized inquiries for modal -->
+<script id="inquiriesData" type="application/json">
+  {{ inquiries|tojson }}
+</script>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+/* ============================================================
+   INQUIRIES PAGE — interactive helpers
+   ============================================================ */
+
+/* ---------- Status change guard ---------- */
+function confirmStatusChange(form, currentStatus) {
+  const select = form.querySelector('select[name="status"]');
+  const newStatus = select?.value;
+  if (newStatus === currentStatus) return false;
+
+  // Archiving is destructive-ish
+  if (newStatus === 'archived') {
+    return confirm('Archive this inquiry? It will be hidden from active views.');
+  }
+  return true;
+}
+
+/* ---------- Copy email to clipboard ---------- */
+function copyEmail(email, btn) {
+  if (!email) {
+    alert('No email on file.');
+    return;
+  }
+  navigator.clipboard.writeText(email).then(() => {
+    const icon = btn.querySelector('i');
+    const original = icon.className;
+    icon.className = 'fa-solid fa-check text-[10px] text-emerald-600';
+    setTimeout(() => { icon.className = original; }, 1500);
+  }).catch(() => alert('Could not copy: ' + email));
+}
+
+/* ---------- Escape HTML helper ---------- */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[m]));
+}
+
+/* ---------- Inquiry detail modal ---------- */
+let INQUIRIES_CACHE = null;
+
+function getInquiriesData() {
+  if (INQUIRIES_CACHE) return INQUIRIES_CACHE;
+  try {
+    const el = document.getElementById('inquiriesData');
+    INQUIRIES_CACHE = JSON.parse(el.textContent) || [];
+  } catch (e) {
+    INQUIRIES_CACHE = [];
+  }
+  return INQUIRIES_CACHE;
+}
+
+function viewInquiryDetail(id) {
+  const list = getInquiriesData();
+  const i = list.find(x => String(x.id) === String(id));
+  if (!i) {
+    toast('Inquiry not found', 'error');
+    return;
+  }
+
+  const status = (i.status || 'new').toLowerCase();
+  const statusClass = {
+    new: 'bg-amber-100 text-amber-700',
+    contacted: 'bg-blue-100 text-blue-700',
+    booked: 'bg-emerald-100 text-emerald-700',
+    archived: 'bg-charcoal/10 text-charcoal/70',
+  }[status] || 'bg-ivory-dark text-charcoal/70';
+
+  const modal = document.getElementById('inquiryDetailModal');
+  const content = document.getElementById('inquiryDetailContent');
+
+  content.innerHTML = `
+    <div class="flex items-start gap-4 mb-6">
+      <div class="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 text-xl font-bold font-serif">
+        ${escapeHtml((i.name || 'G')[0].toUpperCase())}
+      </div>
+      <div class="min-w-0 flex-1">
+        <span class="text-[10px] uppercase tracking-widest text-gold font-bold">Guest Inquiry</span>
+        <h3 class="font-serif text-2xl font-semibold text-primary leading-tight mt-1">${escapeHtml(i.name || 'Guest')}</h3>
+        <p class="text-xs text-charcoal/60 mt-1">
+          <i class="fa-solid fa-envelope text-gold mr-1"></i>${escapeHtml(i.email || '—')}
+        </p>
+        ${i.phone ? `<p class="text-xs text-charcoal/60 mt-0.5"><i class="fa-solid fa-phone text-gold mr-1"></i>${escapeHtml(i.phone)}</p>` : ''}
+        <p class="text-[10px] text-charcoal/40 mt-2">
+          <i class="fa-regular fa-clock mr-1"></i>${escapeHtml(i.created_at || '—')}
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 mb-6">
+      <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${statusClass}">
+        <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+        ${escapeHtml(status)}
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+      <div class="p-4 rounded-xl bg-ivory border border-gold/20">
+        <p class="text-[10px] uppercase text-charcoal/50 font-semibold mb-1">Estate of Interest</p>
+        <p class="text-sm font-bold text-primary">${escapeHtml(i.property || 'General Inquiry')}</p>
+      </div>
+      <div class="p-4 rounded-xl bg-ivory border border-gold/20">
+        <p class="text-[10px] uppercase text-charcoal/50 font-semibold mb-1">Guests</p>
+        <p class="text-sm font-bold text-primary">${escapeHtml(i.guests || '—')}</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mb-6">
+      <div class="p-4 rounded-xl bg-ivory border border-gold/20 text-center">
+        <p class="text-[10px] uppercase text-charcoal/50 font-semibold mb-1">Check-In</p>
+        <p class="text-sm font-bold text-primary">${escapeHtml(i.check_in || 'Flexible')}</p>
+      </div>
+      <div class="p-4 rounded-xl bg-ivory border border-gold/20 text-center">
+        <p class="text-[10px] uppercase text-charcoal/50 font-semibold mb-1">Check-Out</p>
+        <p class="text-sm font-bold text-primary">${escapeHtml(i.check_out || 'Flexible')}</p>
+      </div>
+    </div>
+
+    ${i.message ? `
+      <div class="p-4 rounded-2xl bg-primary/5 border border-primary/10 mb-6">
+        <p class="text-[10px] uppercase text-primary/60 font-bold mb-2">
+          <i class="fa-regular fa-comment-dots mr-1"></i>Special Requests &amp; Notes
+        </p>
+        <p class="text-sm text-charcoal/80 leading-relaxed whitespace-pre-wrap">${escapeHtml(i.message)}</p>
+      </div>
+    ` : ''}
+
+    <div class="flex flex-col sm:flex-row gap-3">
+      <a href="mailto:${escapeHtml(i.email || '')}?subject=Re: Your Le Rêve Inquiry&body=Dear ${escapeHtml((i.name || 'Guest').split(' ')[0])},%0D%0A%0D%0AThank you for your interest in Le Rêve Properties.%0D%0A%0D%0A"
+         class="flex-1 bg-primary text-gold hover:bg-gold hover:text-primary px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider text-center transition-all">
+        <i class="fa-solid fa-reply mr-1"></i> Reply by Email
+      </a>
+      <button onclick="closeInquiryDetailModal()"
+              class="flex-1 border border-charcoal/15 hover:bg-ivory px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
+        Close
+      </button>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.body.classList.add('modal-open');
+}
+
+function closeInquiryDetailModal() {
+  const modal = document.getElementById('inquiryDetailModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.body.classList.remove('modal-open');
+}
+
+/* ---------- Escape key ---------- */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeInquiryDetailModal();
+});
+</script>
+{% endblock %}

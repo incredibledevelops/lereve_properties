@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /client/
+Disallow: /super-admin/
+Disallow: /paystack/
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://lereveproperties.com/sitemap.xml
