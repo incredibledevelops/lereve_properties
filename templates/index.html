@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<meta name="description" content="Le Rêve Properties — Curated luxury stays & extraordinary estates.">
+<meta name="description" content="Le Rêve Properties — Curated luxury stays & extraordinary estates in Accra, Ghana.">
 <meta name="theme-color" content="#1a3a2a">
 
-<title>Le Rêve Properties | Curated Luxury Stays &amp; Extraordinary Estates</title>
+<title>Le Rêve Properties | Where Africa Feels Like Home</title>
 
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%231a3a2a'/><text x='50' y='68' font-size='60' font-family='Georgia' font-style='italic' font-weight='bold' fill='%23c9a84c' text-anchor='middle'>R</text></svg>">
+<link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,19 +24,21 @@ tailwind.config = {
       primary:'#1a3a2a','primary-dark':'#122b1e','primary-light':'#28543e',
       ivory:'#f7f3ed','ivory-dark':'#ebe3d5',
       gold:'#c9a84c','gold-dark':'#a88938','gold-light':'#e5cb7a',
-      charcoal:'#2c2c2a','soft-white':'#ffffff'
+      charcoal:'#2c2c2a','soft-white':'#ffffff',
+      forest:'#1a3a2a'
     },
     fontFamily:{ serif:['Cormorant Garamond','Georgia','serif'], sans:['Inter','sans-serif'] },
-    boxShadow:{ 'luxury':'0 20px 40px -15px rgba(26,58,42,0.12)' },
+    boxShadow:{
+      'luxury':'0 20px 40px -15px rgba(26,58,42,0.12)',
+      'gold-glow':'0 10px 25px -5px rgba(201,168,76,0.3)'
+    },
     keyframes: {
       fadeIn: { '0%': { opacity: '0', transform: 'translateY(12px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
-      slideIn: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
-      scrollLeft: { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
+      slideIn: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } }
     },
     animation: {
       'fade-in': 'fadeIn .4s ease-out forwards',
-      'slide-in': 'slideIn .3s ease-out forwards',
-      'scroll-left': 'scrollLeft 45s linear infinite',
+      'slide-in': 'slideIn .3s ease-out forwards'
     }
   }}
 }
@@ -47,26 +49,148 @@ tailwind.config = {
   ::-webkit-scrollbar { width:8px; }
   ::-webkit-scrollbar-track { background:#f7f3ed; }
   ::-webkit-scrollbar-thumb { background:#1a3a2a; border-radius:4px; }
-  .glass-nav { background: rgba(247,243,237,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-  .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  ::-webkit-scrollbar-thumb:hover { background:#c9a84c; }
+
+  .glass-nav  { background: rgba(247,243,237,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .glass-dark { background: rgba(26,58,42,0.92);    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+  .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(8px);  -webkit-backdrop-filter: blur(8px); }
+
   html { scroll-padding-top: 90px; }
   input[type=range] { accent-color:#c9a84c; }
   body.modal-open { overflow:hidden; }
   .line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
-  /* Carousel */
+  /* ── Keyframes (plain CSS — guaranteed to work) ───────────── */
+  @keyframes leReveMarquee {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+  }
+
+  /* ── Trust bar animated marquee ───────────────────────────── */
+  .trust-bar {
+    overflow: hidden;
+    width: 100%;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+            mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
+  .trust-bar-track {
+    display: flex;
+    flex-wrap: nowrap;
+    width: max-content;
+    will-change: transform;
+    /* duration is set dynamically by JS based on content width */
+    animation: leReveMarquee var(--marquee-duration, 40s) linear infinite;
+  }
+  .trust-bar:hover .trust-bar-track,
+  .trust-bar:focus-within .trust-bar-track {
+    animation-play-state: paused;
+  }
+  .trust-item {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    padding-right: 3rem;
+    color: rgba(247, 243, 237, 0.7);
+    font-size: 0.8rem;
+  }
+  .trust-item .check {
+    color: #c9a84c;
+  }
+
+  /* ── Reviews carousel ─────────────────────────────────────── */
+  .carousel-wrap {
+    overflow: hidden;
+    width: 100%;
+  }
   .carousel-track {
     display: flex;
+    flex-wrap: nowrap;
     gap: 1.5rem;
     width: max-content;
-    animation: scrollLeft 45s linear infinite;
     will-change: transform;
+    animation: leReveMarquee var(--carousel-duration, 45s) linear infinite;
   }
-  .carousel-track:hover,
-  .carousel-track:focus-within { animation-play-state: paused; }
+  .carousel-wrap:hover .carousel-track,
+  .carousel-wrap:focus-within .carousel-track {
+    animation-play-state: paused;
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ── Decorative patterns ──────────────────────────────────── */
+  .kente-pattern {
+    background:
+      repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(201,168,76,.04) 18px, rgba(201,168,76,.04) 20px),
+      repeating-linear-gradient(0deg,  transparent, transparent 18px, rgba(201,168,76,.04) 18px, rgba(201,168,76,.04) 20px);
+  }
+  .grid-pattern {
+    background:
+      repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(201,168,76,.05) 24px, rgba(201,168,76,.05) 26px),
+      repeating-linear-gradient(0deg,  transparent, transparent 24px, rgba(201,168,76,.05) 24px, rgba(201,168,76,.05) 26px);
+  }
+
+  /* ── WHY LE RÊVE — brand-consistent palette ───────────────── */
+  .why-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(201, 168, 76, 0.18);
+    border-radius: 1rem;
+    padding: 1.75rem;
+    transition: border-color .25s ease, background .25s ease, transform .25s ease;
+  }
+  .why-card:hover {
+    border-color: rgba(201, 168, 76, 0.55);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+  }
+  .why-num {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.75rem;
+    font-weight: 300;
+    line-height: 1;
+    color: rgba(201, 168, 76, 0.45);
+    margin-bottom: 1rem;
+    letter-spacing: 0.02em;
+  }
+  .why-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #f7f3ed;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
+  .why-body {
+    font-size: 0.85rem;
+    line-height: 1.75;
+    color: rgba(247, 243, 237, 0.7);
+  }
+  .why-quote {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.2rem;
+    font-style: italic;
+    color: #e5cb7a;
+    line-height: 1.6;
+    border-left: 2px solid #c9a84c;
+    padding-left: 1.25rem;
+  }
+  .why-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #c9a84c;
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    .carousel-track { animation: none; }
+    *, .carousel-track, .trust-bar-track {
+      animation: none !important;
+      transition: none !important;
+    }
+    .trust-bar-track, .carousel-track { transform: none !important; }
+    .why-card:hover { transform: none; }
   }
 </style>
 </head>
@@ -94,55 +218,56 @@ tailwind.config = {
 <!-- ============ HEADER ============ -->
 <header class="fixed top-0 left-0 w-full z-40 glass-nav border-b border-gold/20 shadow-sm">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-    <a href="#hero" class="flex items-center gap-3 group">
-      <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-gold border border-gold/40 group-hover:bg-gold group-hover:text-primary transition-all">
-        <span class="font-serif text-xl font-bold italic">R</span>
-      </div>
-      <div>
-        <span class="font-serif text-2xl tracking-widest font-semibold text-primary block leading-none">LE RÊVE</span>
-        <span class="text-[10px] tracking-[0.25em] uppercase text-gold font-medium block">Properties</span>
-      </div>
+    <a href="#hero" class="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-lg">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Site Logo" width="200">
     </a>
 
     <nav class="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest font-medium text-charcoal/80">
-      <a href="#hero" class="hover:text-gold transition-colors">Home</a>
-      <a href="#services" class="hover:text-gold transition-colors">Services</a>
-      <a href="#listings" class="hover:text-gold transition-colors">Stays</a>
-      <a href="#reviews" class="hover:text-gold transition-colors">Reviews</a>
-      <a href="#contact" class="hover:text-gold transition-colors">Contact</a>
+      <a href="#hero" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Home</a>
+      <a href="#listings" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Stays</a>
+      <a href="#why" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Why Us</a>
+      <a href="#reviews" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Reviews</a>
+      <a href="#contact" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Contact</a>
     </nav>
 
     <div class="hidden md:flex items-center gap-3">
+      <button id="favoritesTriggerBtn" onclick="scrollToListingsAndShowFavorites()"
+              class="relative p-2.5 rounded-full border border-primary/10 text-primary hover:border-gold hover:bg-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all flex items-center justify-center"
+              title="View Saved Favorites" aria-label="View saved favorites">
+        <i class="fa-regular fa-heart text-lg" aria-hidden="true"></i>
+        <span id="favoritesBadge" class="absolute -top-1 -right-1 bg-gold text-primary font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-ivory hidden">0</span>
+      </button>
+
       {% if current_user.is_authenticated %}
         {% if current_user.is_admin %}
-          <a href="{{ url_for('super_admin.dashboard') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary transition-all text-xs font-bold uppercase tracking-widest">
+          <a href="{{ url_for('super_admin.dashboard') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs font-bold uppercase tracking-widest">
             <i class="fa-solid fa-shield-halved mr-1" aria-hidden="true"></i> Admin
           </a>
         {% else %}
-          <a href="{{ url_for('client.dashboard') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary transition-all text-xs font-bold uppercase tracking-widest">
+          <a href="{{ url_for('client.dashboard') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs font-bold uppercase tracking-widest">
             <i class="fa-solid fa-user mr-1" aria-hidden="true"></i> Portal
           </a>
         {% endif %}
       {% else %}
-        <a href="{{ url_for('auth.login') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary transition-all text-xs font-bold uppercase tracking-widest">
+        <a href="{{ url_for('auth.login') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs font-bold uppercase tracking-widest">
           <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
         </a>
       {% endif %}
     </div>
 
-    <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-primary" aria-label="Open menu">
+    <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-lg" aria-label="Open menu">
       <i class="fa-solid fa-bars text-2xl" aria-hidden="true"></i>
     </button>
   </div>
 
-  <div id="mobileDrawer" class="hidden md:hidden bg-primary text-ivory border-b border-gold/30 px-6 py-6">
+  <div id="mobileDrawer" class="hidden md:hidden bg-primary text-ivory border-b border-gold/30 px-6 py-6 transition-all duration-300">
     <div class="flex flex-col gap-4 text-base tracking-wider uppercase font-medium">
-      <a href="#hero" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Home</a>
-      <a href="#services" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Services</a>
-      <a href="#listings" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Stays</a>
-      <a href="#reviews" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Reviews</a>
-      <a href="#contact" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Contact</a>
-      <div class="pt-4">
+      <a href="#hero"      onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Home</a>
+      <a href="#listings"  onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Stays</a>
+      <a href="#why"       onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Why Us</a>
+      <a href="#reviews"   onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Reviews</a>
+      <a href="#contact"   onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Contact</a>
+      <div class="pt-4 flex flex-col gap-3">
         {% if current_user.is_authenticated %}
           <a href="{{ url_for('client.dashboard') if not current_user.is_admin else url_for('super_admin.dashboard') }}"
              class="w-full text-center bg-gold text-primary py-2.5 rounded-full font-bold uppercase tracking-wider text-xs block">
@@ -154,6 +279,10 @@ tailwind.config = {
             <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
           </a>
         {% endif %}
+        <button onclick="toggleMobileMenu(); scrollToListingsAndShowFavorites();"
+                class="w-full text-center border border-ivory/30 text-ivory py-2.5 rounded-full font-medium uppercase tracking-wider text-xs flex items-center justify-center gap-2">
+          <i class="fa-solid fa-heart text-gold" aria-hidden="true"></i> Saved Favorites (<span id="mobileFavCount">0</span>)
+        </button>
       </div>
     </div>
   </div>
@@ -163,31 +292,34 @@ tailwind.config = {
 <section id="hero" class="relative pt-32 pb-20 md:pt-40 md:pb-28 min-h-[90vh] flex flex-col justify-between bg-primary text-soft-white overflow-hidden">
   <div class="absolute inset-0 opacity-25 bg-cover bg-center" style="background-image:url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=80');"></div>
   <div class="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/95 to-primary"></div>
+  <div class="kente-pattern absolute top-0 right-0 w-5/12 h-full opacity-60 pointer-events-none"></div>
 
   <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center my-auto">
     <span class="inline-block py-1 px-4 rounded-full border border-gold/40 text-gold text-xs uppercase tracking-[0.25em] mb-6 backdrop-blur-sm bg-primary/40">
-      The Pinnacle of Private Luxury
+      Accra, Ghana · Come as a Guest. Return as Family
     </span>
     <h1 class="font-serif text-4xl sm:text-6xl md:text-7xl font-light text-ivory tracking-wide leading-tight max-w-5xl mx-auto mb-6">
       Where <span class="italic text-gold font-normal">Africa</span> feels like home
     </h1>
     <p class="text-ivory/80 text-base sm:text-lg md:text-xl font-light max-w-2xl mx-auto mb-10 leading-relaxed">
-      Quality short-stay accommodation in the heart of Accra - affordable, comfortable and close to everything that matters
+      Quality short-stay accommodation in the heart of Accra — affordable, comfortable, and close to everything that matters.
     </p>
 
     <div class="glass-card text-charcoal rounded-3xl p-4 sm:p-6 shadow-luxury border border-gold/30 max-w-5xl mx-auto text-left">
       <form onsubmit="event.preventDefault(); applyHeroFilters();" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div class="flex flex-col">
-          <label class="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 flex items-center gap-1.5">
+          <label for="filterLocation" class="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 flex items-center gap-1.5">
             <i class="fa-solid fa-location-dot text-gold" aria-hidden="true"></i> Destination
           </label>
-          <input type="text" id="filterLocation" oninput="debouncedRender()" placeholder="e.g., Amalfi, Zermatt" class="w-full px-4 py-3 rounded-xl border border-charcoal/10 bg-ivory/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+          <input type="text" id="filterLocation" oninput="debouncedRender()" placeholder="e.g., Accra, East Legon"
+                 class="w-full px-4 py-3 rounded-xl border border-charcoal/10 bg-ivory/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
         </div>
         <div class="flex flex-col">
-          <label class="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 flex items-center gap-1.5">
+          <label for="filterType" class="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 flex items-center gap-1.5">
             <i class="fa-solid fa-house-chimney text-gold" aria-hidden="true"></i> Estate Type
           </label>
-          <select id="filterType" onchange="debouncedRender()" class="w-full px-4 py-3 rounded-xl border border-charcoal/10 bg-ivory/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+          <select id="filterType" onchange="debouncedRender()"
+                  class="w-full px-4 py-3 rounded-xl border border-charcoal/10 bg-ivory/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
             <option value="all">All Categories</option>
             {% for c in categories %}
               <option value="{{ c.name }}">{{ c.name }}</option>
@@ -196,40 +328,48 @@ tailwind.config = {
         </div>
         <div class="flex flex-col">
           <div class="flex justify-between items-center mb-1.5">
-            <label class="text-[11px] font-bold uppercase tracking-widest text-primary/70 flex items-center gap-1.5">
+            <label for="filterPrice" class="text-[11px] font-bold uppercase tracking-widest text-primary/70 flex items-center gap-1.5">
               <i class="fa-solid fa-tag text-gold" aria-hidden="true"></i> Max Nightly
             </label>
             <span id="priceDisplay" class="text-xs font-bold text-primary">₵50,000</span>
           </div>
-          <input type="range" id="filterPrice" min="1000" max="50000" step="500" value="50000" oninput="updatePriceLabel(this.value)" class="w-full cursor-pointer h-2">
+          <input type="range" id="filterPrice" min="1000" max="50000" step="500" value="50000"
+                 oninput="updatePriceLabel(this.value)" class="w-full cursor-pointer h-2">
         </div>
         <div>
-          <button type="submit" class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3 px-6 rounded-xl font-semibold uppercase tracking-wider text-xs transition-all shadow-md flex items-center justify-center gap-2">
+          <button type="submit"
+                  class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3 px-6 rounded-xl font-semibold uppercase tracking-wider text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all shadow-md flex items-center justify-center gap-2">
             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Explore Stays
           </button>
         </div>
       </form>
     </div>
   </div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 w-full">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-8 border-t border-gold/20 text-center">
+      <div><span class="font-serif text-3xl md:text-4xl font-bold text-gold block">100%</span><span class="text-xs text-ivory/70 uppercase tracking-widest mt-1 block">Vetted Apartments</span></div>
+      <div><span class="font-serif text-3xl md:text-4xl font-bold text-gold block">24 / 7</span><span class="text-xs text-ivory/70 uppercase tracking-widest mt-1 block">Private Concierge</span></div>
+      <div><span class="font-serif text-3xl md:text-4xl font-bold text-gold block">4.98 ★</span><span class="text-xs text-ivory/70 uppercase tracking-widest mt-1 block">Avg Guest Rating</span></div>
+      <div><span class="font-serif text-3xl md:text-4xl font-bold text-gold block">15 min</span><span class="text-xs text-ivory/70 uppercase tracking-widest mt-1 block">From Airport</span></div>
+    </div>
+  </div>
 </section>
 
-<!-- ============ SERVICES ============ -->
-<section id="services" class="py-20 md:py-28 bg-ivory relative">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center max-w-3xl mx-auto mb-16">
-      <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-2">For property owners</span>
-      <h2 class="font-serif text-3xl sm:text-5xl font-light text-primary tracking-wide">Turn your <span class="italic text-gold">Property </span>into income
-      </h2>
-      <div class="w-16 h-[2px] bg-gold mx-auto mt-4"></div>
-    </div>
-    <div class="max-w-3xl mx-auto text-center">
-      <p class="text-charcoal/80 leading-relaxed font-light text-base mb-6">
-        Have an apartment, house or villa in Ghana? LE RÊVE can manage the hospitality side so you earn without the operational burden.
-      </p>
-      <a href="#listings" class="inline-flex items-center gap-3 bg-primary text-gold px-8 py-4 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gold hover:text-primary transition-all shadow-luxury">
-        <span>Explore Luxury Stays</span>
-        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-      </a>
+<!-- ════════════════════════════════════════
+     TRUST BAR — ENDLESS LOOPING MARQUEE
+════════════════════════════════════════ -->
+<section class="bg-forest border-y border-gold/20 relative" aria-label="Trust signals">
+  <div class="trust-bar py-5" id="trustBar">
+    <div class="trust-bar-track" id="trustBarTrack" data-marquee-source="trustBarSource">
+      <div class="flex items-center shrink-0" id="trustBarSource">
+        <div class="trust-item"><span class="check" aria-hidden="true">✓</span> Airbnb Verified Listing</div>
+        <div class="trust-item"><span class="check" aria-hidden="true">✓</span> City centre location</div>
+        <div class="trust-item"><span class="check" aria-hidden="true">✓</span> 15 min from Kotoka International Airport</div>
+        <div class="trust-item"><span class="check" aria-hidden="true">✓</span> Local &amp; international guests welcome</div>
+        <div class="trust-item"><span class="check" aria-hidden="true">✓</span> Business &amp; leisure stays</div>
+        <div class="trust-item"><span class="check" aria-hidden="true">✓</span> Flexible check-in</div>
+      </div>
     </div>
   </div>
 </section>
@@ -247,13 +387,16 @@ tailwind.config = {
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <button onclick="filterCategory('all', this)" class="category-btn active border border-primary bg-primary text-gold px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all">All Stays</button>
+        <button onclick="filterCategory('all', this)"
+                class="category-btn active border border-primary bg-primary text-gold px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all">
+          All Stays
+        </button>
         {% for c in categories %}
           {% set icon = c.icon or 'fa-house-chimney' %}
           {% set icon_class = icon if icon.startswith('fa-') else 'fa-' ~ icon %}
           <button onclick="filterCategory({{ c.name|tojson }}, this)"
                   data-category="{{ c.name|e }}"
-                  class="category-btn border border-primary/20 hover:border-primary bg-white/60 text-primary px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5">
+                  class="category-btn border border-primary/20 hover:border-primary bg-white/60 text-primary px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all flex items-center gap-1.5">
             <i class="fa-solid {{ icon_class|e }} text-[10px]" aria-hidden="true"></i>
             {{ c.name|e }}
           </button>
@@ -267,12 +410,74 @@ tailwind.config = {
       <i class="fa-solid fa-house-circle-xmark text-4xl text-gold mb-3" aria-hidden="true"></i>
       <h3 class="font-serif text-2xl font-semibold text-primary mb-2">No Matching Estates Found</h3>
       <p class="text-charcoal/70 text-sm max-w-md mx-auto mb-6">Try adjusting your filters or price range.</p>
-      <button onclick="resetAllFilters()" class="bg-primary text-gold px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gold hover:text-primary transition-all">Reset All Filters</button>
+      <button onclick="resetAllFilters()"
+              class="bg-primary text-gold px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all">
+        Reset All Filters
+      </button>
     </div>
   </div>
 </section>
 
-<!-- ============ REVIEWS CAROUSEL ============ -->
+<!-- ════════════════════════════════════════
+     WHY LE RÊVE — brand-consistent palette
+════════════════════════════════════════ -->
+<section id="why" class="bg-primary relative overflow-hidden">
+  <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
+
+  <div class="relative max-w-7xl mx-auto px-6 md:px-16 py-20 md:py-28">
+    <div class="max-w-2xl mb-14">
+      <p class="why-eyebrow mb-4">Why Le Rêve</p>
+      <h2 class="font-serif text-3xl sm:text-5xl font-light text-ivory leading-tight mb-5">
+        Five things guests <span class="italic text-gold">come back for</span>
+      </h2>
+      <p class="text-ivory/70 text-sm sm:text-base leading-relaxed max-w-lg font-light">
+        We didn't build a rental business. We built a hospitality experience — and there's a difference.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <div class="why-card">
+        <div class="why-num">01</div>
+        <h3 class="why-title">Genuine local knowledge</h3>
+        <p class="why-body">We know Accra the way only someone who lives here can. Best routes, local food, what to avoid — we share it all.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-num">02</div>
+        <h3 class="why-title">Affordable without compromise</h3>
+        <p class="why-body">Significantly below hotel pricing without sacrificing the things that matter: cleanliness, comfort, and reliable communication.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-num">03</div>
+        <h3 class="why-title">City access, airport proximity</h3>
+        <p class="why-body">15 minutes from Kotoka International Airport and well-connected to business districts, embassies, and key city areas.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-num">04</div>
+        <h3 class="why-title">Responsive, real support</h3>
+        <p class="why-body">Not a faceless corporation — you're in direct contact with us throughout your stay. Fast answers, real help, no automated runaround.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-num">05</div>
+        <h3 class="why-title">A sense of home</h3>
+        <p class="why-body">Whether you're here for a night or a month, you'll have a real space that feels lived in — not staged. That's what a home should feel like.</p>
+      </div>
+
+      <div class="why-card flex items-center">
+        <blockquote class="why-quote">
+          Le Rêve means "the dream." And the dream is that every traveler to Africa can find a home worth coming back to.
+        </blockquote>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ REVIEWS CAROUSEL — ENDLESS LOOPING ============ -->
 <section id="reviews" class="py-20 md:py-28 bg-ivory relative overflow-hidden">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
     <div class="text-center max-w-3xl mx-auto">
@@ -281,12 +486,6 @@ tailwind.config = {
         Verified <span class="italic text-gold">Guest Reflections</span>
       </h2>
       <div class="w-16 h-[2px] bg-gold mx-auto mt-4"></div>
-      {% if reviews|length > 1 %}
-        <p class="text-xs text-charcoal/50 mt-3">
-          <i class="fa-solid fa-pause text-gold mr-1" aria-hidden="true"></i>
-          Hover or focus to pause · {{ reviews|length }} verified stays
-        </p>
-      {% endif %}
     </div>
   </div>
 
@@ -295,63 +494,35 @@ tailwind.config = {
       <div class="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-ivory to-transparent z-10" aria-hidden="true"></div>
       <div class="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-ivory to-transparent z-10" aria-hidden="true"></div>
 
-      <div class="overflow-hidden px-4">
-        <div class="carousel-track">
-          {% if reviews|length > 1 %}
-            {# Two passes for seamless loop #}
-            {% for pass in [1, 2] %}
-              {% for r in reviews %}
-                {% set rating = (r.rating or 0)|int %}
-                {% set avatar_url = r.avatar or ('https://ui-avatars.com/api/?name=' ~ ((r.name or 'Guest')|urlencode) ~ '&background=c9a84c&color=1a3a2a') %}
-                <article class="w-[320px] sm:w-[380px] flex-shrink-0 bg-white rounded-3xl p-7 border border-gold/20 shadow-luxury flex flex-col justify-between relative"
-                         {% if pass == 2 %}aria-hidden="true"{% endif %}>
-                  <i class="fa-solid fa-quote-left text-4xl text-gold/20 absolute top-5 right-5" aria-hidden="true"></i>
-                  <div>
-                    <div class="flex items-center gap-1 text-gold text-xs mb-4">
-                      {% for i in range(5) %}
-                        <i class="fa-solid fa-star {% if i < rating %}text-gold{% else %}text-charcoal/20{% endif %}" aria-hidden="true"></i>
-                      {% endfor %}
-                      <span class="text-charcoal/60 text-[11px] ml-2 font-medium">Verified</span>
-                    </div>
-                    <p class="text-charcoal/80 text-sm leading-relaxed italic mb-6 line-clamp-2">"{{ r.text|e }}"</p>
+      <div class="carousel-wrap px-4" id="reviewsCarouselWrap">
+        <div class="carousel-track" id="reviewsCarouselTrack" data-marquee-source="reviewsSource">
+          <div class="flex gap-6 shrink-0" id="reviewsSource">
+            {% for r in reviews %}
+              {% set rating = (r.rating or 0)|int %}
+              {% set avatar_url = r.avatar or ('https://ui-avatars.com/api/?name=' ~ ((r.name or 'Guest')|urlencode) ~ '&background=c9a84c&color=1a3a2a') %}
+              <article class="w-[320px] sm:w-[380px] flex-shrink-0 bg-white rounded-3xl p-7 border border-gold/20 shadow-luxury flex flex-col justify-between relative">
+                <i class="fa-solid fa-quote-left text-4xl text-gold/20 absolute top-5 right-5" aria-hidden="true"></i>
+                <div>
+                  <div class="flex items-center gap-1 text-gold text-xs mb-4">
+                    {% for i in range(5) %}
+                      <i class="fa-solid fa-star {% if i < rating %}text-gold{% else %}text-charcoal/20{% endif %}" aria-hidden="true"></i>
+                    {% endfor %}
+                    <span class="text-charcoal/60 text-[11px] ml-2 font-medium">Verified</span>
                   </div>
-                  <div class="flex items-center gap-4 pt-4 border-t border-charcoal/5">
-                    <img src="{{ avatar_url|e }}"
-                         alt="{{ r.name or 'Guest' }}"
-                         class="w-12 h-12 rounded-full object-cover border-2 border-gold"
-                         loading="lazy"
-                         onerror="this.src='https://ui-avatars.com/api/?name={{ (r.name or 'Guest')|urlencode }}&amp;background=c9a84c&amp;color=1a3a2a';">
-                    <div class="min-w-0">
-                      <h4 class="font-serif text-base font-semibold text-primary truncate">{{ r.name|e or 'Anonymous' }}</h4>
-                      <p class="text-xs text-gold truncate">{{ r.property|e or '—' }}</p>
-                    </div>
-                  </div>
-                </article>
-              {% endfor %}
-            {% endfor %}
-          {% else %}
-            {# Single review — no animation #}
-            {% set r = reviews[0] %}
-            {% set rating = (r.rating or 0)|int %}
-            {% set avatar_url = r.avatar or ('https://ui-avatars.com/api/?name=' ~ ((r.name or 'Guest')|urlencode) ~ '&background=c9a84c&color=1a3a2a') %}
-            <article class="w-[320px] sm:w-[380px] flex-shrink-0 bg-white rounded-3xl p-7 border border-gold/20 shadow-luxury flex flex-col justify-between relative mx-auto">
-              <div class="flex items-center gap-1 text-gold text-xs mb-4">
-                {% for i in range(5) %}
-                  <i class="fa-solid fa-star {% if i < rating %}text-gold{% else %}text-charcoal/20{% endif %}" aria-hidden="true"></i>
-                {% endfor %}
-                <span class="text-charcoal/60 text-[11px] ml-2 font-medium">Verified</span>
-              </div>
-              <p class="text-charcoal/80 text-sm leading-relaxed italic mb-6">"{{ r.text|e }}"</p>
-              <div class="flex items-center gap-4 pt-4 border-t border-charcoal/5">
-                <img src="{{ avatar_url|e }}" alt="{{ r.name or 'Guest' }}"
-                     class="w-12 h-12 rounded-full object-cover border-2 border-gold" loading="lazy">
-                <div class="min-w-0">
-                  <h4 class="font-serif text-base font-semibold text-primary truncate">{{ r.name|e or 'Anonymous' }}</h4>
-                  <p class="text-xs text-gold truncate">{{ r.property|e or '—' }}</p>
+                  <p class="text-charcoal/80 text-sm leading-relaxed italic mb-6 line-clamp-2">"{{ r.text|e }}"</p>
                 </div>
-              </div>
-            </article>
-          {% endif %}
+                <div class="flex items-center gap-4 pt-4 border-t border-charcoal/5">
+                  <img src="{{ avatar_url|e }}" alt="{{ r.name or 'Guest' }}"
+                       class="w-12 h-12 rounded-full object-cover border-2 border-gold" loading="lazy"
+                       onerror="this.src='https://ui-avatars.com/api/?name={{ (r.name or 'Guest')|urlencode }}&amp;background=c9a84c&amp;color=1a3a2a';">
+                  <div class="min-w-0">
+                    <h4 class="font-serif text-base font-semibold text-primary truncate">{{ r.name|e or 'Anonymous' }}</h4>
+                    <p class="text-xs text-gold truncate">{{ r.property|e or '—' }}</p>
+                  </div>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
         </div>
       </div>
     </div>
@@ -363,52 +534,127 @@ tailwind.config = {
 </section>
 
 <!-- ============ CONTACT ============ -->
-<section id="contact" class="py-20 bg-primary text-ivory relative">
+<section id="contact" class="py-20 bg-ivory relative">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-12">
       <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-2">Concierge Desk</span>
-      <h2 class="font-serif text-3xl sm:text-5xl font-light text-ivory">
+      <h2 class="font-serif text-3xl sm:text-5xl font-light text-primary">
         Initiate Your <span class="italic text-gold">Reservation</span>
       </h2>
+      <p class="text-charcoal/60 text-sm mt-3 max-w-lg mx-auto">
+        Our private advisors are available 24/7 to assist with availability, custom itineraries, or estate onboarding.
+      </p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-4xl mx-auto">
-      <a href="https://wa.me/233300000000" target="_blank" rel="noopener"
-         class="flex items-center gap-4 p-5 rounded-2xl bg-primary-dark/80 border border-gold/30 hover:border-gold transition-all group">
-        <div class="w-14 h-14 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-          <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
-        </div>
-        <div>
-          <span class="text-xs uppercase tracking-wider text-gold font-semibold block">Instant Concierge</span>
-          <span class="text-sm font-medium text-ivory">WhatsApp Us</span>
-        </div>
-      </a>
-
-      <a href="tel:+233300000000"
-         class="flex items-center gap-4 p-5 rounded-2xl bg-primary-dark/80 border border-gold/30 hover:border-gold transition-all group">
-        <div class="w-14 h-14 rounded-xl bg-gold/20 text-gold flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-          <i class="fa-solid fa-phone" aria-hidden="true"></i>
-        </div>
-        <div>
-          <span class="text-xs uppercase tracking-wider text-gold font-semibold block">24/7 Global Desk</span>
-          <span class="text-sm font-medium text-ivory">+233 30 000 0000</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="text-center mt-8">
-      {% if current_user.is_authenticated %}
-        <a href="{{ url_for('client.dashboard') if not current_user.is_admin else url_for('super_admin.dashboard') }}"
-           class="text-gold hover:text-gold-light text-xs uppercase tracking-widest underline-offset-4 hover:underline">
-          <i class="fa-solid fa-user mr-1" aria-hidden="true"></i>
-          Go to your {{ 'admin console' if current_user.is_admin else 'portal' }}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-5xl mx-auto">
+      <div class="space-y-4">
+        <a href="https://wa.me/233547975252" target="_blank" rel="noopener"
+           class="flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all group">
+          <div class="w-14 h-14 rounded-xl bg-emerald-600/15 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+            <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+          </div>
+          <div class="flex-1">
+            <span class="text-xs uppercase tracking-wider text-gold font-semibold block">Instant Concierge</span>
+            <span class="text-sm font-medium text-charcoal">WhatsApp +233 54 797 5252</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform" aria-hidden="true"></i>
         </a>
-      {% else %}
-        <a href="{{ url_for('auth.login') }}"
-           class="text-gold hover:text-gold-light text-xs uppercase tracking-widest underline-offset-4 hover:underline">
-          <i class="fa-solid fa-user mr-1" aria-hidden="true"></i> Sign in to your portal
+
+        <a href="tel:+233547975252"
+           class="flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all group">
+          <div class="w-14 h-14 rounded-xl bg-gold/20 text-gold flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-phone" aria-hidden="true"></i>
+          </div>
+          <div class="flex-1">
+            <span class="text-xs uppercase tracking-wider text-gold font-semibold block">24/7 Global Desk</span>
+            <span class="text-sm font-medium text-charcoal">+233 54 797 5252</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform" aria-hidden="true"></i>
         </a>
-      {% endif %}
+
+        <a href="https://instagram.com/lereveafrica" target="_blank" rel="noopener"
+           class="flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all group">
+          <div class="w-14 h-14 rounded-xl bg-pink-500/15 text-pink-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+            <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+          </div>
+          <div class="flex-1">
+            <span class="text-xs uppercase tracking-wider text-gold font-semibold block">Follow Portfolio</span>
+            <span class="text-sm font-medium text-charcoal">@lereveproperties</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform" aria-hidden="true"></i>
+        </a>
+
+        <div class="p-5 rounded-2xl bg-primary text-ivory">
+          <div class="text-xs uppercase tracking-wider text-gold font-semibold mb-1">Location</div>
+          <div class="text-sm font-medium">Accra, Ghana</div>
+          <div class="text-xs text-ivory/70 mt-0.5">15 minutes from Kotoka International Airport</div>
+        </div>
+      </div>
+
+      <div class="bg-white border border-gold/30 rounded-3xl p-8 shadow-luxury">
+        <h3 class="font-serif text-2xl font-semibold text-primary mb-2">Send Private Inquiry</h3>
+        <p class="text-xs text-charcoal/60 mb-6">An assigned concierge will respond within 2 hours.</p>
+
+        <div id="contactFormFeedback" class="hidden mb-4 p-3 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200"></div>
+
+        <form id="contactForm" onsubmit="handleContactSubmit(event)" class="space-y-4">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="contactName" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Full Name *</label>
+              <input type="text" id="contactName" name="name" required maxlength="120" placeholder="Your name"
+                     class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+            </div>
+            <div>
+              <label for="contactEmail" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Email *</label>
+              <input type="email" id="contactEmail" name="email" required maxlength="200" placeholder="vip@domain.com"
+                     class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+            </div>
+          </div>
+          <div>
+            <label for="contactPhone" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Phone *</label>
+            <input type="tel" id="contactPhone" name="phone" required maxlength="40" placeholder="+233 XX XXX XXXX"
+                   class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+          </div>
+          <div>
+            <label for="contactProperty" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Estate of Interest</label>
+            <select name="property" id="contactProperty"
+                    class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+              <option value="General Inquiry">General Bespoke Inquiry</option>
+              {% for p in properties %}
+                <option value="{{ p.title }}">{{ p.title }} — {{ p.location }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="contactMessage" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Message</label>
+            <textarea id="contactMessage" name="message" rows="4" maxlength="2000"
+                      placeholder="Tell us about your stay, special requests, or partnership interest..."
+                      class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea>
+          </div>
+          <button type="submit" id="contactSubmitBtn"
+                  class="w-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+            Submit Confidential Inquiry
+          </button>
+        </form>
+
+        {% if current_user.is_authenticated %}
+          <div class="text-center mt-5">
+            <a href="{{ url_for('client.dashboard') if not current_user.is_admin else url_for('super_admin.dashboard') }}"
+               class="text-gold hover:text-gold-dark text-xs uppercase tracking-widest underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded">
+              <i class="fa-solid fa-user mr-1" aria-hidden="true"></i>
+              Go to your {{ 'admin console' if current_user.is_admin else 'portal' }}
+            </a>
+          </div>
+        {% else %}
+          <div class="text-center mt-5">
+            <a href="{{ url_for('auth.login') }}"
+               class="text-gold hover:text-gold-dark text-xs uppercase tracking-widest underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded">
+              <i class="fa-solid fa-user mr-1" aria-hidden="true"></i> Sign in to your portal
+            </a>
+          </div>
+        {% endif %}
+      </div>
     </div>
   </div>
 </section>
@@ -416,24 +662,41 @@ tailwind.config = {
 <!-- ============ FOOTER ============ -->
 <footer class="bg-primary-dark text-ivory border-t border-gold/20 pt-16 pb-12">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-gold/10">
-      <div class="md:col-span-2 space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-gold/10">
+      <div class="lg:col-span-2 space-y-4">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-gold flex items-center justify-center text-primary font-serif font-bold text-lg">R</div>
-          <span class="font-serif text-xl tracking-widest text-ivory">LE RÊVE PROPERTIES</span>
+          <img src="{{ url_for('static', filename='images/logo-light.png') }}" alt="Site Logo" width="200">
         </div>
         <p class="text-xs text-ivory/70 leading-relaxed max-w-sm font-light">
-          Curating world-class luxury estates, waterfront villas, and high-altitude sanctuaries for the global traveler seeking uncompromising privacy.
+          Your dream stay, our passion. Affordable quality hospitality in Accra — and across Africa, soon.
         </p>
+        <p class="text-xs text-ivory/50 leading-relaxed max-w-sm font-light">
+          Part of the Dave &amp; Co Pan-African Trade Alliance Ltd.
+        </p>
+        <div class="flex gap-3 text-gold pt-2">
+          <a href="https://instagram.com/lereveafrica" target="_blank" rel="noopener" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
+          <a href="https://wa.me/233547975252" target="_blank" rel="noopener" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></a>
+          <a href="#" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></a>
+          <a href="#" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="Facebook"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>
+        </div>
       </div>
 
       <div>
         <h4 class="font-serif text-lg font-semibold text-gold mb-4">Explore</h4>
         <ul class="space-y-2 text-xs text-ivory/70 font-light">
-          <li><a href="#listings" onclick="filterCategory('all')" class="hover:text-gold transition-colors">Featured Estates</a></li>
+          <li><a href="#listings" onclick="filterCategory('all')" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Featured Estates</a></li>
           {% for c in categories %}
-            <li><a href="#listings" onclick="filterCategory({{ c.name|tojson }})" class="hover:text-gold transition-colors">{{ c.name|e }}</a></li>
+            <li><a href="#listings" onclick="filterCategory({{ c.name|tojson }})" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">{{ c.name|e }}</a></li>
           {% endfor %}
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-serif text-lg font-semibold text-gold mb-4">Company</h4>
+        <ul class="space-y-2 text-xs text-ivory/70 font-light">
+          <li><a href="#contact"  class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Contact</a></li>
+          <li><a href="#why"      class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Why Le Rêve</a></li>
+          <li><a href="#reviews"  class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Reviews</a></li>
         </ul>
       </div>
 
@@ -442,14 +705,25 @@ tailwind.config = {
         <p class="text-xs text-ivory/70 mb-3 font-light">Subscribe for off-market estate listings before public release.</p>
         <form onsubmit="handleJournalSubmit(event)" class="space-y-2">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="email" name="email" required placeholder="Enter private email" class="w-full px-3 py-2 text-xs rounded-lg border border-gold/30 bg-primary/60 text-ivory placeholder-ivory/40 focus:outline-none focus:border-gold">
-          <button type="submit" class="w-full bg-gold text-primary py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-white transition-all">Subscribe</button>
+          <label for="journalEmail" class="sr-only">Email Address</label>
+          <input type="email" id="journalEmail" name="email" required placeholder="Enter private email"
+                 class="w-full px-3 py-2 text-xs rounded-lg border border-gold/30 bg-primary/60 text-ivory placeholder-ivory/40 focus:outline-none focus:border-gold">
+          <button type="submit" class="w-full bg-gold text-primary py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-all">Subscribe</button>
         </form>
       </div>
     </div>
 
-    <div class="pt-8 text-center text-xs text-ivory/50">
-      &copy; 2026 Le Rêve Properties. All Rights Reserved. Private &amp; Confidential Hospitality.
+    <div class="pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-ivory/50 gap-4">
+      <p>© 2026 Le Rêve Properties · Dave &amp; Co Pan-African Trade Alliance Ltd · Accra, Ghana</p>
+      <div class="flex items-center gap-2 bg-primary px-4 py-2 rounded-full border border-gold/30 text-gold font-medium">
+        <i class="fa-solid fa-crown text-[10px]" aria-hidden="true"></i>
+        <span>Crafted with excellence by <strong class="text-white font-bold tracking-wide">Dave &amp; Co</strong></span>
+      </div>
+      <div class="flex gap-4">
+        <a href="#" class="hover:text-gold focus:outline-none focus-visible:text-gold">Privacy</a>
+        <span>·</span>
+        <a href="#" class="hover:text-gold focus:outline-none focus-visible:text-gold">Terms</a>
+      </div>
     </div>
   </div>
 </footer>
@@ -457,7 +731,7 @@ tailwind.config = {
 <!-- ============ QUICK VIEW MODAL ============ -->
 <div id="quickViewModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md" onclick="if (event.target === this) closeQuickViewModal();">
   <div class="bg-ivory rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative">
-    <button onclick="closeQuickViewModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary transition-all flex items-center justify-center" aria-label="Close">
+    <button onclick="closeQuickViewModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all flex items-center justify-center" aria-label="Close Modal">
       <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
     </button>
     <div id="quickViewContent"></div>
@@ -467,7 +741,7 @@ tailwind.config = {
 <!-- ============ BOOKING MODAL ============ -->
 <div id="bookingModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md" onclick="if (event.target === this) closeBookingModal();">
   <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative">
-    <button onclick="closeBookingModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold transition-all flex items-center justify-center" aria-label="Close">
+    <button onclick="closeBookingModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all flex items-center justify-center" aria-label="Close Modal">
       <i class="fa-solid fa-xmark" aria-hidden="true"></i>
     </button>
     <div id="bookingModalContent"></div>
@@ -478,7 +752,6 @@ tailwind.config = {
 /* ============================================================
    LE RÊVE PROPERTIES — PUBLIC SITE SCRIPT
    ============================================================ */
-
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
 const CURRENCY_SYMBOL = {{ CURRENCY_SYMBOL|tojson }};
 const IS_LOGGED_IN = {{ 'true' if current_user.is_authenticated and not current_user.is_admin else 'false' }};
@@ -487,10 +760,10 @@ const CURRENT_USER = {
   name: {{ (current_user.name if current_user.is_authenticated else '')|tojson }},
   email: {{ (current_user.email if current_user.is_authenticated else '')|tojson }}
 };
-
 const RAW_PROPERTIES = {{ properties|tojson }};
-const WISHLIST_IDS = {{ wishlist_ids|tojson }};
+const WISHLIST_IDS  = {{ wishlist_ids|tojson }};
 
+/* ---------- Normalize ---------- */
 function normalizeProperty(p) {
   return {
     id: p.id || p._id,
@@ -510,10 +783,16 @@ function normalizeProperty(p) {
     description: p.description || ''
   };
 }
-
 const PROPERTIES = RAW_PROPERTIES.map(normalizeProperty);
+
+/* ---------- State ---------- */
 let favorites = new Set(WISHLIST_IDS.map(String));
+try {
+  const local = JSON.parse(localStorage.getItem('leReveFavorites') || '[]');
+  local.forEach(id => favorites.add(String(id)));
+} catch(e) {}
 let activeCategory = 'all';
+let showingFavoritesOnly = false;
 let debounceTimer = null;
 
 /* ---------- Utilities ---------- */
@@ -522,28 +801,120 @@ function escapeHtml(str) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[m]));
 }
-
 function formatGHS(amount) {
   const n = Number(amount) || 0;
   return CURRENCY_SYMBOL + n.toLocaleString('en-GH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
-
 function debouncedRender() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(renderPropertyListings, 250);
 }
-
 function toggleMobileMenu() {
   const drawer = document.getElementById('mobileDrawer');
   if (drawer) drawer.classList.toggle('hidden');
+}
+function openModal(el) {
+  el.classList.remove('hidden'); el.classList.add('flex');
+  document.body.classList.add('modal-open');
+}
+function closeModal(el) {
+  el.classList.add('hidden'); el.classList.remove('flex');
+  document.body.classList.remove('modal-open');
+}
+
+/* ============================================================
+   ENDLESS MARQUEE BUILDER
+   ------------------------------------------------------------
+   Clones the source content as many times as needed so the
+   track width is at least 2× the container width. Then the
+   CSS animation translates the track by exactly -50%, which
+   lands on an identical snapshot → seamless infinite loop.
+   Speed (px/sec) is constant regardless of content amount.
+   ============================================================ */
+function buildEndlessMarquee(trackId, sourceId, opts = {}) {
+  const track  = document.getElementById(trackId);
+  const source = document.getElementById(sourceId);
+  if (!track || !source) return;
+
+  const speed     = opts.speed     || 80;   // px per second
+  const minPasses = opts.minPasses || 2;
+
+  // Reset to just the source
+  track.innerHTML = '';
+  track.appendChild(source);
+  source.style.flexShrink = '0';
+  source.removeAttribute('aria-hidden');
+
+  // Measure source width after a layout tick
+  requestAnimationFrame(() => {
+    const containerWidth = track.parentElement ? track.parentElement.offsetWidth : window.innerWidth;
+    const sourceWidth    = source.getBoundingClientRect().width;
+
+    if (sourceWidth < 1 || containerWidth < 1) return;
+
+    // How many copies so 1 "half" >= container width?
+    const halfNeeded    = Math.max(containerWidth, sourceWidth);
+    const copiesPerHalf = Math.max(minPasses, Math.ceil(halfNeeded / sourceWidth));
+
+    // Clear and rebuild with copiesPerHalf clones for each half
+    track.innerHTML = '';
+
+    const appendCopy = (isFirstHalf) => {
+      for (let i = 0; i < copiesPerHalf; i++) {
+        const clone = source.cloneNode(true);
+        clone.removeAttribute('id'); // avoid duplicate IDs
+        clone.style.flexShrink = '0';
+        if (!isFirstHalf) clone.setAttribute('aria-hidden', 'true');
+        track.appendChild(clone);
+      }
+    };
+
+    appendCopy(true);
+    appendCopy(false);
+
+    // Total track width = 2 * (copiesPerHalf * sourceWidth)  → -50% = one full half
+    const halfWidth = (copiesPerHalf * sourceWidth);
+    const duration  = halfWidth / speed; // seconds
+
+    track.style.setProperty('--marquee-duration', duration.toFixed(2) + 's');
+    track.style.animation = `leReveMarquee ${duration.toFixed(2)}s linear infinite`;
+  });
+}
+
+function rebuildAllMarquees() {
+  buildEndlessMarquee('trustBarTrack', 'trustBarSource', { speed: 90 });
+
+  const reviewsTrack  = document.getElementById('reviewsCarouselTrack');
+  const reviewsSource = document.getElementById('reviewsSource');
+  if (reviewsTrack && reviewsSource && reviewsSource.children.length > 0) {
+    buildEndlessMarquee('reviewsCarouselTrack', 'reviewsSource', { speed: 70 });
+  }
 }
 
 /* ---------- Init ---------- */
 document.addEventListener('DOMContentLoaded', () => {
   renderPropertyListings();
-  updatePriceLabel('50000');
+  updateFavoritesBadge();
   autoDismissFlashes();
+
+  // Build the endless marquees after fonts & layout settle
+  rebuildAllMarquees();
+  setTimeout(rebuildAllMarquees, 400);
+  setTimeout(rebuildAllMarquees, 1200);
 });
+
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(rebuildAllMarquees, 250);
+});
+
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    rebuildAllMarquees();
+    setTimeout(rebuildAllMarquees, 300);
+  });
+}
 
 function autoDismissFlashes() {
   const container = document.getElementById('flashContainer');
@@ -571,6 +942,7 @@ function renderPropertyListings() {
     if (activeCategory !== 'all' && prop.category !== activeCategory) return false;
     if (typeVal !== 'all' && prop.category !== typeVal) return false;
     if (prop.price > maxPriceVal) return false;
+    if (showingFavoritesOnly && !favorites.has(String(prop.id))) return false;
     if (locationVal) {
       const haystack = (prop.location + ' ' + prop.title).toLowerCase();
       if (!haystack.includes(locationVal)) return false;
@@ -580,8 +952,8 @@ function renderPropertyListings() {
 
   if (countEl) {
     countEl.textContent = filtered.length === 0
-      ? 'No estates available'
-      : `${filtered.length} estate${filtered.length === 1 ? '' : 's'} available`;
+      ? (showingFavoritesOnly ? 'No saved favorites match' : 'No estates available')
+      : `${filtered.length} estate${filtered.length === 1 ? '' : 's'} available${showingFavoritesOnly ? ' (favorites)' : ''}`;
   }
 
   if (filtered.length === 0) {
@@ -589,7 +961,6 @@ function renderPropertyListings() {
     noResults?.classList.remove('hidden');
     return;
   }
-
   noResults?.classList.add('hidden');
 
   grid.innerHTML = filtered.map(prop => {
@@ -604,7 +975,8 @@ function renderPropertyListings() {
           <img src="${escapeHtml(prop.image)}" alt="${escapeHtml(prop.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
           <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-black/20"></div>
           <span class="absolute top-4 left-4 bg-primary/90 text-gold backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-gold/30">${escapeHtml(prop.category)}</span>
-          <button onclick="toggleFavorite('${prop.id}')" aria-label="Save to wishlist" class="absolute top-4 right-4 w-9 h-9 rounded-full ${isFav ? 'bg-gold text-primary' : 'bg-primary/70 text-white hover:bg-gold hover:text-primary'} backdrop-blur-sm flex items-center justify-center transition-all shadow-md">
+          <button onclick="toggleFavorite('${prop.id}')" aria-label="Save to wishlist"
+                  class="absolute top-4 right-4 w-9 h-9 rounded-full ${isFav ? 'bg-gold text-primary' : 'bg-primary/70 text-white hover:bg-gold hover:text-primary'} backdrop-blur-sm flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all shadow-md">
             <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" aria-hidden="true"></i>
           </button>
           ${savingsPct > 0 ? `<div class="absolute bottom-4 left-4 bg-gold text-primary font-bold text-xs px-3 py-1 rounded-lg shadow-md">Save ${savingsPct}%</div>` : ''}
@@ -622,6 +994,12 @@ function renderPropertyListings() {
               <span class="flex items-center gap-1.5"><i class="fa-solid fa-bath text-gold" aria-hidden="true"></i> ${prop.baths} Baths</span>
               <span class="flex items-center gap-1.5"><i class="fa-solid fa-users text-gold" aria-hidden="true"></i> ${prop.guests} Guests</span>
             </div>
+            ${prop.amenities.length ? `
+              <div class="flex flex-wrap gap-1.5 mb-6">
+                ${prop.amenities.slice(0,3).map(a => `<span class="bg-ivory text-primary text-[10px] font-semibold px-2.5 py-1 rounded-md border border-gold/20">${escapeHtml(a)}</span>`).join('')}
+                ${prop.amenities.length > 3 ? `<span class="bg-gold/10 text-gold-dark text-[10px] font-bold px-2 py-1 rounded-md">+${prop.amenities.length - 3} more</span>` : ''}
+              </div>
+            ` : ''}
           </div>
           <div class="pt-2 border-t border-charcoal/5 flex items-center justify-between gap-2">
             <div class="min-w-0">
@@ -632,8 +1010,8 @@ function renderPropertyListings() {
               </div>
             </div>
             <div class="flex gap-2 flex-shrink-0">
-              <button onclick="openQuickView('${prop.id}')" class="px-3.5 py-2 rounded-xl bg-ivory text-primary border border-primary/20 hover:border-gold hover:bg-gold hover:text-primary transition-all text-xs font-bold uppercase tracking-wider">Details</button>
-              <button onclick="openBookingModal('${prop.id}')" class="px-3.5 py-2 rounded-xl bg-primary text-gold hover:bg-gold hover:text-primary transition-all text-xs font-bold uppercase tracking-wider">Book</button>
+              <button onclick="openQuickView('${prop.id}')" class="px-3.5 py-2 rounded-xl bg-ivory text-primary border border-primary/20 hover:border-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs font-bold uppercase tracking-wider">Details</button>
+              <button onclick="openBookingModal('${prop.id}')" class="px-3.5 py-2 rounded-xl bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs font-bold uppercase tracking-wider">Book</button>
             </div>
           </div>
         </div>
@@ -645,7 +1023,6 @@ function renderPropertyListings() {
 /* ---------- Favorites ---------- */
 async function toggleFavorite(id) {
   id = String(id);
-
   if (IS_LOGGED_IN) {
     try {
       const res = await fetch('/api/wishlist/toggle', {
@@ -657,16 +1034,39 @@ async function toggleFavorite(id) {
       if (!data.success) { showToast(data.error || 'Could not update wishlist.', 'info'); return; }
       if (data.added) { favorites.add(id); showToast('Saved to your wishlist', 'success'); }
       else { favorites.delete(id); showToast('Removed from wishlist', 'info'); }
-    } catch (e) {
-      showToast('Network error. Please try again.', 'error');
-      return;
-    }
+    } catch (e) { showToast('Network error. Please try again.', 'error'); return; }
   } else {
     if (favorites.has(id)) { favorites.delete(id); showToast('Removed from saved', 'info'); }
     else { favorites.add(id); showToast('Saved locally — sign in to sync', 'info'); }
     try { localStorage.setItem('leReveFavorites', JSON.stringify([...favorites])); } catch(e){}
   }
+  updateFavoritesBadge();
+  renderPropertyListings();
+}
 
+function updateFavoritesBadge() {
+  const count = favorites.size;
+  const badge = document.getElementById('favoritesBadge');
+  const mobileCount = document.getElementById('mobileFavCount');
+  if (mobileCount) mobileCount.textContent = count;
+  if (badge) {
+    if (count > 0) { badge.textContent = count; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+  }
+}
+
+function scrollToListingsAndShowFavorites() {
+  showingFavoritesOnly = !showingFavoritesOnly;
+  const btn = document.getElementById('favoritesTriggerBtn');
+  if (btn) {
+    if (showingFavoritesOnly) {
+      btn.classList.add('bg-gold', 'text-primary');
+      showToast('Showing your saved favorites only', 'info');
+    } else {
+      btn.classList.remove('bg-gold', 'text-primary');
+    }
+  }
+  document.getElementById('listings')?.scrollIntoView({ behavior: 'smooth' });
   renderPropertyListings();
 }
 
@@ -675,16 +1075,15 @@ function updatePriceLabel(val) {
   const el = document.getElementById('priceDisplay');
   if (el) el.textContent = formatGHS(parseInt(val, 10));
 }
-
 function applyHeroFilters() {
+  showingFavoritesOnly = false;
   document.getElementById('listings')?.scrollIntoView({ behavior: 'smooth' });
   renderPropertyListings();
 }
-
 function filterCategory(cat, btn) {
   activeCategory = cat;
+  showingFavoritesOnly = false;
 
-  // Reset the hero dropdown so it doesn't conflict with the pill
   const typeSelect = document.getElementById('filterType');
   if (typeSelect && cat !== 'all') typeSelect.value = 'all';
 
@@ -695,7 +1094,6 @@ function filterCategory(cat, btn) {
 
   let targetBtn = btn;
   if (!targetBtn) {
-    // Find matching button by data attribute (used by footer + programmatic calls)
     targetBtn = document.querySelector(`.category-btn[data-category="${CSS.escape(cat)}"]`);
   }
   if (!targetBtn && cat === 'all') {
@@ -705,12 +1103,11 @@ function filterCategory(cat, btn) {
     targetBtn.classList.add('active', 'bg-primary', 'text-gold');
     targetBtn.classList.remove('bg-white/60');
   }
-
   renderPropertyListings();
 }
-
 function resetAllFilters() {
   activeCategory = 'all';
+  showingFavoritesOnly = false;
   const loc = document.getElementById('filterLocation');
   const type = document.getElementById('filterType');
   const price = document.getElementById('filterPrice');
@@ -742,7 +1139,7 @@ function openQuickView(id) {
         ${prop.gallery.length > 1 ? `
           <div class="flex gap-2 flex-wrap">
             ${prop.gallery.map(imgUrl => `
-              <button onclick="document.getElementById('modalMainImg').src='${escapeHtml(imgUrl)}'" class="w-16 h-16 rounded-lg overflow-hidden border border-gold/30 hover:border-gold">
+              <button onclick="document.getElementById('modalMainImg').src='${escapeHtml(imgUrl)}'" class="w-16 h-16 rounded-lg overflow-hidden border border-gold/30 hover:border-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gold" aria-label="View alternative image">
                 <img src="${escapeHtml(imgUrl)}" class="w-full h-full object-cover" alt="">
               </button>
             `).join('')}
@@ -768,53 +1165,39 @@ function openQuickView(id) {
             <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Guests</span><span class="font-serif text-xl font-bold text-primary">${prop.guests}</span></div>
           </div>
 
-          <h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Privileges</h4>
-          <div class="flex flex-wrap gap-2 mb-8">
-            ${prop.amenities.map(a => `<span class="bg-primary/5 text-primary text-xs px-3 py-1.5 rounded-xl border border-primary/10 flex items-center gap-1.5"><i class="fa-solid fa-check text-gold text-xs" aria-hidden="true"></i> ${escapeHtml(a)}</span>`).join('')}
-          </div>
+          ${prop.amenities.length ? `
+            <h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Inclusive Privileges</h4>
+            <div class="flex flex-wrap gap-2 mb-8">
+              ${prop.amenities.map(a => `<span class="bg-primary/5 text-primary text-xs px-3 py-1.5 rounded-xl border border-primary/10 flex items-center gap-1.5"><i class="fa-solid fa-check text-gold text-xs" aria-hidden="true"></i> ${escapeHtml(a)}</span>`).join('')}
+            </div>
+          ` : ''}
         </div>
         <div class="pt-4 border-t border-charcoal/10 flex items-center justify-between gap-3 flex-wrap">
           <div>
             <span class="font-serif text-3xl font-bold text-primary">${formatGHS(prop.price)}</span>
             <span class="text-xs text-charcoal/70">/ night</span>
           </div>
-          <button onclick="closeQuickViewModal(); openBookingModal('${prop.id}');" class="bg-primary text-gold hover:bg-gold hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+          <button onclick="closeQuickViewModal(); openBookingModal('${prop.id}');"
+                  class="bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
             Book This Estate
           </button>
         </div>
       </div>
     </div>
   `;
-  modal.classList.remove('hidden');
-  modal.classList.add('flex');
-  document.body.classList.add('modal-open');
+  openModal(modal);
 }
+function closeQuickViewModal() { closeModal(document.getElementById('quickViewModal')); }
 
-function closeQuickViewModal() {
-  const modal = document.getElementById('quickViewModal');
-  if (!modal) return;
-  modal.classList.add('hidden');
-  modal.classList.remove('flex');
-  document.body.classList.remove('modal-open');
-}
-
-/* ============================================================
-   BOOKING MODAL
-   ============================================================ */
+/* ---------- Booking ---------- */
 function openBookingModal(propertyId) {
   const prop = PROPERTIES.find(p => String(p.id) === String(propertyId));
   if (!prop) { showToast('Property not found.', 'error'); return; }
-
-  // Admin shouldn't book via portal
-  if (IS_ADMIN) {
-    showToast('Admins cannot book via the guest portal.', 'info');
-    return;
-  }
+  if (IS_ADMIN) { showToast('Admins cannot book via the guest portal.', 'info'); return; }
 
   const modal = document.getElementById('bookingModal');
   const content = document.getElementById('bookingModalContent');
 
-  // Guest → prompt to sign in
   if (!IS_LOGGED_IN) {
     content.innerHTML = `
       <div class="p-8 sm:p-10 text-center">
@@ -826,55 +1209,40 @@ function openBookingModal(propertyId) {
           Create a free account or sign in to reserve <strong>${escapeHtml(prop.title)}</strong>.
           Your concierge will confirm within 2 hours.
         </p>
-
         <div class="flex flex-col sm:flex-row gap-3">
-          <a href="{{ url_for('auth.login') }}"
-             class="flex-1 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+          <a href="{{ url_for('auth.login') }}" class="flex-1 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all">
             <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
           </a>
-          <a href="{{ url_for('auth.register') }}"
-             class="flex-1 bg-gold text-primary hover:bg-primary hover:text-gold px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+          <a href="{{ url_for('auth.register') }}" class="flex-1 bg-gold text-primary hover:bg-primary hover:text-gold px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all">
             <i class="fa-solid fa-user-plus mr-1" aria-hidden="true"></i> Create Account
           </a>
         </div>
-
         <p class="text-[10px] text-charcoal/40 mt-5">
-          Or
-          <button onclick="switchToGuestInquiry('${prop.id}')" class="text-gold hover:underline font-semibold">
-            submit a guest inquiry without an account
-          </button>
+          Or <button onclick="switchToGuestInquiry('${prop.id}')" class="text-gold hover:underline font-semibold focus:outline-none">submit a guest inquiry without an account</button>
         </p>
       </div>
     `;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    document.body.classList.add('modal-open');
+    openModal(modal);
     return;
   }
 
-  // Logged-in client → show inquiry form
   switchToLoggedInBooking(prop);
+  openModal(modal);
 }
 
 function switchToGuestInquiry(propertyId) {
   const prop = PROPERTIES.find(p => String(p.id) === String(propertyId));
   if (!prop) return;
-
-  const content = document.getElementById('bookingModalContent');
-  content.innerHTML = buildInquiryFormHTML(prop, {
-    name: '', email: '', phone: '', isGuest: true,
+  document.getElementById('bookingModalContent').innerHTML = buildInquiryFormHTML(prop, {
+    name: '', email: '', phone: '', isGuest: true
   });
   bindInquiryFormEvents();
   focusFirstField();
 }
 
 function switchToLoggedInBooking(prop) {
-  const content = document.getElementById('bookingModalContent');
-  content.innerHTML = buildInquiryFormHTML(prop, {
-    name: CURRENT_USER.name || '',
-    email: CURRENT_USER.email || '',
-    phone: '',
-    isGuest: false,
+  document.getElementById('bookingModalContent').innerHTML = buildInquiryFormHTML(prop, {
+    name: CURRENT_USER.name || '', email: CURRENT_USER.email || '', phone: '', isGuest: false
   });
   bindInquiryFormEvents();
   focusFirstField();
@@ -882,8 +1250,7 @@ function switchToLoggedInBooking(prop) {
 
 function focusFirstField() {
   requestAnimationFrame(() => {
-    const el = document.querySelector('#bookingInquiryForm input[name="name"]');
-    if (el) el.focus();
+    document.querySelector('#bookingInquiryForm input[name="name"]')?.focus();
   });
 }
 
@@ -897,7 +1264,7 @@ function buildInquiryFormHTML(prop, defaults) {
       <div class="flex items-start gap-4 mb-6">
         <div class="w-16 h-16 rounded-xl border border-gold/30 flex-shrink-0 bg-primary-dark overflow-hidden">
           <img src="${escapeHtml(prop.image)}" alt="" class="w-full h-full object-cover"
-               onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-gold font-serif text-2xl font-bold\\'>${initials}</div>';">
+               onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=&quot;w-full h-full flex items-center justify-center text-gold font-serif text-2xl font-bold&quot;>${initials}</div>';">
         </div>
         <div class="min-w-0">
           <span class="text-[10px] uppercase tracking-widest text-gold font-bold">Book This Estate</span>
@@ -919,40 +1286,40 @@ function buildInquiryFormHTML(prop, defaults) {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Full Name *</label>
-            <input type="text" name="name" required maxlength="120" value="${escapeHtml(defaults.name)}"
-                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+            <label for="bookingName" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Full Name *</label>
+            <input type="text" id="bookingName" name="name" required maxlength="120" value="${escapeHtml(defaults.name)}"
+                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
           </div>
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Email *</label>
-            <input type="email" name="email" required maxlength="200" value="${escapeHtml(defaults.email)}"
-                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+            <label for="bookingEmail" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Email *</label>
+            <input type="email" id="bookingEmail" name="email" required maxlength="200" value="${escapeHtml(defaults.email)}"
+                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Phone *</label>
-          <input type="tel" name="phone" required maxlength="40" value="${escapeHtml(defaults.phone)}"
+          <label for="bookingPhone" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Phone *</label>
+          <input type="tel" id="bookingPhone" name="phone" required maxlength="40" value="${escapeHtml(defaults.phone)}"
                  placeholder="+233 XX XXX XXXX"
-                 class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+                 class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Check-In *</label>
-            <input type="date" name="check_in" required min="${today}" value="${tomorrow}"
-                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+            <label for="bookingCheckIn" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Check-In *</label>
+            <input type="date" id="bookingCheckIn" name="check_in" required min="${today}" value="${tomorrow}"
+                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
           </div>
           <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Check-Out *</label>
-            <input type="date" name="check_out" required min="${tomorrow}"
-                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+            <label for="bookingCheckOut" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Check-Out *</label>
+            <input type="date" id="bookingCheckOut" name="check_out" required min="${tomorrow}"
+                   class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Guests</label>
-          <select name="guests" class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm">
+          <label for="bookingGuests" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Guests</label>
+          <select id="bookingGuests" name="guests" class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
             <option value="1-2 Guests">1-2 Guests</option>
             <option value="3-5 Guests">3-5 Guests</option>
             <option value="6-10 Guests">6-10 Guests</option>
@@ -961,14 +1328,14 @@ function buildInquiryFormHTML(prop, defaults) {
         </div>
 
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Special Requests</label>
-          <textarea name="message" rows="3" maxlength="2000"
-                    placeholder="Chef dietary requirements, yacht charters, airport transfers..."
-                    class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm resize-none"></textarea>
+          <label for="bookingMessage" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Special Requests</label>
+          <textarea id="bookingMessage" name="message" rows="3" maxlength="2000"
+                    placeholder="Chef dietary requirements, airport transfers, extended-stay questions..."
+                    class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea>
         </div>
 
         <button type="submit" id="bookingSubmitBtn"
-                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury flex items-center justify-center gap-2">
+                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all shadow-luxury flex items-center justify-center gap-2">
           <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
           <span>Submit Reservation Request</span>
         </button>
@@ -1004,20 +1371,16 @@ function bindInquiryFormEvents() {
       check_in: (fd.get('check_in') || '').toString(),
       check_out: (fd.get('check_out') || '').toString(),
       guests: (fd.get('guests') || '1-2 Guests').toString(),
-      message: (fd.get('message') || '').toString().trim(),
+      message: (fd.get('message') || '').toString().trim()
     };
 
     if (!payload.name || !payload.email || !payload.phone || !payload.check_in || !payload.check_out) {
       showToast('Please fill in all required fields.', 'error');
-      btn.disabled = false;
-      btn.innerHTML = original;
-      return;
+      btn.disabled = false; btn.innerHTML = original; return;
     }
     if (payload.check_out <= payload.check_in) {
       showToast('Check-out must be after check-in.', 'error');
-      btn.disabled = false;
-      btn.innerHTML = original;
-      return;
+      btn.disabled = false; btn.innerHTML = original; return;
     }
 
     try {
@@ -1036,18 +1399,55 @@ function bindInquiryFormEvents() {
     } catch (err) {
       showToast('Network error. Please try again.', 'error');
     } finally {
-      btn.disabled = false;
-      btn.innerHTML = original;
+      btn.disabled = false; btn.innerHTML = original;
     }
   });
 }
 
-function closeBookingModal() {
-  const modal = document.getElementById('bookingModal');
-  if (!modal) return;
-  modal.classList.add('hidden');
-  modal.classList.remove('flex');
-  document.body.classList.remove('modal-open');
+function closeBookingModal() { closeModal(document.getElementById('bookingModal')); }
+
+/* ---------- Contact form ---------- */
+async function handleContactSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.getElementById('contactSubmitBtn');
+  const feedback = document.getElementById('contactFormFeedback');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1" aria-hidden="true"></i> Sending…';
+
+  const fd = new FormData(form);
+  const payload = {
+    name: (fd.get('name') || '').toString().trim(),
+    email: (fd.get('email') || '').toString().trim(),
+    phone: (fd.get('phone') || '').toString().trim(),
+    property: (fd.get('property') || 'General Inquiry').toString(),
+    check_in: '', check_out: '',
+    guests: '—',
+    message: (fd.get('message') || '').toString().trim()
+  };
+
+  try {
+    const res = await fetch('{{ url_for("public.submit_inquiry") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      feedback.textContent = '✓ Thank you! A concierge will be in touch within 2 hours.';
+      feedback.classList.remove('hidden');
+      showToast('Your message has been sent.', 'success');
+      form.reset();
+    } else {
+      showToast(data.error || 'Submission failed. Please try again.', 'error');
+    }
+  } catch {
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
 }
 
 /* ---------- Journal ---------- */
@@ -1068,9 +1468,7 @@ async function handleJournalSubmit(e) {
     } else {
       showToast(data.error || 'Subscription failed.', 'error');
     }
-  } catch (err) {
-    showToast('Network error. Please try again.', 'error');
-  }
+  } catch { showToast('Network error. Please try again.', 'error'); }
 }
 
 /* ---------- Toast ---------- */
@@ -1079,11 +1477,11 @@ function showToast(message, type = 'success') {
   if (!container) return;
   const toast = document.createElement('div');
   const bgClass = type === 'success' ? 'bg-primary text-gold border-gold'
-                : type === 'error' ? 'bg-red-600 text-white border-red-400'
-                : 'bg-gold text-primary border-primary';
+                : type === 'error'   ? 'bg-red-600 text-white border-red-400'
+                                     : 'bg-gold text-primary border-primary';
   const iconClass = type === 'success' ? 'fa-solid fa-circle-check'
-                  : type === 'error' ? 'fa-solid fa-circle-exclamation'
-                  : 'fa-solid fa-circle-info';
+                  : type === 'error'   ? 'fa-solid fa-circle-exclamation'
+                                       : 'fa-solid fa-circle-info';
   toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-fade-in ${bgClass}`;
   toast.innerHTML = `<i class="${iconClass} text-lg" aria-hidden="true"></i><span>${escapeHtml(message)}</span>`;
   container.appendChild(toast);

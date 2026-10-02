@@ -9,7 +9,7 @@
 <title>{% block title %}Admin Console — {{ SITE_NAME }}{% endblock %}</title>
 
 <!-- Inline SVG favicon -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%231a3a2a'/><text x='50' y='68' font-size='60' font-family='Georgia' font-style='italic' font-weight='bold' fill='%23c9a84c' text-anchor='middle'>R</text></svg>">
+<link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -130,7 +130,7 @@ tailwind.config = {
          class="sidebar fixed lg:static inset-y-0 left-0 z-40 w-64 bg-primary text-ivory flex flex-col"
          aria-label="Admin sidebar">
     <div class="h-20 px-6 flex items-center gap-3 border-b border-gold/20">
-      <div class="w-9 h-9 rounded-full bg-gold flex items-center justify-center text-primary font-serif font-bold text-lg">R</div>
+      <div class="w-9 h-9 rounded-full bg-gold flex items-center justify-center text-primary font-serif font-bold text-lg"></div>
       <div>
         <span class="font-serif text-lg tracking-widest text-ivory block leading-none">LE RÊVE</span>
         <span class="text-[9px] tracking-[0.25em] uppercase text-gold">Admin</span>
