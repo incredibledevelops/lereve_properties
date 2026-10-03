@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Forgot Password · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-4 relative">
+  {# Decorative background #}
+  <div class="absolute inset-0 bg-gradient-to-br from-primary to-primary-dark"></div>
+  <div class="absolute inset-0 opacity-10 bg-cover bg-center pointer-events-none kente-pattern"></div>
+
+  <div class="relative z-10 w-full max-w-md my-8">
+
+    {# ---------- Brand mark ---------- #}
+    <div class="text-center mb-6">
+      <a href="{{ url_for('auth.index') }}" class="inline-block" aria-label="{{ SITE_NAME }} — Home">
+        <div class="w-14 h-14 mx-auto rounded-full bg-gold flex items-center justify-center text-primary border border-gold/40 mb-4">
+          <i class="fa-solid fa-key text-xl" aria-hidden="true"></i>
+        </div>
+      </a>
+      <h1 class="font-serif text-3xl font-semibold text-ivory">Forgot Password</h1>
+      <p class="text-xs text-ivory/60 mt-1 tracking-widest uppercase">
+        Password Recovery
+      </p>
+    </div>
+
+    {# ---------- Card ---------- #}
+    <div class="bg-ivory rounded-3xl shadow-2xl border border-gold/30 p-8 sm:p-10">
+
+      {# ---------- Flash messages (shown above form) ---------- #}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="space-y-2 mb-5" aria-live="polite">
+            {% for category, message in messages %}
+              {% set is_error = category in ('error', 'danger') %}
+              <div role="alert"
+                   class="flex items-start gap-2 p-3 rounded-xl border text-xs
+                          {% if is_error %}
+                            border-red-200 bg-red-50 text-red-700
+                          {% else %}
+                            border-emerald-200 bg-emerald-50 text-emerald-700
+                          {% endif %}">
+                <i class="fa-solid {% if is_error %}fa-circle-exclamation{% else %}fa-circle-check{% endif %} mt-0.5"
+                   aria-hidden="true"></i>
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <p class="text-xs text-charcoal/70 mb-6 text-center leading-relaxed">
+        Enter the email address linked to your account and we'll send you a secure reset link.
+      </p>
+
+      <form method="POST" id="forgotForm" class="space-y-4" novalidate>
+        {{ form.hidden_tag() }}
+
+        {# ---------- Email ---------- #}
+        <div>
+          <label for="{{ form.email.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1
+                        {% if form.email.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Email <span class="text-gold">*</span>
+          </label>
+
+          {{ form.email(
+              id=form.email.id,
+              type="email",
+              autocomplete="email",
+              autofocus=true,
+              required=true,
+              aria_invalid="true" if form.email.errors else "false",
+              aria_describedby="emailError",
+              class="w-full px-4 py-3 rounded-xl border bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                    + ("border-red-300 bg-red-50" if form.email.errors else "border-charcoal/15"),
+              placeholder="you@domain.com"
+          ) }}
+
+          {% if form.email.errors %}
+            <ul id="emailError" role="alert"
+                class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.email.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        {# ---------- Submit ---------- #}
+        <button type="submit" id="forgotSubmitBtn"
+                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary
+                       py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs
+                       transition-all shadow-luxury flex items-center justify-center gap-2
+                       disabled:opacity-70 disabled:cursor-wait">
+          <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+          <span>Send Reset Link</span>
+        </button>
+      </form>
+
+      {# ---------- Helper note ---------- #}
+      <p class="mt-5 text-[11px] text-charcoal/50 text-center leading-relaxed">
+        Didn't receive the email? Check your spam folder.<br>
+        Reset links expire after <strong class="text-charcoal/70">1 hour</strong>.
+      </p>
+
+      {# ---------- Back link ---------- #}
+      <div class="mt-6 pt-5 border-t border-charcoal/10 text-center">
+        <a href="{{ url_for('auth.login') }}"
+           class="group inline-flex items-center gap-2 text-xs text-gold hover:text-gold-dark
+                  font-semibold uppercase tracking-widest transition-colors">
+          <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-0.5"
+             aria-hidden="true"></i>
+          <span>Back to Sign In</span>
+        </a>
+      </div>
+    </div>
+
+    {# ---------- Public site link ---------- #}
+    <div class="text-center mt-6">
+      <a href="{{ PUBLIC_SITE_URL }}"
+         class="text-ivory/60 hover:text-gold text-xs uppercase tracking-widest transition-colors">
+        <i class="fa-solid fa-arrow-left mr-1" aria-hidden="true"></i>
+        Back to Public Site
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+  const form = document.getElementById('forgotForm');
+  const btn  = document.getElementById('forgotSubmitBtn');
+  if (!form || !btn) return;
+
+  form.addEventListener('submit', function () {
+    // Native validation as a first pass (email format, required)
+    if (!form.checkValidity()) return;
+
+    // Lock the button to prevent double-submits and show progress
+    if (!btn.disabled) {
+      btn.disabled = true;
+      btn.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>' +
+        '<span>Sending…</span>';
+    }
+  });
+})();
+</script>
+{% endblock %}

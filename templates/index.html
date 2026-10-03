@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Le Rêve Properties · Your Dream Stay, Our Passion{% endblock %}
+{% block title %}{{ SITE_NAME }} · Your Dream Stay, Our Passion{% endblock %}
 
 {% block content %}
 
@@ -11,33 +11,41 @@
   <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
 
   <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-    <span class="inline-block py-1 px-4 rounded-full border border-gold/40 text-gold text-xs uppercase tracking-[0.25em] mb-6 backdrop-blur-sm bg-primary/40">
+    <span class="inline-block py-1 px-4 rounded-full border border-gold/40 text-gold text-xs uppercase tracking-[0.25em] mb-6 backdrop-blur-sm bg-primary/40 animate-fade-in">
       Accra, Ghana · Come as a guest, return as family
     </span>
-    <h1 class="font-serif text-4xl sm:text-6xl lg:text-7xl font-light text-ivory tracking-wide leading-[1.05] max-w-5xl mx-auto mb-6">
+    <h1 class="font-serif text-4xl sm:text-6xl lg:text-7xl font-light text-ivory tracking-wide leading-[1.05] max-w-5xl mx-auto mb-6 animate-fade-in" style="animation-delay:.1s">
       Where <span class="italic text-gold font-normal">Africa</span> feels like home
     </h1>
-    <p class="text-ivory/80 text-base sm:text-lg font-light max-w-2xl mx-auto leading-relaxed mb-10">
+    <p class="text-ivory/80 text-base sm:text-lg font-light max-w-2xl mx-auto leading-relaxed mb-10 animate-fade-in" style="animation-delay:.2s">
       Quality short-stay accommodation in the heart of Accra — affordable, comfortable, and close to everything that matters.
     </p>
-    <div class="flex flex-col sm:flex-row gap-3 justify-center">
-      <a href="{{ url_for('public.stays') }}"
-         class="bg-gold text-primary hover:bg-white px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+    <div class="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in" style="animation-delay:.3s">
+      <a href="{{ url_for('auth.stays') }}"
+         class="bg-gold text-primary hover:bg-white px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary">
         <i class="fa-solid fa-house-chimney mr-2" aria-hidden="true"></i> Browse Stays
       </a>
-      <a href="{{ url_for('public.contact') }}"
-         class="border border-ivory/40 text-ivory hover:bg-ivory hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
+      <a href="{{ url_for('auth.contact') }}"
+         class="border border-ivory/40 text-ivory hover:bg-ivory hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
         <i class="fa-solid fa-paper-plane mr-2" aria-hidden="true"></i> Talk to Concierge
       </a>
     </div>
+
+    <!-- Scroll cue -->
+    <button onclick="document.getElementById('searchBar').scrollIntoView({behavior:'smooth',block:'center'})"
+            class="mt-12 inline-flex flex-col items-center gap-1 text-ivory/50 hover:text-gold transition-colors focus:outline-none focus-visible:text-gold animate-fade-in"
+            style="animation-delay:.5s" aria-label="Scroll to search">
+      <span class="text-[10px] uppercase tracking-widest font-semibold">Explore</span>
+      <i class="fa-solid fa-chevron-down text-xs animate-bounce" aria-hidden="true"></i>
+    </button>
   </div>
 </section>
 
-<!-- ============ SEARCH & FILTER BAR (overlapping) ============ -->
-<section class="relative -mt-12 z-20">
+<!-- ============ SEARCH & FILTER BAR ============ -->
+<section id="searchBar" class="relative -mt-12 z-20">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="glass-card text-charcoal rounded-3xl p-4 sm:p-6 shadow-luxury border border-gold/30">
-      <form onsubmit="event.preventDefault(); applyHeroFilters();" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <form onsubmit="event.preventDefault(); applyHeroFilters();" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end" role="search">
         <div class="flex flex-col">
           <label for="filterLocation" class="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 flex items-center gap-1.5">
             <i class="fa-solid fa-location-dot text-gold" aria-hidden="true"></i> Destination
@@ -47,7 +55,7 @@
         </div>
         <div class="flex flex-col">
           <label for="filterType" class="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 flex items-center gap-1.5">
-            <i class="fa-solid fa-house-chimney text-gold" aria-hidden="true"></i> Estate Type
+            <i class="fa-solid fa-house-chimney text-gold" aria-hidden="true"></i> Apartment Type
           </label>
           <select id="filterType" onchange="debouncedRender()"
                   class="w-full px-4 py-3 rounded-xl border border-charcoal/10 bg-ivory/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
@@ -72,6 +80,9 @@
           </button>
         </div>
       </form>
+
+      <!-- Active filter chips -->
+      <div id="activeFilters" class="hidden flex-wrap gap-2 mt-4 pt-4 border-t border-gold/20"></div>
     </div>
   </div>
 </section>
@@ -79,27 +90,27 @@
 <!-- ============ STATS STRIP ============ -->
 <section class="py-16 bg-primary-dark text-ivory border-t border-b border-gold/20">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-    <div>
-      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">100%</span>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-to="100" data-suffix="%">0%</span>
       <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Verified Apartments</span>
     </div>
-    <div>
-      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">24 / 7</span>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-text="24 / 7">24 / 7</span>
       <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Private Concierge</span>
     </div>
-    <div>
-      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">4.98 ★</span>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-to="4.98" data-decimals="2" data-suffix=" ★">0 ★</span>
       <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Avg Guest Rating</span>
     </div>
-    <div>
-      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">15 min</span>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-to="15" data-suffix=" min">0 min</span>
       <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">From Airport</span>
     </div>
   </div>
 </section>
 
 <!-- ============ TRUST BAR RIBBON ============ -->
-<section class="bg-forest/95 border-b border-gold/20">
+<section class="bg-forest/95 border-b border-gold/20" aria-hidden="true">
   <div class="trust-bar py-3">
     <div class="trust-bar-track">
       {% for i in range(2) %}
@@ -108,7 +119,8 @@
         <span class="trust-item" {% if i == 1 %}aria-hidden="true"{% endif %}><span class="check">✓</span> 15 min from Kotoka International Airport</span>
         <span class="trust-item" {% if i == 1 %}aria-hidden="true"{% endif %}><span class="check">✓</span> Local &amp; international guests welcome</span>
         <span class="trust-item" {% if i == 1 %}aria-hidden="true"{% endif %}><span class="check">✓</span> Business &amp; leisure stays</span>
-        <span class="trust-item" {% if i == 1 %}aria-hidden="true"{% endif %}><span class="check">✓</span> 24/7 support</span>
+        <span class="trust-item" {% if i == 1 %}aria-hidden="true"{% endif %}><span class="check">✓</span> 24/7 support
+        </span>
       {% endfor %}
     </div>
   </div>
@@ -121,10 +133,10 @@
       <div>
         <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-2">Exclusive Portfolio</span>
         <h2 class="font-serif text-3xl sm:text-4xl font-light text-primary">Featured <span class="italic text-gold">Sanctuaries</span></h2>
-        <p id="propertyCount" class="text-xs text-charcoal/60 mt-2 font-light"></p>
+        <p id="propertyCount" class="text-xs text-charcoal/60 mt-2 font-light" aria-live="polite"></p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button onclick="filterCategory('all', this)"
+        <button onclick="filterCategory('all', this)" data-category="all"
                 class="category-btn active border border-primary bg-primary text-gold px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all">
           All Stay
         </button>
@@ -143,7 +155,7 @@
 
     <div id="noResults" class="hidden text-center py-16 bg-white/50 rounded-3xl border border-dashed border-gold/40">
       <i class="fa-solid fa-house-circle-xmark text-4xl text-gold mb-3" aria-hidden="true"></i>
-      <h3 class="font-serif text-2xl font-semibold text-primary mb-2">No Matching Estates Found</h3>
+      <h3 class="font-serif text-2xl font-semibold text-primary mb-2">No Matching Apartments Found</h3>
       <p class="text-charcoal/70 text-sm max-w-md mx-auto mb-6">Try adjusting your filters or price range.</p>
       <button onclick="resetAllFilters()"
               class="bg-primary text-gold px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all">
@@ -153,11 +165,11 @@
   </div>
 </section>
 
-<!-- ============ WHY LE RÊVE (full section) ============ -->
-<section class="bg-primary relative overflow-hidden py-20 md:py-28">
+<!-- ============ WHY LE RÊVE ============ -->
+<section id="why" class="bg-primary relative overflow-hidden py-20 md:py-28">
   <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
   <div class="relative max-w-7xl mx-auto px-6 md:px-16">
-    <div class="max-w-2xl mb-12">
+    <div class="max-w-2xl mb-12 reveal">
       <p class="why-eyebrow mb-4">Why Le Rêve</p>
       <h2 class="font-serif text-3xl sm:text-5xl font-light text-ivory leading-tight mb-4">
         Five things guests <span class="italic text-gold font-normal">come back for</span>
@@ -168,24 +180,24 @@
     </div>
 
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div class="why-card"><div class="why-num">01</div><h3 class="why-title">Genuine local knowledge</h3>
+      <div class="why-card reveal"><div class="why-num">01</div><h3 class="why-title">Genuine local knowledge</h3>
         <p class="why-body">We know Accra the way only someone who lives here can. Best routes, local food, what to avoid — we share it all.</p></div>
-      <div class="why-card"><div class="why-num">02</div><h3 class="why-title">Affordable without compromise</h3>
+      <div class="why-card reveal" style="transition-delay:.05s"><div class="why-num">02</div><h3 class="why-title">Affordable without compromise</h3>
         <p class="why-body">Significantly below hotel pricing without sacrificing the things that matter: cleanliness, comfort, and reliable communication.</p></div>
-      <div class="why-card"><div class="why-num">03</div><h3 class="why-title">City access, airport proximity</h3>
+      <div class="why-card reveal" style="transition-delay:.1s"><div class="why-num">03</div><h3 class="why-title">City access, airport proximity</h3>
         <p class="why-body">15 minutes from Kotoka International Airport and well-connected to business districts, embassies, and key city areas.</p></div>
-      <div class="why-card"><div class="why-num">04</div><h3 class="why-title">Responsive, real support</h3>
+      <div class="why-card reveal" style="transition-delay:.15s"><div class="why-num">04</div><h3 class="why-title">Responsive, real support</h3>
         <p class="why-body">Not a faceless corporation — you're in direct contact with us throughout your stay. Fast answers, real help, no automated runaround.</p></div>
-      <div class="why-card"><div class="why-num">05</div><h3 class="why-title">A sense of home</h3>
+      <div class="why-card reveal" style="transition-delay:.2s"><div class="why-num">05</div><h3 class="why-title">A sense of home</h3>
         <p class="why-body">Whether you're here for a night or a month, you'll have a real space that feels lived in — not staged. That's what a home should feel like.</p></div>
-      <div class="why-card flex items-center">
+      <div class="why-card flex items-center reveal" style="transition-delay:.25s">
         <blockquote class="why-quote">Le Rêve means "the dream." And the dream is that every traveler to Africa can find a home worth coming back to.</blockquote>
       </div>
     </div>
 
     <div class="text-center mt-12">
-      <a href="{{ url_for('public.why_us') }}"
-         class="inline-block border border-gold/40 text-gold hover:bg-gold hover:text-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
+      <a href="{{ url_for('auth.why_us') }}"
+         class="inline-block border border-gold/40 text-gold hover:bg-gold hover:text-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
         Read our full story <i class="fa-solid fa-arrow-right ml-1" aria-hidden="true"></i>
       </a>
     </div>
@@ -194,7 +206,7 @@
 
 <!-- ============ GUEST REFLECTIONS CAROUSEL ============ -->
 {% if reviews %}
-<section class="py-20 md:py-28 bg-ivory relative overflow-hidden">
+<section id="reviews" class="py-20 md:py-28 bg-ivory relative overflow-hidden">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12">
     <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">Guest Testimonials</span>
     <h2 class="font-serif text-3xl sm:text-5xl font-light text-primary">Verified <span class="italic text-gold">Guest Reflections</span></h2>
@@ -220,8 +232,7 @@
                 <p class="text-charcoal/80 text-sm leading-relaxed italic mb-6 line-clamp-2">"{{ r.text|e }}"</p>
               </div>
               <div class="flex items-center gap-4 pt-4 border-t border-charcoal/5">
-                <img src="{{ avatar_url|e }}" alt="{{ r.name or 'Guest' }}" class="w-12 h-12 rounded-full object-cover border-2 border-gold" loading="lazy"
-                     onerror="this.src='https://ui-avatars.com/api/?name={{ (r.name or 'Guest')|urlencode }}&amp;background=c9a84c&amp;color=1a3a2a';">
+                <img src="{{ avatar_url|e }}" alt="{{ r.name or 'Guest' }}" class="w-12 h-12 rounded-full object-cover border-2 border-gold" loading="lazy">
                 <div class="min-w-0">
                   <h4 class="font-serif text-base font-semibold text-primary truncate">{{ r.name|e or 'Anonymous' }}</h4>
                   <p class="text-xs text-gold truncate">{{ r.property|e or '—' }}</p>
@@ -237,7 +248,7 @@
 {% endif %}
 
 <!-- ============ CONCIERGE / CONTACT ============ -->
-<section class="py-20 bg-ivory-dark/40">
+<section id="concierge" class="py-20 bg-ivory-dark/40">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-14">
       <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">Concierge Desk</span>
@@ -245,14 +256,14 @@
         Initiate Your <span class="italic text-gold">Reservation</span>
       </h2>
       <p class="text-charcoal/70 text-sm sm:text-base font-light max-w-2xl mx-auto mt-4 leading-relaxed">
-        Our private advisors are available 24/7 to assist with availability, custom itineraries, or estate onboarding.
+        Our private advisors are available 24/7 to assist with availability, custom itineraries, or apartment onboarding.
       </p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-5xl mx-auto">
       <div class="space-y-4">
         <a href="https://wa.me/233547975252" target="_blank" rel="noopener"
-           class="flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 transition-all group">
+           class="flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
           <div class="w-14 h-14 rounded-xl bg-emerald-600/15 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
             <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
           </div>
@@ -260,10 +271,10 @@
             <span class="text-xs uppercase tracking-wider text-gold font-semibold block">Instant Concierge</span>
             <span class="text-sm font-medium text-charcoal">WhatsApp +233 54 797 5252</span>
           </div>
-          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform"></i>
+          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform" aria-hidden="true"></i>
         </a>
         <a href="tel:+233547975252"
-           class="flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 transition-all group">
+           class="flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
           <div class="w-14 h-14 rounded-xl bg-gold/20 text-gold flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
             <i class="fa-solid fa-phone" aria-hidden="true"></i>
           </div>
@@ -271,10 +282,10 @@
             <span class="text-xs uppercase tracking-wider text-gold font-semibold block">24/7 Global Desk</span>
             <span class="text-sm font-medium text-charcoal">+233 54 797 5252</span>
           </div>
-          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform"></i>
+          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform" aria-hidden="true"></i>
         </a>
         <a href="https://instagram.com/lereveafrica" target="_blank" rel="noopener"
-           class="flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 transition-all group">
+           class="flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
           <div class="w-14 h-14 rounded-xl bg-pink-500/15 text-pink-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
             <i class="fa-brands fa-instagram" aria-hidden="true"></i>
           </div>
@@ -282,7 +293,7 @@
             <span class="text-xs uppercase tracking-wider text-gold font-semibold block">Follow Portfolio</span>
             <span class="text-sm font-medium text-charcoal">@lereveproperties</span>
           </div>
-          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform"></i>
+          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform" aria-hidden="true"></i>
         </a>
         <div class="p-5 rounded-2xl bg-primary text-ivory">
           <div class="text-xs uppercase tracking-wider text-gold font-semibold mb-1">Location</div>
@@ -295,29 +306,32 @@
         <h3 class="font-serif text-2xl font-semibold text-primary mb-2">Send Private Inquiry</h3>
         <p class="text-xs text-charcoal/60 mb-6">An assigned concierge will respond within 2 hours.</p>
 
-        <div id="contactFormFeedback" class="hidden mb-4 p-3 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200"></div>
+        <div id="contactFormFeedback" class="hidden mb-4 p-3 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200" role="status" aria-live="polite"></div>
 
-        <form id="contactForm" onsubmit="handleContactSubmit(event)" class="space-y-4">
+        <form id="contactForm" onsubmit="handleContactSubmit(event)" class="space-y-4" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label for="contactName" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Full Name *</label>
-              <input type="text" id="contactName" name="name" required maxlength="120" placeholder="Your name"
-                     class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+              <input type="text" id="contactName" name="name" required maxlength="120" placeholder="Your name" autocomplete="name"
+                     class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+              <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
             </div>
             <div>
               <label for="contactEmail" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Email *</label>
-              <input type="email" id="contactEmail" name="email" required maxlength="200" placeholder="vip@domain.com"
-                     class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+              <input type="email" id="contactEmail" name="email" required maxlength="200" placeholder="vip@domain.com" autocomplete="email"
+                     class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+              <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
             </div>
           </div>
           <div>
             <label for="contactPhone" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Phone *</label>
-            <input type="tel" id="contactPhone" name="phone" required maxlength="40" placeholder="+233 XX XXX XXXX"
-                   class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+            <input type="tel" id="contactPhone" name="phone" required maxlength="40" placeholder="+233 XX XXX XXXX" autocomplete="tel"
+                   class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+            <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
           </div>
           <div>
-            <label for="contactProperty" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Estate of Interest</label>
+            <label for="contactProperty" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Apartment of Interest</label>
             <select name="property" id="contactProperty"
                     class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
               <option value="General Inquiry">General Bespoke Inquiry</option>
@@ -331,29 +345,82 @@
                       class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea>
           </div>
           <button type="submit" id="contactSubmitBtn"
-                  class="w-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+                  class="w-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury disabled:opacity-60 disabled:cursor-not-allowed">
             Submit Confidential Inquiry
           </button>
-          {% if current_user.is_authenticated and current_user.is_admin %}
-            <p class="text-[10px] text-center text-charcoal/50 pt-1">
-              <i class="fa-solid fa-shield-halved mr-1"></i>
-              <a href="{{ url_for('super_admin.dashboard') }}" class="text-gold hover:underline font-semibold">Go to your admin console</a>
-            </p>
-          {% endif %}
         </form>
       </div>
     </div>
   </div>
 </section>
+
+<!-- ============ BACK TO TOP ============ -->
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})"
+        class="fixed bottom-6 right-6 z-30 w-11 h-11 rounded-full bg-primary text-gold border border-gold/40 shadow-luxury flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+        aria-label="Back to top">
+  <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+</button>
+
+<!-- ============ PAGE STYLES ============ -->
+<style>
+  /* Reveal on scroll */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.is-visible { opacity: 1; transform: translateY(0); }
+
+  /* Skeleton loading */
+  .skeleton-card {
+    background: #fff;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    border: 1px solid rgba(201, 168, 76, 0.15);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  .skeleton-img { aspect-ratio: 4/3; background: linear-gradient(90deg, #ebe3d5 25%, #f7f3ed 50%, #ebe3d5 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+  .skeleton-line { height: 0.75rem; border-radius: 999px; background: linear-gradient(90deg, #ebe3d5 25%, #f7f3ed 50%, #ebe3d5 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .85; } }
+
+  /* Field states */
+  .field-input.invalid { border-color: #dc2626 !important; }
+  .field-input.valid   { border-color: #10b981 !important; }
+
+  /* Filter chip */
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    background: #1a3a2a; color: #c9a84c;
+    border-radius: 999px; font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.03em; text-transform: uppercase;
+  }
+  .filter-chip button {
+    color: #c9a84c; background: rgba(201,168,76,.15);
+    width: 1.1rem; height: 1.1rem; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; transition: background .2s ease, color .2s ease;
+  }
+  .filter-chip button:hover { background: #c9a84c; color: #1a3a2a; }
+
+  /* Category button active state */
+  .category-btn.active {
+    background: #1a3a2a; color: #c9a84c; border-color: #1a3a2a;
+  }
+  .category-btn:not(.active) {
+    background: rgba(255,255,255,.6);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; transition: none; }
+    .skeleton-card, .skeleton-img, .skeleton-line { animation: none; }
+    .animate-bounce { animation: none !important; }
+  }
+</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
 /* ============================================================
-   HOME PAGE — page-specific data + functions only.
-   All shared globals (CSRF_TOKEN, IS_LOGGED_IN, showToast,
-   escapeHtml, formatGHS, toggleFavorite, updateFavoritesBadge,
-   buildEndlessMarquee, openQuickView stub, etc.) live in base.html.
+   HOMEPAGE — index.html
+   Uses shared globals from base.html
    ============================================================ */
 const RAW_PROPERTIES = {{ properties|tojson }};
 const WISHLIST_IDS   = {{ wishlist_ids|tojson }};
@@ -372,7 +439,6 @@ function normalizeProperty(p) {
 }
 const PROPERTIES = RAW_PROPERTIES.map(normalizeProperty);
 
-/* Seed favorites from server + localStorage */
 WISHLIST_IDS.forEach(id => favorites.add(String(id)));
 try {
   const local = JSON.parse(localStorage.getItem('leReveFavorites') || '[]');
@@ -381,13 +447,112 @@ try {
 
 let activeCategory = 'all';
 let debounceTimer  = null;
+let isFirstRender  = true;
 
-function debouncedRender() { clearTimeout(debounceTimer); debounceTimer = setTimeout(renderPropertyListings, 250); }
+function debouncedRender() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(renderPropertyListings, 250);
+}
+
+/* ---------- URL sync ---------- */
+function readFiltersFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const loc    = params.get('loc') || '';
+  const type   = params.get('type') || 'all';
+  const price  = params.get('price') || '50000';
+  const cat    = params.get('cat') || 'all';
+  const locEl   = document.getElementById('filterLocation');
+  const typeEl  = document.getElementById('filterType');
+  const priceEl = document.getElementById('filterPrice');
+  if (locEl)   locEl.value = loc;
+  if (typeEl)  typeEl.value = type;
+  if (priceEl) { priceEl.value = price; updatePriceLabel(price); }
+  activeCategory = cat;
+  syncCategoryButtons();
+}
+function writeFiltersToURL() {
+  const loc   = (document.getElementById('filterLocation')?.value || '').trim();
+  const type  = document.getElementById('filterType')?.value || 'all';
+  const price = document.getElementById('filterPrice')?.value || '50000';
+  const params = new URLSearchParams();
+  if (loc) params.set('loc', loc);
+  if (type && type !== 'all') params.set('type', type);
+  if (price && price !== '50000') params.set('price', price);
+  if (activeCategory && activeCategory !== 'all') params.set('cat', activeCategory);
+  const qs = params.toString();
+  const url = qs ? `${window.location.pathname}?${qs}#listings` : `${window.location.pathname}#listings`;
+  history.replaceState(null, '', url);
+}
+function syncCategoryButtons() {
+  document.querySelectorAll('.category-btn').forEach(b => {
+    const isActive = b.dataset.category === activeCategory;
+    b.classList.toggle('active', isActive);
+    if (isActive) { b.classList.add('bg-primary', 'text-gold'); b.classList.remove('bg-white/60'); }
+    else { b.classList.remove('bg-primary', 'text-gold'); b.classList.add('bg-white/60'); }
+  });
+}
+
+/* ---------- Active filter chips ---------- */
+function renderActiveFilters() {
+  const wrap = document.getElementById('activeFilters');
+  if (!wrap) return;
+  const loc   = (document.getElementById('filterLocation')?.value || '').trim();
+  const type  = document.getElementById('filterType')?.value || 'all';
+  const price = parseInt(document.getElementById('filterPrice')?.value || '50000', 10);
+  const chips = [];
+  if (loc) chips.push({ key: 'loc',   label: `📍 ${escapeHtml(loc)}` });
+  if (type !== 'all') chips.push({ key: 'type', label: `🏠 ${escapeHtml(type)}` });
+  if (price < 50000) chips.push({ key: 'price', label: `≤ ${formatGHS(price)}` });
+  if (activeCategory !== 'all') chips.push({ key: 'cat', label: `✨ ${escapeHtml(activeCategory)}` });
+
+  if (chips.length === 0) {
+    wrap.classList.add('hidden'); wrap.classList.remove('flex');
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.classList.remove('hidden'); wrap.classList.add('flex');
+  wrap.innerHTML = `
+    <span class="text-[10px] uppercase tracking-widest font-bold text-primary/60 self-center mr-1">Active:</span>
+    ${chips.map(c => `<span class="filter-chip">${c.label}<button type="button" onclick="removeFilter('${c.key}')" aria-label="Remove ${c.key} filter"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></span>`).join('')}
+    <button type="button" onclick="resetAllFilters()" class="text-[10px] uppercase tracking-widest font-bold text-gold hover:text-primary transition-colors ml-1 self-center">Clear all</button>`;
+}
+function removeFilter(key) {
+  if (key === 'loc') { const el = document.getElementById('filterLocation'); if (el) el.value = ''; }
+  if (key === 'type') { const el = document.getElementById('filterType'); if (el) el.value = 'all'; }
+  if (key === 'price') { const el = document.getElementById('filterPrice'); if (el) { el.value = '50000'; updatePriceLabel('50000'); } }
+  if (key === 'cat') { activeCategory = 'all'; syncCategoryButtons(); }
+  renderPropertyListings();
+}
+
+/* ---------- Skeleton loader ---------- */
+function renderSkeletons(count = 6) {
+  const grid = document.getElementById('propertyGrid');
+  if (!grid) return;
+  grid.innerHTML = Array.from({ length: count }).map(() => `
+    <div class="skeleton-card">
+      <div class="skeleton-img"></div>
+      <div class="p-6 space-y-3">
+        <div class="skeleton-line w-1/3"></div>
+        <div class="skeleton-line w-3/4"></div>
+        <div class="skeleton-line w-1/2"></div>
+        <div class="skeleton-line w-2/3 mt-4"></div>
+      </div>
+    </div>`).join('');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderPropertyListings();
+  readFiltersFromURL();
+
+  /* Show skeletons on first load, then render after a beat */
+  renderSkeletons();
+  setTimeout(() => {
+    isFirstRender = false;
+    renderPropertyListings();
+  }, 350);
+
   updateFavoritesBadge();
-  /* Reviews marquee */
+
+  /* Reviews carousel */
   const rt = document.getElementById('reviewsCarouselTrack');
   const rs = document.getElementById('reviewsSource');
   if (rt && rs && rs.children.length > 0) {
@@ -395,8 +560,87 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => buildEndlessMarquee('reviewsCarouselTrack', 'reviewsSource', { speed: 70 }), 400);
     setTimeout(() => buildEndlessMarquee('reviewsCarouselTrack', 'reviewsSource', { speed: 70 }), 1200);
   }
+
+  /* Reveal on scroll */
+  setupRevealOnScroll();
+
+  /* Stats counter */
+  setupStatsCounters();
+
+  /* Back-to-top */
+  setupBackToTop();
+
+  /* Restore filters on back/forward */
+  window.addEventListener('popstate', () => { readFiltersFromURL(); renderPropertyListings(); });
 });
 
+/* ---------- Reveal on scroll ---------- */
+function setupRevealOnScroll() {
+  const els = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window) || els.length === 0) {
+    els.forEach(el => el.classList.add('is-visible'));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(el => io.observe(el));
+}
+
+/* ---------- Stats counters ---------- */
+function setupStatsCounters() {
+  const blocks = document.querySelectorAll('[data-stat]');
+  if (blocks.length === 0) return;
+  if (!('IntersectionObserver' in window)) return;
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target.querySelector('[data-count-to]');
+      if (!el) { io.unobserve(entry.target); return; }
+      const target = parseFloat(el.dataset.countTo);
+      const decimals = parseInt(el.dataset.decimals || '0', 10);
+      const suffix = el.dataset.suffix || '';
+      animateNumber(el, target, decimals, suffix, 1400);
+      io.unobserve(entry.target);
+    });
+  }, { threshold: 0.4 });
+  blocks.forEach(b => io.observe(b));
+}
+function animateNumber(el, target, decimals, suffix, duration) {
+  const start = performance.now();
+  const initial = 0;
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = initial + (target - initial) * eased;
+    el.textContent = val.toFixed(decimals) + suffix;
+    if (t < 1) requestAnimationFrame(tick);
+    else el.textContent = target.toFixed(decimals) + suffix;
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---------- Back to top ---------- */
+function setupBackToTop() {
+  const btn = document.getElementById('backToTop');
+  if (!btn) return;
+  const onScroll = () => {
+    const show = window.scrollY > 400;
+    btn.classList.toggle('opacity-0', !show);
+    btn.classList.toggle('pointer-events-none', !show);
+    btn.classList.toggle('opacity-100', show);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
+/* ---------- Render listings ---------- */
 function renderPropertyListings() {
   const grid      = document.getElementById('propertyGrid');
   const noResults = document.getElementById('noResults');
@@ -424,6 +668,10 @@ function renderPropertyListings() {
       ? (showingFavoritesOnly ? 'No saved favorites match' : 'No estates available')
       : `${filtered.length} estate${filtered.length === 1 ? '' : 's'} available${showingFavoritesOnly ? ' (favorites)' : ''}`;
   }
+
+  renderActiveFilters();
+  writeFiltersToURL();
+
   if (filtered.length === 0) {
     grid.innerHTML = '';
     noResults?.classList.remove('hidden');
@@ -437,16 +685,21 @@ function renderPropertyListings() {
       ? Math.round(((prop.original_price - prop.price) / prop.original_price) * 100) : 0;
 
     return `
-      <div class="bg-white rounded-3xl overflow-hidden shadow-luxury border border-gold/20 hover:border-gold transition-all group flex flex-col">
+      <div class="bg-white rounded-3xl overflow-hidden shadow-luxury border border-gold/20 hover:border-gold hover:-translate-y-1 transition-all group flex flex-col">
         <div class="relative aspect-[4/3] overflow-hidden bg-primary-dark">
           <img src="${escapeHtml(prop.image)}" alt="${escapeHtml(prop.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
           <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-black/20"></div>
           <span class="absolute top-4 left-4 bg-primary/90 text-gold backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-gold/30">${escapeHtml(prop.category)}</span>
-          <button onclick="toggleFavorite('${prop.id}')" aria-label="Save to wishlist"
+          <button onclick="toggleFavorite('${prop.id}')" aria-label="${isFav ? 'Remove from' : 'Save to'} wishlist" aria-pressed="${isFav}"
                   class="absolute top-4 right-4 w-9 h-9 rounded-full ${isFav ? 'bg-gold text-primary' : 'bg-primary/70 text-white hover:bg-gold hover:text-primary'} backdrop-blur-sm flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all shadow-md">
             <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" aria-hidden="true"></i>
           </button>
           ${savingsPct > 0 ? `<div class="absolute bottom-4 left-4 bg-gold text-primary font-bold text-xs px-3 py-1 rounded-lg shadow-md">Save ${savingsPct}%</div>` : ''}
+          <!-- Quick view overlay button on image -->
+          <button onclick="openQuickView('${prop.id}')" aria-label="Quick view ${escapeHtml(prop.title)}"
+                  class="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-white/90 text-primary hover:bg-gold hover:text-primary backdrop-blur-sm flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+            <i class="fa-solid fa-expand text-sm" aria-hidden="true"></i>
+          </button>
         </div>
         <div class="p-6 flex-1 flex flex-col justify-between">
           <div>
@@ -494,13 +747,7 @@ function filterCategory(cat, btn) {
   activeCategory = cat; showingFavoritesOnly = false;
   const typeSelect = document.getElementById('filterType');
   if (typeSelect && cat !== 'all') typeSelect.value = 'all';
-  document.querySelectorAll('.category-btn').forEach(b => {
-    b.classList.remove('active', 'bg-primary', 'text-gold');
-    b.classList.add('bg-white/60', 'text-primary');
-  });
-  let targetBtn = btn || document.querySelector(`.category-btn[data-category="${CSS.escape(cat)}"]`);
-  if (!targetBtn && cat === 'all') targetBtn = document.querySelector('.category-btn');
-  if (targetBtn) { targetBtn.classList.add('active', 'bg-primary', 'text-gold'); targetBtn.classList.remove('bg-white/60'); }
+  syncCategoryButtons();
   renderPropertyListings();
 }
 
@@ -513,14 +760,11 @@ function resetAllFilters() {
   if (type) type.value = 'all';
   if (price) price.value = '50000';
   updatePriceLabel('50000');
-  document.querySelectorAll('.category-btn').forEach((b, idx) => {
-    if (idx === 0) { b.classList.add('active', 'bg-primary', 'text-gold'); b.classList.remove('bg-white/60'); }
-    else { b.classList.remove('active', 'bg-primary', 'text-gold'); b.classList.add('bg-white/60'); }
-  });
+  syncCategoryButtons();
   renderPropertyListings();
 }
 
-/* ---- Quick view / Booking (page-specific copies) ---- */
+/* ---------- Quick view ---------- */
 function openQuickView(id) {
   const prop = PROPERTIES.find(p => String(p.id) === String(id));
   if (!prop) return;
@@ -532,7 +776,7 @@ function openQuickView(id) {
           <img id="modalMainImg" src="${escapeHtml(prop.image)}" alt="${escapeHtml(prop.title)}" class="w-full h-full object-cover">
         </div>
         ${prop.gallery.length > 1 ? `<div class="flex gap-2 flex-wrap">${prop.gallery.map(u => `
-          <button onclick="document.getElementById('modalMainImg').src='${escapeHtml(u)}'" class="w-16 h-16 rounded-lg overflow-hidden border border-gold/30 hover:border-gold"><img src="${escapeHtml(u)}" class="w-full h-full object-cover" alt=""></button>`).join('')}</div>` : ''}
+          <button onclick="document.getElementById('modalMainImg').src='${escapeHtml(u)}'" class="w-16 h-16 rounded-lg overflow-hidden border border-gold/30 hover:border-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gold" aria-label="View image"><img src="${escapeHtml(u)}" class="w-full h-full object-cover" alt=""></button>`).join('')}</div>` : ''}
         <div class="mt-6 pt-6 border-t border-gold/20">
           <span class="text-xs uppercase tracking-widest text-gold block mb-1">Location</span>
           <p class="font-serif text-xl">${escapeHtml(prop.location)}</p>
@@ -542,7 +786,7 @@ function openQuickView(id) {
         <div>
           <div class="flex items-center gap-2 mb-2 flex-wrap">
             <span class="bg-gold/20 text-gold-dark text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-gold/40">${escapeHtml(prop.category)}</span>
-            <span class="text-xs font-bold text-primary"><i class="fa-solid fa-star text-gold"></i> ${prop.rating}</span>
+            <span class="text-xs font-bold text-primary"><i class="fa-solid fa-star text-gold" aria-hidden="true"></i> ${prop.rating}</span>
           </div>
           <h2 class="font-serif text-3xl font-semibold text-primary mb-3">${escapeHtml(prop.title)}</h2>
           <p class="text-charcoal/80 text-sm leading-relaxed mb-6 font-light">${escapeHtml(prop.description)}</p>
@@ -552,12 +796,12 @@ function openQuickView(id) {
             <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Guests</span><span class="font-serif text-xl font-bold text-primary">${prop.guests}</span></div>
           </div>
           ${prop.amenities.length ? `<h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Inclusive Privileges</h4>
-            <div class="flex flex-wrap gap-2 mb-8">${prop.amenities.map(a => `<span class="bg-primary/5 text-primary text-xs px-3 py-1.5 rounded-xl border border-primary/10 flex items-center gap-1.5"><i class="fa-solid fa-check text-gold text-xs"></i> ${escapeHtml(a)}</span>`).join('')}</div>` : ''}
+            <div class="flex flex-wrap gap-2 mb-8">${prop.amenities.map(a => `<span class="bg-primary/5 text-primary text-xs px-3 py-1.5 rounded-xl border border-primary/10 flex items-center gap-1.5"><i class="fa-solid fa-check text-gold text-xs" aria-hidden="true"></i> ${escapeHtml(a)}</span>`).join('')}</div>` : ''}
         </div>
         <div class="pt-4 border-t border-charcoal/10 flex items-center justify-between gap-3 flex-wrap">
           <div><span class="font-serif text-3xl font-bold text-primary">${formatGHS(prop.price)}</span> <span class="text-xs text-charcoal/70">/ night</span></div>
           <button onclick="closeQuickViewModal(); openBookingModal('${prop.id}');"
-                  class="bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+                  class="bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
             Book This Estate
           </button>
         </div>
@@ -566,6 +810,7 @@ function openQuickView(id) {
   openModal(modal);
 }
 
+/* ---------- Booking ---------- */
 function openBookingModal(propertyId) {
   const prop = PROPERTIES.find(p => String(p.id) === String(propertyId));
   if (!prop) { showToast('Property not found.', 'error'); return; }
@@ -578,7 +823,7 @@ function openBookingModal(propertyId) {
     content.innerHTML = `
       <div class="p-8 sm:p-10 text-center">
         <div class="w-16 h-16 mx-auto rounded-full bg-gold/15 text-gold flex items-center justify-center mb-4">
-          <i class="fa-solid fa-lock text-2xl"></i>
+          <i class="fa-solid fa-lock text-2xl" aria-hidden="true"></i>
         </div>
         <h3 class="font-serif text-3xl font-semibold text-primary mb-2">Sign In to Book</h3>
         <p class="text-sm text-charcoal/70 mb-6 max-w-sm mx-auto">
@@ -586,10 +831,10 @@ function openBookingModal(propertyId) {
         </p>
         <div class="flex flex-col sm:flex-row gap-3">
           <a href="{{ url_for('auth.login') }}" class="flex-1 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
-            <i class="fa-solid fa-right-to-bracket mr-1"></i> Sign In
+            <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
           </a>
           <a href="{{ url_for('auth.register') }}" class="flex-1 bg-gold text-primary hover:bg-primary hover:text-gold px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
-            <i class="fa-solid fa-user-plus mr-1"></i> Create Account
+            <i class="fa-solid fa-user-plus mr-1" aria-hidden="true"></i> Create Account
           </a>
         </div>
         <p class="text-[10px] text-charcoal/40 mt-5">
@@ -631,24 +876,24 @@ function buildInquiryFormHTML(prop, defaults) {
         <div class="min-w-0">
           <span class="text-[10px] uppercase tracking-widest text-gold font-bold">Book This Estate</span>
           <h3 class="font-serif text-2xl font-semibold text-primary leading-tight mt-1">${escapeHtml(prop.title)}</h3>
-          <p class="text-xs text-charcoal/60 mt-0.5"><i class="fa-solid fa-location-dot text-gold mr-1"></i>${escapeHtml(prop.location)}</p>
+          <p class="text-xs text-charcoal/60 mt-0.5"><i class="fa-solid fa-location-dot text-gold mr-1" aria-hidden="true"></i>${escapeHtml(prop.location)}</p>
         </div>
       </div>
       <div class="p-3 rounded-xl bg-ivory border border-gold/20 mb-5 flex items-center justify-between">
         <span class="text-xs text-charcoal/60">Nightly rate</span>
         <span class="font-serif text-lg font-bold text-primary">${formatGHS(prop.price)}</span>
       </div>
-      <form id="bookingInquiryForm" class="space-y-4">
+      <form id="bookingInquiryForm" class="space-y-4" novalidate>
         <input type="hidden" name="property"    value="${escapeHtml(prop.title)}">
         <input type="hidden" name="property_id" value="${escapeHtml(prop.id)}">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div><label for="bookingName"  class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Full Name *</label>
-            <input type="text"  id="bookingName"  name="name"  required maxlength="120" value="${escapeHtml(defaults.name)}"  class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
+            <input type="text"  id="bookingName"  name="name"  required maxlength="120" value="${escapeHtml(defaults.name)}"  class="field-input w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
           <div><label for="bookingEmail" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Email *</label>
-            <input type="email" id="bookingEmail" name="email" required maxlength="200" value="${escapeHtml(defaults.email)}" class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
+            <input type="email" id="bookingEmail" name="email" required maxlength="200" value="${escapeHtml(defaults.email)}" class="field-input w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
         </div>
         <div><label for="bookingPhone" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Phone *</label>
-          <input type="tel" id="bookingPhone" name="phone" required maxlength="40" value="${escapeHtml(defaults.phone)}" placeholder="+233 XX XXX XXXX" class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
+          <input type="tel" id="bookingPhone" name="phone" required maxlength="40" value="${escapeHtml(defaults.phone)}" placeholder="+233 XX XXX XXXX" class="field-input w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
         <div class="grid grid-cols-2 gap-4">
           <div><label for="bookingCheckIn"  class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Check-In *</label>
             <input type="date" id="bookingCheckIn"  name="check_in"  required min="${today}"    value="${tomorrow}" class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
@@ -665,8 +910,8 @@ function buildInquiryFormHTML(prop, defaults) {
         <div><label for="bookingMessage" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Special Requests</label>
           <textarea id="bookingMessage" name="message" rows="3" maxlength="2000" placeholder="Chef dietary requirements, airport transfers, extended-stay questions..." class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea></div>
         <button type="submit" id="bookingSubmitBtn"
-                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs focus:outline-none transition-all shadow-luxury flex items-center justify-center gap-2">
-          <i class="fa-solid fa-paper-plane"></i><span>Submit Reservation Request</span>
+                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all shadow-luxury flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+          <i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Submit Reservation Request</span>
         </button>
       </form>
     </div>`;
@@ -675,12 +920,27 @@ function buildInquiryFormHTML(prop, defaults) {
 function bindInquiryFormEvents() {
   const form = document.getElementById('bookingInquiryForm');
   if (!form) return;
+
+  /* Live check-out min update */
+  const checkIn  = form.querySelector('#bookingCheckIn');
+  const checkOut = form.querySelector('#bookingCheckOut');
+  if (checkIn && checkOut) {
+    checkIn.addEventListener('change', () => {
+      if (checkIn.value) {
+        const next = new Date(checkIn.value);
+        next.setDate(next.getDate() + 1);
+        checkOut.min = next.toISOString().split('T')[0];
+        if (checkOut.value && checkOut.value <= checkIn.value) checkOut.value = checkOut.min;
+      }
+    });
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('bookingSubmitBtn');
     const original = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Sending…</span>';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Sending…</span>';
     const fd = new FormData(form);
     const payload = {
       name:      (fd.get('name')      || '').toString().trim(),
@@ -701,7 +961,7 @@ function bindInquiryFormEvents() {
       btn.disabled = false; btn.innerHTML = original; return;
     }
     try {
-      const res = await fetch('{{ url_for("public.submit_inquiry") }}', {
+      const res = await fetch('{{ url_for("api.create_inquiry") }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
         body: JSON.stringify(payload)
@@ -721,15 +981,44 @@ function bindInquiryFormEvents() {
   });
 }
 
-/* ---- Inline contact form (used on this page) ---- */
+/* ---------- Contact form validation ---------- */
+function validateField(input) {
+  const wrap = input.closest('div');
+  const errEl = wrap?.querySelector('.field-error');
+  const value = (input.value || '').trim();
+  let valid = true; let message = '';
+  if (input.hasAttribute('required') && !value) { valid = false; message = 'This field is required.'; }
+  else if (input.type === 'email' && value) {
+    valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    if (!valid) message = 'Please enter a valid email address.';
+  } else if (input.type === 'tel' && value) {
+    valid = value.replace(/\D/g, '').length >= 7;
+    if (!valid) message = 'Please enter a valid phone number.';
+  }
+  input.classList.toggle('invalid', !valid && value !== '');
+  input.classList.toggle('valid', valid && value !== '');
+  if (errEl) { errEl.textContent = message; errEl.classList.toggle('hidden', valid || value === ''); }
+  return valid;
+}
+
 async function handleContactSubmit(e) {
   e.preventDefault();
   const form = e.target;
+
+  const fields = form.querySelectorAll('.field-input');
+  let allValid = true;
+  fields.forEach(f => { if (!validateField(f)) allValid = false; });
+  if (!allValid) {
+    showToast('Please check the highlighted fields.', 'error');
+    form.querySelector('.field-input.invalid')?.focus();
+    return;
+  }
+
   const btn = document.getElementById('contactSubmitBtn');
   const feedback = document.getElementById('contactFormFeedback');
   const original = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Sending…';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1" aria-hidden="true"></i> Sending…';
 
   const fd = new FormData(form);
   const payload = {
@@ -738,7 +1027,7 @@ async function handleContactSubmit(e) {
     check_in:'', check_out:'', guests:'—', message:(fd.get('message')||'').toString().trim()
   };
   try {
-    const res = await fetch('{{ url_for("public.submit_inquiry") }}', {
+    const res = await fetch('{{ url_for("api.create_inquiry") }}', {
       method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},
       body: JSON.stringify(payload)
     });
@@ -748,9 +1037,23 @@ async function handleContactSubmit(e) {
       feedback.classList.remove('hidden');
       showToast('Your message has been sent.', 'success');
       form.reset();
+      form.querySelectorAll('.field-input').forEach(f => {
+        f.classList.remove('valid','invalid');
+        f.closest('div')?.querySelector('.field-error')?.classList.add('hidden');
+      });
     } else showToast(data.error || 'Submission failed. Please try again.', 'error');
   } catch { showToast('Network error. Please try again.', 'error'); }
   finally { btn.disabled = false; btn.innerHTML = original; }
 }
+
+/* Attach contact form validation on load */
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('contactForm');
+  if (!form) return;
+  form.querySelectorAll('.field-input').forEach(f => {
+    f.addEventListener('blur', () => validateField(f));
+    f.addEventListener('input', () => { if (f.classList.contains('invalid')) validateField(f); });
+  });
+});
 </script>
 {% endblock %}

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="theme-color" content="#1a3a2a" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#122b1e" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>{% block title %}Admin Console · {{ SITE_NAME }}{% endblock %}</title>
+
+<link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+{# Chart.js is only needed on pages that ask for it. #}
+{% block vendor_scripts %}{% endblock %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+
+{# Per-page head additions (preconnect hints, meta tags, etc.) #}
+{% block head_extra %}{% endblock %}
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary:      '#1a3a2a',
+        'primary-dark':'#122b1e',
+        'primary-light':'#28543e',
+        ivory:        '#f7f3ed',
+        'ivory-dark': '#ebe3d5',
+        gold:         '#c9a84c',
+        'gold-dark':  '#a88938',
+        'gold-light': '#e5cb7a',
+        charcoal:     '#2c2c2a',
+      },
+      fontFamily: {
+        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+        sans:  ['Inter', 'sans-serif'],
+      },
+      boxShadow: {
+        luxury: '0 20px 40px -15px rgba(26,58,42,0.12)',
+      },
+    },
+  },
+};
+</script>
+
+{# Tell the shell which section is active, so sidebar highlight + breadcrumbs work. #}
+<script>
+window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }};
+</script>
+</head>
+
+<body class="bg-ivory text-charcoal antialiased">
+
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<noscript>
+  <div class="bg-primary text-gold text-xs text-center py-2 px-4">
+    JavaScript is disabled. Some features (search, refresh, chat) will not work.
+    <a href="{{ url_for('auth.logout') }}" class="underline">Sign out</a>
+  </div>
+</noscript>
+
+<div class="min-h-screen flex">
+
+  {# ============================================================
+     SIDEBAR
+     ============================================================ #}
+  <aside id="sidebar"
+         class="sidebar fixed lg:static inset-y-0 left-0 z-40 w-64 bg-primary text-ivory flex flex-col"
+         aria-label="Admin navigation">
+
+    {# --- Brand --- #}
+    <div class="h-20 px-6 flex items-center gap-3 border-b border-gold/20 shrink-0">
+      <div class="w-9 h-9 rounded-full bg-gold flex items-center justify-center text-primary font-serif font-bold text-lg"
+           aria-hidden="true">R</div>
+      <div>
+        <span class="font-serif text-lg tracking-widest text-ivory block leading-none">LE RÊVE</span>
+        <span class="text-[9px] tracking-[0.25em] uppercase text-gold">Admin</span>
+      </div>
+      <button type="button"
+              onclick="LeReve.closeSidebar()"
+              class="lg:hidden ml-auto p-1.5 text-ivory/60 hover:text-gold rounded-full"
+              aria-label="Close navigation">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    {% set _active = active_section if active_section is defined and active_section else 'dashboard' %}
+
+    {# --- Nav --- #}
+    <nav class="flex-1 py-4 overflow-y-auto" aria-label="Main">
+      {% set nav = [
+        ('dashboard',  'Dashboard',    'fa-chart-pie',      url_for('admin.dashboard')),
+        ('analytics',  'Analytics',    'fa-chart-line',     url_for('admin.analytics')),
+        ('users',      'Users',        'fa-users',          url_for('admin.users')),
+        ('properties', 'Properties',   'fa-house-chimney',  url_for('admin.properties')),
+        ('categories', 'Categories',   'fa-layer-group',    url_for('admin.categories')),
+        ('bookings',   'Bookings',     'fa-calendar-check', url_for('admin.bookings')),
+        ('inquiries',  'Inquiries',    'fa-envelope',       url_for('admin.inquiries')),
+        ('messages',   'Messages',     'fa-comments',       url_for('admin.messages')),
+        ('reviews',    'Reviews',      'fa-star',           url_for('admin.reviews')),
+        ('journal',    'Journal Subs', 'fa-pen-nib',        url_for('admin.journal')),
+        ('settings',   'Settings',     'fa-gear',           url_for('admin.settings')),
+      ] %}
+
+      {% for key, label, icon, link in nav %}
+        {% set badge_count = 0 %}
+        {% if key == 'inquiries' %}{% set badge_count = pending_inquiries|default(0) %}{% endif %}
+        {% if key == 'reviews'   %}{% set badge_count = pending_reviews|default(0) %}{% endif %}
+        {% if key == 'messages'  %}{% set badge_count = unread_messages|default(0) %}{% endif %}
+
+        <a href="{{ link }}"
+           data-section="{{ key }}"
+           data-nav-link
+           class="sidebar-link {% if _active == key %}active{% endif %} flex items-center gap-3 px-6 py-3 text-sm hover:bg-gold/10"
+           {% if _active == key %}aria-current="page"{% endif %}>
+          <i class="fa-solid {{ icon }} w-5 text-center text-gold" aria-hidden="true"></i>
+          <span>{{ label }}</span>
+
+          {% if badge_count > 0 %}
+            <span class="ml-auto bg-gold text-primary text-[10px] font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center"
+                  aria-label="{{ badge_count }} pending">
+              {{ badge_count if badge_count < 100 else '99+' }}
+            </span>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </nav>
+
+    {# --- Footer actions --- #}
+    <div class="p-4 border-t border-gold/20 space-y-1 shrink-0">
+      <a href="{{ PUBLIC_SITE_URL }}"
+         target="_blank" rel="noopener"
+         class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-ivory/70 hover:text-gold hover:bg-gold/10 transition-all">
+        <i class="fa-solid fa-arrow-up-right-from-square w-4" aria-hidden="true"></i>
+        <span>Public Site</span>
+      </a>
+
+      <form method="POST" action="{{ url_for('auth.logout') }}" class="contents">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit"
+                class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-ivory/70 hover:text-red-300 hover:bg-red-500/10 transition-all text-left">
+          <i class="fa-solid fa-right-from-bracket w-4" aria-hidden="true"></i>
+          <span>Sign Out</span>
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  {# --- Mobile overlay --- #}
+  <div id="sidebarOverlay"
+       onclick="LeReve.closeSidebar()"
+       class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"
+       aria-hidden="true"></div>
+
+  {# ============================================================
+     MAIN COLUMN
+     ============================================================ #}
+  <div class="flex-1 flex flex-col min-w-0">
+
+    {# ---------- Header ---------- #}
+    <header class="h-20 bg-white border-b border-gold/20 flex items-center justify-between gap-3 px-4 sm:px-6 sticky top-0 z-20">
+
+      {# Left: sidebar toggle + title + breadcrumbs #}
+      <div class="flex items-center gap-3 min-w-0">
+        <button type="button"
+                onclick="LeReve.toggleSidebar()"
+                id="sidebarToggleBtn"
+                class="lg:hidden p-2 text-primary rounded-lg hover:bg-ivory transition-colors"
+                aria-label="Open navigation"
+                aria-controls="sidebar"
+                aria-expanded="false">
+          <i class="fa-solid fa-bars text-xl" aria-hidden="true"></i>
+        </button>
+
+        <div class="min-w-0">
+          {% block breadcrumbs %}
+            <nav aria-label="Breadcrumb" class="text-[11px] text-charcoal/50 mb-0.5 hidden sm:flex items-center gap-1.5">
+              <a href="{{ url_for('admin.dashboard') }}"
+                 class="hover:text-gold transition-colors">Admin</a>
+              {% if active_section is defined and active_section and active_section != 'dashboard' %}
+                <i class="fa-solid fa-chevron-right text-[8px]" aria-hidden="true"></i>
+                <span class="text-primary font-semibold capitalize">
+                  {{ active_section | replace('_', ' ') }}
+                </span>
+              {% endif %}
+            </nav>
+          {% endblock %}
+
+          <h1 class="font-serif text-xl sm:text-2xl font-semibold text-primary leading-tight truncate">
+            {% block page_title %}{{ page_title|default('Dashboard') }}{% endblock %}
+          </h1>
+          <p class="text-[11px] sm:text-xs text-charcoal/50 mt-0.5 truncate">
+            {% block page_subtitle %}{{ page_subtitle|default('Admin Console') }}{% endblock %}
+          </p>
+        </div>
+      </div>
+
+      {# Right: search + messages + user menu #}
+      <div class="flex items-center gap-2 sm:gap-3">
+
+        {# --- Global search --- #}
+        <form action="{{ url_for('admin.users') }}"
+              method="GET"
+              role="search"
+              class="hidden md:block relative">
+          <label for="adminGlobalSearch" class="sr-only">Search admin</label>
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/30 text-xs pointer-events-none"
+             aria-hidden="true"></i>
+          <input id="adminGlobalSearch"
+                 name="q"
+                 type="search"
+                 autocomplete="off"
+                 placeholder="Search…"
+                 class="w-40 lg:w-56 pl-8 pr-3 py-2 text-xs rounded-full border border-charcoal/10 bg-ivory/50
+                        focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+        </form>
+
+        {# --- Messages --- #}
+        <a href="{{ url_for('admin.messages') }}"
+           class="relative w-10 h-10 rounded-full border border-charcoal/10 hover:border-gold text-primary
+                  flex items-center justify-center transition-all"
+           aria-label="Messages{% if unread_messages and unread_messages > 0 %} ({{ unread_messages }} unread){% endif %}">
+          <i class="fa-regular fa-comment" aria-hidden="true"></i>
+          {% if unread_messages and unread_messages > 0 %}
+            <span class="absolute top-2 right-2 w-2 h-2 bg-gold rounded-full animate-pulse"
+                  aria-hidden="true"></span>
+          {% endif %}
+        </a>
+
+        {# --- User dropdown --- #}
+        <div class="relative" id="adminUserMenu">
+          <button type="button"
+                  id="adminUserBtn"
+                  class="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 sm:border-l border-charcoal/10
+                         rounded-full hover:bg-ivory/60 transition-colors pr-2 py-1"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  aria-controls="adminUserDropdown">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary text-gold flex items-center justify-center font-semibold text-sm shrink-0"
+                 aria-hidden="true">
+              {{ current_user.initials if current_user.is_authenticated and current_user.initials else 'AD' }}
+            </div>
+            <div class="hidden md:block text-left">
+              <p class="text-sm font-semibold text-primary leading-none">
+                {{ current_user.name or 'Admin' }}
+              </p>
+              <p class="text-[11px] text-charcoal/50 mt-0.5">Super User</p>
+            </div>
+            <i class="fa-solid fa-chevron-down text-[10px] text-charcoal/40 hidden md:block ml-1"
+               aria-hidden="true"></i>
+          </button>
+
+          <div id="adminUserDropdown"
+               class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-gold/20 shadow-lg overflow-hidden z-50"
+               role="menu"
+               aria-labelledby="adminUserBtn">
+            <div class="px-4 py-3 border-b border-charcoal/5 bg-ivory/40">
+              <p class="text-xs font-semibold text-primary truncate">
+                {{ current_user.name or 'Admin' }}
+              </p>
+              <p class="text-[11px] text-charcoal/50 truncate">
+                {{ current_user.email or '' }}
+              </p>
+            </div>
+            <a href="{{ url_for('admin.settings') }}"
+               role="menuitem"
+               class="flex items-center gap-2 px-4 py-2.5 text-xs text-charcoal/80 hover:bg-ivory/60 transition-colors">
+              <i class="fa-solid fa-gear w-4 text-gold" aria-hidden="true"></i> Settings
+            </a>
+            <a href="{{ PUBLIC_SITE_URL }}"
+               target="_blank" rel="noopener"
+               role="menuitem"
+               class="flex items-center gap-2 px-4 py-2.5 text-xs text-charcoal/80 hover:bg-ivory/60 transition-colors">
+              <i class="fa-solid fa-arrow-up-right-from-square w-4 text-gold" aria-hidden="true"></i> Public Site
+            </a>
+            <form method="POST" action="{{ url_for('auth.logout') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit"
+                      role="menuitem"
+                      class="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 transition-colors border-t border-charcoal/5 text-left">
+                <i class="fa-solid fa-right-from-bracket w-4" aria-hidden="true"></i> Sign Out
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    {# ---------- Main ---------- #}
+    <main id="main-content" class="flex-1 p-4 sm:p-6 overflow-x-hidden">
+
+      {# Flash messages with dismiss + ARIA #}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div id="flashContainer"
+               class="mb-6 space-y-3"
+               role="status"
+               aria-live="polite">
+            {% for cat, msg in messages %}
+              <div class="flash-msg flex items-start gap-3 px-4 py-3 rounded-xl border text-xs
+                {% if cat == 'error' %}bg-red-50 text-red-600 border-red-200
+                {% elif cat == 'info' %}bg-blue-50 text-blue-600 border-blue-200
+                {% else %}bg-emerald-50 text-emerald-600 border-emerald-200{% endif %}">
+                <i class="fa-solid mt-0.5
+                  {% if cat == 'error' %}fa-circle-exclamation
+                  {% elif cat == 'info' %}fa-circle-info
+                  {% else %}fa-circle-check{% endif %}"
+                   aria-hidden="true"></i>
+                <span class="flex-1">{{ msg }}</span>
+                <button type="button"
+                        onclick="this.closest('.flash-msg').remove()"
+                        class="shrink-0 p-0.5 rounded hover:bg-black/5 transition-colors"
+                        aria-label="Dismiss message">
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+{# Toast container — used by LeReve.toast() #}
+<div id="adminToast"
+     class="fixed top-24 right-5 z-[60] flex flex-col gap-3 pointer-events-none max-w-sm"
+     aria-live="polite"
+     aria-atomic="false"></div>
+
+{# ---------- Bootstrap config for JS ---------- #}
+<script>
+window.LeReveConfig = {
+  csrf:          {{ csrf_token()|tojson }},
+  currency:      {{ CURRENCY_SYMBOL|tojson }},
+  publicSiteUrl: {{ PUBLIC_SITE_URL|tojson }},
+  isLoggedIn:    true,
+  isAdmin:       true,
+  user: {
+    id:    {{ current_user.id|tojson if current_user.is_authenticated else '""' }},
+    name:  {{ (current_user.name  if current_user.is_authenticated else '')|tojson }},
+    email: {{ (current_user.email if current_user.is_authenticated else '')|tojson }}
+  }
+};
+</script>
+
+<script src="{{ url_for('static', filename='js/shared.js') }}"></script>
+
+{# Small shell interactions that only matter on admin pages #}
+<script>
+(function () {
+  'use strict';
+
+  // ---------- User dropdown ----------
+  const btn  = document.getElementById('adminUserBtn');
+  const menu = document.getElementById('adminUserDropdown');
+  if (btn && menu) {
+    function closeMenu() {
+      menu.classList.add('hidden');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+    function openMenu() {
+      menu.classList.remove('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      menu.classList.contains('hidden') ? openMenu() : closeMenu();
+    });
+    document.addEventListener('click', function (e) {
+      if (!menu.contains(e.target) && e.target !== btn) closeMenu();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+  }
+
+  // ---------- Sidebar toggle: sync aria-expanded ----------
+  const toggle = document.getElementById('sidebarToggleBtn');
+  if (toggle) {
+    const observer = new MutationObserver(() => {
+      const sidebar = document.getElementById('sidebar');
+      const isOpen = sidebar && sidebar.classList.contains('open');
+      toggle.setAttribute('aria-expanded', String(!!isOpen));
+    });
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  // ---------- Cmd/Ctrl+K → focus global search ----------
+  document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      const input = document.getElementById('adminGlobalSearch');
+      if (input) {
+        e.preventDefault();
+        input.focus();
+        input.select();
+      }
+    }
+  });
+
+  // ---------- Auto-dismiss flash messages after 8s ----------
+  document.querySelectorAll('#flashContainer .flash-msg').forEach(el => {
+    setTimeout(() => {
+      el.style.transition = 'opacity .4s, transform .4s';
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(-4px)';
+      setTimeout(() => el.remove(), 400);
+    }, 8000);
+  });
+})();
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

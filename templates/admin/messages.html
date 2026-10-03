@@ -1,0 +1,41 @@
+{% extends "admin/base.html" %}
+{% block title %}Messages · Admin Console{% endblock %}
+{% set active_section = 'messages' %}
+{% block page_title %}Concierge Inbox{% endblock %}
+{% block page_subtitle %}Client conversations{% endblock %}
+
+{% block content %}
+
+{% if threads %}
+  <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden divide-y divide-charcoal/5">
+    {% for t in threads %}
+      <a href="{{ url_for('admin.message_thread', thread_id=t._id) }}" class="block p-5 hover:bg-ivory/50 transition-colors">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 font-bold">
+            {{ (t.user_name or 'U')[0]|upper }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <p class="font-semibold text-primary truncate">{{ t.user_name or 'Guest' }}</p>
+              <span class="text-[10px] text-charcoal/50 flex-shrink-0">{{ t.last_at|relative_time if t.last_at else '' }}</span>
+            </div>
+            <p class="text-xs text-charcoal/50 truncate mb-2">{{ t.user_email }}</p>
+            <p class="text-sm text-charcoal/80 truncate">{{ t.last_message }}</p>
+          </div>
+          {% if t.unread and t.unread > 0 %}
+            <span class="bg-gold text-primary text-[10px] font-bold rounded-full min-w-[24px] h-6 px-2 flex items-center justify-center flex-shrink-0">{{ t.unread }}</span>
+          {% endif %}
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gold/40">
+    <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+      <i class="fa-solid fa-comments text-gold text-2xl"></i>
+    </div>
+    <p class="text-sm text-charcoal/60">No conversations yet.</p>
+  </div>
+{% endif %}
+
+{% endblock %}

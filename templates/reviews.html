@@ -15,13 +15,33 @@
     <p class="text-charcoal/70 text-base sm:text-lg font-light max-w-2xl mx-auto mt-6 leading-relaxed">
       Real words from real guests — every review below is from a confirmed stay at a Le Rêve property.
     </p>
+
+    <!-- Inline ratings summary -->
+    <div class="mt-8 inline-flex flex-wrap items-center justify-center gap-x-6 gap-y-3 px-6 py-3 rounded-full bg-white border border-gold/30 shadow-luxury">
+      <div class="flex items-center gap-2">
+        <div class="flex text-gold text-sm" aria-hidden="true">
+          {% for i in range(5) %}<i class="fa-solid fa-star"></i>{% endfor %}
+        </div>
+        <span class="font-serif text-lg font-bold text-primary">4.98</span>
+        <span class="text-xs text-charcoal/60 font-medium">/ 5.00</span>
+      </div>
+      <span class="hidden sm:inline-block w-px h-4 bg-charcoal/15"></span>
+      <div class="text-xs text-charcoal/70 font-medium">
+        <strong class="text-primary">{{ reviews|length if reviews else 0 }}</strong> verified reviews
+      </div>
+      <span class="hidden sm:inline-block w-px h-4 bg-charcoal/15"></span>
+      <div class="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold">
+        <i class="fa-solid fa-circle-check text-[10px]" aria-hidden="true"></i> 100% verified stays
+      </div>
+    </div>
+
     <div class="flex flex-col sm:flex-row gap-3 justify-center mt-8">
       <button onclick="openReviewModal()"
-              class="bg-primary text-gold hover:bg-gold hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+              class="bg-primary text-gold hover:bg-gold hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
         <i class="fa-solid fa-pen-fancy mr-2" aria-hidden="true"></i> Write a Review
       </button>
-      <a href="{{ url_for('public.stays') }}"
-         class="border border-primary text-primary hover:bg-primary hover:text-gold px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
+      <a href="{{ url_for('auth.stays') }}"
+         class="border border-primary text-primary hover:bg-primary hover:text-gold px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
         <i class="fa-solid fa-house-chimney mr-2" aria-hidden="true"></i> Browse Stays
       </a>
     </div>
@@ -31,20 +51,20 @@
 <!-- ============ STATS STRIP ============ -->
 <section class="py-12 bg-white border-y border-gold/20">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-    <div>
-      <span class="font-serif text-4xl font-bold text-primary block">4.98 ★</span>
+    <div data-stat>
+      <span class="font-serif text-4xl font-bold text-primary block" data-count-to="4.98" data-decimals="2" data-suffix=" ★">0 ★</span>
       <span class="text-xs text-charcoal/60 uppercase tracking-widest mt-1 block">Average Rating</span>
     </div>
-    <div>
-      <span class="font-serif text-4xl font-bold text-primary block">100%</span>
+    <div data-stat>
+      <span class="font-serif text-4xl font-bold text-primary block" data-count-to="100" data-suffix="%">0%</span>
       <span class="text-xs text-charcoal/60 uppercase tracking-widest mt-1 block">Verified Stays</span>
     </div>
-    <div>
-      <span class="font-serif text-4xl font-bold text-primary block">500+</span>
+    <div data-stat>
+      <span class="font-serif text-4xl font-bold text-primary block" data-count-to="500" data-suffix="+">0+</span>
       <span class="text-xs text-charcoal/60 uppercase tracking-widest mt-1 block">Guest Nights Hosted</span>
     </div>
-    <div>
-      <span class="font-serif text-4xl font-bold text-primary block">24 / 7</span>
+    <div data-stat>
+      <span class="font-serif text-4xl font-bold text-primary block" data-count-text="24 / 7">24 / 7</span>
       <span class="text-xs text-charcoal/60 uppercase tracking-widest mt-1 block">Concierge Support</span>
     </div>
   </div>
@@ -79,7 +99,7 @@
               </div>
               <div class="flex items-center gap-4 pt-4 border-t border-charcoal/5">
                 <img src="{{ avatar_url|e }}" alt="{{ r.name or 'Guest' }}" class="w-12 h-12 rounded-full object-cover border-2 border-gold" loading="lazy"
-                     onerror="this.src='https://ui-avatars.com/api/?name={{ (r.name or 'Guest')|urlencode }}&amp;background=c9a84c&amp;color=1a3a2a';">
+                     onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (r.name or 'Guest')|urlencode }}&amp;background=c9a84c&amp;color=1a3a2a';">
                 <div class="min-w-0">
                   <h4 class="font-serif text-base font-semibold text-primary truncate">{{ r.name|e or 'Anonymous' }}</h4>
                   <p class="text-xs text-gold truncate">{{ r.property|e or '—' }}</p>
@@ -103,16 +123,16 @@
       <div>
         <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-2">Browse All</span>
         <h2 class="font-serif text-3xl sm:text-4xl font-light text-primary">Recent <span class="italic text-gold">Highlights</span></h2>
-        <p id="reviewsCount" class="text-xs text-charcoal/60 mt-2 font-light"></p>
+        <p id="reviewsCount" class="text-xs text-charcoal/60 mt-2 font-light" aria-live="polite"></p>
       </div>
       <button onclick="openReviewModal()"
-              class="self-start md:self-auto bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+              class="self-start md:self-auto bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
         <i class="fa-solid fa-plus mr-1" aria-hidden="true"></i> Share Your Stay
       </button>
     </div>
 
     <!-- Filter bar -->
-    <div class="bg-white rounded-2xl border border-gold/20 shadow-luxury p-4 sm:p-5 mb-8">
+    <div class="bg-white rounded-2xl border border-gold/20 shadow-luxury p-4 sm:p-5 mb-6">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
         <!-- Search -->
@@ -120,9 +140,17 @@
           <label for="reviewSearch" class="block text-[10px] font-bold uppercase tracking-widest text-primary/70 mb-1.5">
             <i class="fa-solid fa-magnifying-glass text-gold mr-1" aria-hidden="true"></i> Search
           </label>
-          <input type="text" id="reviewSearch" oninput="debouncedApplyFilters()"
-                 placeholder="Guest name, property, or keyword..."
-                 class="w-full px-4 py-2.5 rounded-xl border border-charcoal/10 bg-ivory/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+          <div class="relative">
+            <input type="text" id="reviewSearch" oninput="debouncedApplyFilters()"
+                   placeholder="Guest name, property, or keyword..."
+                   class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-charcoal/10 bg-ivory/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-charcoal/30 text-xs pointer-events-none" aria-hidden="true"></i>
+            <button type="button" id="reviewSearchClear" onclick="clearSearch()"
+                    class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-charcoal/10 hover:bg-charcoal/20 text-charcoal/60 flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                    aria-label="Clear search">
+              <i class="fa-solid fa-xmark text-[10px]" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
 
         <!-- Rating pills -->
@@ -130,15 +158,15 @@
           <span class="block text-[10px] font-bold uppercase tracking-widest text-primary/70 mb-1.5">
             <i class="fa-solid fa-star text-gold mr-1" aria-hidden="true"></i> Rating
           </span>
-          <div class="flex flex-wrap gap-1.5">
+          <div class="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Filter by rating">
             <button data-rating="all" onclick="setRatingFilter('all', this)"
-                    class="rating-filter active px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border border-primary bg-primary text-gold transition-all">All</button>
+                    class="rating-filter active px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border border-primary bg-primary text-gold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">All</button>
             <button data-rating="5" onclick="setRatingFilter('5', this)"
-                    class="rating-filter px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border border-primary/20 bg-white text-primary hover:border-primary transition-all">5 ★</button>
+                    class="rating-filter px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border border-primary/20 bg-white text-primary hover:border-primary transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">5 ★</button>
             <button data-rating="4" onclick="setRatingFilter('4', this)"
-                    class="rating-filter px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border border-primary/20 bg-white text-primary hover:border-primary transition-all">4 ★+</button>
+                    class="rating-filter px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border border-primary/20 bg-white text-primary hover:border-primary transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">4 ★+</button>
             <button data-rating="3" onclick="setRatingFilter('3', this)"
-                    class="rating-filter px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border border-primary/20 bg-white text-primary hover:border-primary transition-all">3 ★+</button>
+                    class="rating-filter px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border border-primary/20 bg-white text-primary hover:border-primary transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">3 ★+</button>
           </div>
         </div>
 
@@ -155,6 +183,9 @@
           </select>
         </div>
       </div>
+
+      <!-- Active filter chips -->
+      <div id="activeReviewFilters" class="hidden flex-wrap gap-2 mt-4 pt-4 border-t border-gold/20"></div>
     </div>
 
     <!-- Grid -->
@@ -166,7 +197,7 @@
       <h3 class="font-serif text-2xl font-semibold text-primary mb-2">No reviews match your filters</h3>
       <p class="text-charcoal/70 text-sm max-w-md mx-auto mb-6">Try clearing the search or choosing a different rating.</p>
       <button onclick="resetAllReviewFilters()"
-              class="bg-primary text-gold px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gold hover:text-primary transition-all">
+              class="bg-primary text-gold px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gold hover:text-primary transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
         Reset Filters
       </button>
     </div>
@@ -174,16 +205,17 @@
     <!-- Load more -->
     <div id="reviewsLoadMoreWrap" class="hidden text-center mt-10">
       <button onclick="loadMoreReviews()"
-              class="border border-primary text-primary hover:bg-primary hover:text-gold px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
+              class="border border-primary text-primary hover:bg-primary hover:text-gold px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
         <i class="fa-solid fa-arrow-down mr-2" aria-hidden="true"></i> Load More Reviews
       </button>
+      <p id="reviewsLoadMoreHint" class="text-[11px] text-charcoal/50 mt-3 font-medium"></p>
     </div>
   </div>
 </section>
 
 <!-- ============ WRITE A REVIEW MODAL ============ -->
 <div id="reviewModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md"
-     onclick="if (event.target === this) closeReviewModal();">
+     onclick="if (event.target === this) closeReviewModal();" role="dialog" aria-modal="true" aria-label="Share your stay">
   <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative">
     <button onclick="closeReviewModal()"
             class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all flex items-center justify-center"
@@ -200,23 +232,25 @@
         <p class="text-xs text-charcoal/60 mt-1">Your review will be published after moderation.</p>
       </div>
 
-      <form id="reviewForm" onsubmit="handleReviewSubmit(event)" class="space-y-4">
+      <form id="reviewForm" onsubmit="handleReviewSubmit(event)" class="space-y-4" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div>
           <label for="reviewName" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Your Name *</label>
-          <input type="text" id="reviewName" name="name" required maxlength="120" placeholder="e.g., Alexandra W."
-                 class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+          <input type="text" id="reviewName" name="name" required maxlength="120" placeholder="e.g., Alexandra W." autocomplete="name"
+                 class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+          <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
         </div>
 
         <div>
           <label for="reviewProperty" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Property Stayed At *</label>
           <select id="reviewProperty" name="property" required
-                  class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+                  class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
             <option value="">Select the estate...</option>
             {% for p in properties %}<option value="{{ p.title }}">{{ p.title }} — {{ p.location }}</option>{% endfor %}
             <option value="Other">Other / Multiple</option>
           </select>
+          <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
         </div>
 
         <div>
@@ -224,25 +258,32 @@
           <div id="starPicker" class="flex items-center gap-2" role="radiogroup" aria-label="Star rating">
             {% for i in range(1, 6) %}
               <button type="button" data-star="{{ i }}" onclick="setStarRating({{ i }})"
+                      onmouseenter="hoverStar({{ i }})" onmouseleave="hoverStar(0)"
+                      onkeydown="if(event.key==='ArrowRight'||event.key==='ArrowUp'){event.preventDefault();setStarRating(Math.min(5,{{ i }}+1));} else if(event.key==='ArrowLeft'||event.key==='ArrowDown'){event.preventDefault();setStarRating(Math.max(1,{{ i }}-1));}"
                       class="star-picker text-3xl text-charcoal/20 hover:text-gold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded"
-                      aria-label="{{ i }} star{{ 's' if i > 1 else '' }}">
+                      aria-label="{{ i }} star{{ 's' if i > 1 else '' }}" role="radio" aria-checked="{{ 'true' if i == 5 else 'false' }}">
                 <i class="fa-solid fa-star" aria-hidden="true"></i>
               </button>
             {% endfor %}
-            <span id="starLabel" class="ml-2 text-xs font-semibold text-charcoal/60">Select a rating</span>
+            <span id="starLabel" class="ml-2 text-xs font-semibold text-charcoal/60">Exceptional</span>
           </div>
           <input type="hidden" id="reviewRating" name="rating" value="5" required>
         </div>
 
         <div>
-          <label for="reviewText" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Your Review *</label>
+          <div class="flex items-end justify-between mb-1">
+            <label for="reviewText" class="block text-xs font-bold uppercase tracking-wider text-primary/80">Your Review *</label>
+            <span id="reviewTextCounter" class="text-[10px] text-charcoal/50 font-medium">0 / 2000</span>
+          </div>
           <textarea id="reviewText" name="text" rows="4" required maxlength="2000"
+                    oninput="updateReviewCounter(this)"
                     placeholder="Tell us about your stay — what you loved, what surprised you..."
-                    class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea>
+                    class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea>
+          <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
         </div>
 
         <button type="submit" id="reviewSubmitBtn"
-                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury flex items-center justify-center gap-2">
+                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold disabled:opacity-60 disabled:cursor-not-allowed">
           <i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Submit Review</span>
         </button>
         <p class="text-[10px] text-center text-charcoal/50">
@@ -267,6 +308,29 @@
   }
   .star-picker.active i { color: #c9a84c; }
   .star-picker.active { text-shadow: 0 0 12px rgba(201, 168, 76, 0.5); }
+  .star-picker.hover i  { color: #e5cb7a; }
+
+  .field-input.invalid { border-color: #dc2626 !important; }
+  .field-input.valid   { border-color: #10b981 !important; }
+
+  #reviewTextCounter.is-warn   { color: #d97706; font-weight: 700; }
+  #reviewTextCounter.is-danger { color: #dc2626; font-weight: 700; }
+
+  /* Filter chips */
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    background: #1a3a2a; color: #c9a84c;
+    border-radius: 999px; font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.03em; text-transform: uppercase;
+  }
+  .filter-chip button {
+    color: #c9a84c; background: rgba(201,168,76,.15);
+    width: 1.1rem; height: 1.1rem; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; transition: background .2s ease, color .2s ease;
+  }
+  .filter-chip button:hover { background: #c9a84c; color: #1a3a2a; }
 
   @media (prefers-reduced-motion: reduce) {
     .reveal-review { opacity: 1; transform: none; transition: none; }
@@ -278,14 +342,10 @@
 <script>
 /* ============================================================
    REVIEWS PAGE — page-specific only.
-   Shared globals (CSRF_TOKEN, escapeHtml, showToast,
-   buildEndlessMarquee, openModal, closeModal) live in base.html.
    ============================================================ */
 
-/* ---------- Raw review data from server ---------- */
 const RAW_REVIEWS = {{ reviews|tojson }};
 
-/* Normalize each review to a consistent shape */
 const ALL_REVIEWS = RAW_REVIEWS.map((r, idx) => ({
   id: r.id || r._id || ('r-' + idx),
   name: r.name || 'Anonymous',
@@ -297,7 +357,6 @@ const ALL_REVIEWS = RAW_REVIEWS.map((r, idx) => ({
   _idx: idx
 }));
 
-/* ---------- Filter / pagination state ---------- */
 let currentRating = 'all';
 let currentSort   = 'newest';
 let currentSearch = '';
@@ -305,7 +364,6 @@ let currentPage   = 1;
 const PAGE_SIZE   = 6;
 let debounceTimer = null;
 
-/* ---------- Helpers ---------- */
 function avatarFallback(name) {
   const encoded = encodeURIComponent(name || 'Guest');
   return `https://ui-avatars.com/api/?name=${encoded}&background=c9a84c&color=1a3a2a`;
@@ -319,16 +377,96 @@ function starsHTML(rating) {
   return html;
 }
 
+/* ---------- URL sync ---------- */
+function readFiltersFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get('q') || '';
+  const rating = params.get('rating') || 'all';
+  const sort = params.get('sort') || 'newest';
+
+  const searchEl = document.getElementById('reviewSearch');
+  const sortEl = document.getElementById('reviewSort');
+  if (searchEl) searchEl.value = q;
+  if (sortEl) sortEl.value = sort;
+
+  currentSearch = q;
+  currentRating = rating;
+  currentSort = sort;
+
+  document.querySelectorAll('.rating-filter').forEach(b => {
+    const isActive = b.dataset.rating === rating;
+    b.classList.toggle('active', isActive);
+    if (isActive) { b.classList.add('bg-primary', 'text-gold'); b.classList.remove('bg-white'); }
+    else { b.classList.remove('bg-primary', 'text-gold'); b.classList.add('bg-white', 'text-primary'); }
+  });
+  updateSearchClearButton();
+}
+function writeFiltersToURL() {
+  const params = new URLSearchParams();
+  if (currentSearch) params.set('q', currentSearch);
+  if (currentRating && currentRating !== 'all') params.set('rating', currentRating);
+  if (currentSort && currentSort !== 'newest') params.set('sort', currentSort);
+  const qs = params.toString();
+  const url = qs ? `${window.location.pathname}?${qs}#reviews-grid` : `${window.location.pathname}#reviews-grid`;
+  history.replaceState(null, '', url);
+}
+function updateSearchClearButton() {
+  const btn = document.getElementById('reviewSearchClear');
+  if (!btn) return;
+  const hasText = (document.getElementById('reviewSearch')?.value || '').length > 0;
+  btn.classList.toggle('hidden', !hasText);
+  btn.classList.toggle('flex', hasText);
+}
+function clearSearch() {
+  const el = document.getElementById('reviewSearch');
+  if (el) el.value = '';
+  updateSearchClearButton();
+  applyFilters();
+}
+
+/* ---------- Active filter chips ---------- */
+function renderActiveReviewFilters() {
+  const wrap = document.getElementById('activeReviewFilters');
+  if (!wrap) return;
+  const chips = [];
+  if (currentSearch) chips.push({ key: 'search', label: `🔍 ${escapeHtml(currentSearch)}` });
+  if (currentRating !== 'all') chips.push({ key: 'rating', label: `⭐ ${currentRating} ★${currentRating === '5' ? '' : '+'}` });
+  if (currentSort !== 'newest') chips.push({ key: 'sort', label: `↕ ${currentSort === 'highest' ? 'Highest' : 'Lowest'} first` });
+
+  if (chips.length === 0) {
+    wrap.classList.add('hidden'); wrap.classList.remove('flex');
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.classList.remove('hidden'); wrap.classList.add('flex');
+  wrap.innerHTML = `
+    <span class="text-[10px] uppercase tracking-widest font-bold text-primary/60 self-center mr-1">Active:</span>
+    ${chips.map(c => `<span class="filter-chip">${c.label}<button type="button" onclick="removeReviewFilter('${c.key}')" aria-label="Remove ${c.key} filter"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></span>`).join('')}
+    <button type="button" onclick="resetAllReviewFilters()" class="text-[10px] uppercase tracking-widest font-bold text-gold hover:text-primary transition-colors ml-1 self-center">Clear all</button>`;
+}
+function removeReviewFilter(key) {
+  if (key === 'search') clearSearch();
+  else if (key === 'rating') { currentRating = 'all'; syncRatingButtons(); renderReviews(); }
+  else if (key === 'sort')   { currentSort = 'newest'; const s = document.getElementById('reviewSort'); if (s) s.value = 'newest'; renderReviews(); }
+}
+function syncRatingButtons() {
+  document.querySelectorAll('.rating-filter').forEach(b => {
+    const isActive = b.dataset.rating === currentRating;
+    b.classList.toggle('active', isActive);
+    if (isActive) { b.classList.add('bg-primary', 'text-gold'); b.classList.remove('bg-white'); }
+    else { b.classList.remove('bg-primary', 'text-gold'); b.classList.add('bg-white', 'text-primary'); }
+  });
+}
+
+/* ---------- Filtering ---------- */
 function getFilteredReviews() {
   let list = ALL_REVIEWS.slice();
 
-  /* Rating filter (inclusive from N stars up) */
   if (currentRating !== 'all') {
     const min = parseInt(currentRating, 10);
     list = list.filter(r => r.rating >= min);
   }
 
-  /* Search filter */
   if (currentSearch) {
     const q = currentSearch.toLowerCase();
     list = list.filter(r =>
@@ -338,11 +476,9 @@ function getFilteredReviews() {
     );
   }
 
-  /* Sort */
   list.sort((a, b) => {
     if (currentSort === 'highest') return b.rating - a.rating;
     if (currentSort === 'lowest')  return a.rating - b.rating;
-    /* newest: if created_at missing, fall back to original order */
     const at = a.created_at ? new Date(a.created_at).getTime() : 0;
     const bt = b.created_at ? new Date(b.created_at).getTime() : 0;
     if (at === bt) return a._idx - b._idx;
@@ -352,12 +488,12 @@ function getFilteredReviews() {
   return list;
 }
 
-/* ---------- Render ---------- */
 function renderReviews() {
   const grid     = document.getElementById('reviewsGrid');
   const empty    = document.getElementById('reviewsEmpty');
   const countEl  = document.getElementById('reviewsCount');
   const moreWrap = document.getElementById('reviewsLoadMoreWrap');
+  const moreHint = document.getElementById('reviewsLoadMoreHint');
   if (!grid) return;
 
   const all = getFilteredReviews();
@@ -365,10 +501,14 @@ function renderReviews() {
   const visible = all.slice(0, visibleCount);
 
   if (countEl) {
+    const hasFilters = currentSearch || currentRating !== 'all';
     countEl.textContent = all.length === 0
       ? 'No reviews match'
-      : `Showing ${visible.length} of ${all.length} review${all.length === 1 ? '' : 's'}`;
+      : `Showing ${visible.length} of ${all.length} review${all.length === 1 ? '' : 's'}${hasFilters ? ' (filtered)' : ''}`;
   }
+
+  renderActiveReviewFilters();
+  writeFiltersToURL();
 
   if (all.length === 0) {
     grid.innerHTML = '';
@@ -401,14 +541,13 @@ function renderReviews() {
       </article>`;
   }).join('');
 
-  /* Load more */
   if (visible.length < all.length) {
     moreWrap?.classList.remove('hidden');
+    if (moreHint) moreHint.textContent = `${all.length - visible.length} more review${all.length - visible.length === 1 ? '' : 's'} available`;
   } else {
     moreWrap?.classList.add('hidden');
   }
 
-  /* Animate reveal */
   requestAnimationFrame(() => {
     grid.querySelectorAll('.reveal-review').forEach((el, i) => {
       setTimeout(() => el.classList.add('is-visible'), i * 40);
@@ -416,15 +555,16 @@ function renderReviews() {
   });
 }
 
-/* ---------- Filter handlers ---------- */
 function applyFilters() {
   currentSort   = document.getElementById('reviewSort')?.value || 'newest';
   currentSearch = (document.getElementById('reviewSearch')?.value || '').trim();
   currentPage   = 1;
+  updateSearchClearButton();
   renderReviews();
 }
 
 function debouncedApplyFilters() {
+  updateSearchClearButton();
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(applyFilters, 200);
 }
@@ -432,14 +572,7 @@ function debouncedApplyFilters() {
 function setRatingFilter(rating, btn) {
   currentRating = rating;
   currentPage   = 1;
-  document.querySelectorAll('.rating-filter').forEach(b => {
-    b.classList.remove('active', 'bg-primary', 'text-gold');
-    b.classList.add('bg-white', 'text-primary');
-  });
-  if (btn) {
-    btn.classList.add('active', 'bg-primary', 'text-gold');
-    btn.classList.remove('bg-white');
-  }
+  syncRatingButtons();
   renderReviews();
 }
 
@@ -451,24 +584,23 @@ function resetAllReviewFilters() {
 
   const s = document.getElementById('reviewSearch'); if (s) s.value = '';
   const so = document.getElementById('reviewSort');  if (so) so.value = 'newest';
-  document.querySelectorAll('.rating-filter').forEach(b => {
-    b.classList.remove('active', 'bg-primary', 'text-gold');
-    b.classList.add('bg-white', 'text-primary');
-  });
-  const allBtn = document.querySelector('.rating-filter[data-rating="all"]');
-  if (allBtn) {
-    allBtn.classList.add('active', 'bg-primary', 'text-gold');
-    allBtn.classList.remove('bg-white');
-  }
+  updateSearchClearButton();
+  syncRatingButtons();
   renderReviews();
 }
 
 function loadMoreReviews() {
   currentPage += 1;
   renderReviews();
+  /* Scroll to first new card */
+  requestAnimationFrame(() => {
+    const cards = document.querySelectorAll('#reviewsGrid .reveal-review');
+    const firstNew = cards[(currentPage - 1) * PAGE_SIZE];
+    firstNew?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
 }
 
-/* ---------- Star picker (modal) ---------- */
+/* ---------- Star picker ---------- */
 let selectedStar = 5;
 function setStarRating(n) {
   selectedStar = n;
@@ -480,27 +612,72 @@ function setStarRating(n) {
   }
   document.querySelectorAll('.star-picker').forEach(btn => {
     const val = parseInt(btn.dataset.star, 10);
-    btn.classList.toggle('active', val <= n);
+    const active = val <= n;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-checked', String(val === n));
+  });
+}
+function hoverStar(n) {
+  document.querySelectorAll('.star-picker').forEach(btn => {
+    const val = parseInt(btn.dataset.star, 10);
+    btn.classList.toggle('hover', n > 0 && val <= n);
   });
 }
 
+/* ---------- Review text counter ---------- */
+function updateReviewCounter(el) {
+  const counter = document.getElementById('reviewTextCounter');
+  if (!counter) return;
+  const len = el.value.length;
+  counter.textContent = `${len} / 2000`;
+  counter.classList.toggle('is-warn', len > 1600 && len <= 1900);
+  counter.classList.toggle('is-danger', len > 1900);
+}
+
+/* ---------- Modal ---------- */
 function openReviewModal() {
   const modal = document.getElementById('reviewModal');
   if (!modal) return;
-  /* Prefill name/email if logged in */
   if (IS_LOGGED_IN && CURRENT_USER.name) {
     const nameEl = document.getElementById('reviewName');
     if (nameEl && !nameEl.value) nameEl.value = CURRENT_USER.name;
   }
   setStarRating(5);
+  updateReviewCounter(document.getElementById('reviewText'));
   openModal(modal);
 }
 function closeReviewModal() { closeModal(document.getElementById('reviewModal')); }
 
-/* ---------- Submit review ---------- */
+/* ---------- Inline validation ---------- */
+function validateReviewField(input) {
+  const wrap = input.closest('div');
+  const errEl = wrap?.querySelector('.field-error');
+  const value = (input.value || '').trim();
+  let valid = true; let message = '';
+  if (input.hasAttribute('required') && !value) {
+    valid = false; message = 'This field is required.';
+  } else if (input.tagName === 'SELECT' && value === '') {
+    valid = false; message = 'Please select an option.';
+  }
+  input.classList.toggle('invalid', !valid);
+  input.classList.toggle('valid', valid && value !== '');
+  if (errEl) { errEl.textContent = message; errEl.classList.toggle('hidden', valid); }
+  return valid;
+}
+
 async function handleReviewSubmit(e) {
   e.preventDefault();
   const form = e.target;
+
+  const fields = form.querySelectorAll('.field-input');
+  let allValid = true;
+  fields.forEach(f => { if (!validateReviewField(f)) allValid = false; });
+  if (!allValid) {
+    showToast('Please check the highlighted fields.', 'error');
+    form.querySelector('.field-input.invalid')?.focus();
+    return;
+  }
+
   const btn  = document.getElementById('reviewSubmitBtn');
   const original = btn.innerHTML;
   btn.disabled = true;
@@ -511,41 +688,33 @@ async function handleReviewSubmit(e) {
     name:     (fd.get('name') || '').toString().trim(),
     property: (fd.get('property') || '').toString().trim(),
     rating:   parseInt(fd.get('rating') || '5', 10),
-    text:     (fd.get('text') || '').toString().trim(),
-    csrf_token: (fd.get('csrf_token') || '').toString()
+    text:     (fd.get('text') || '').toString().trim()
   };
 
-  if (!payload.name || !payload.property || !payload.text) {
-    showToast('Please fill in all required fields.', 'error');
-    btn.disabled = false; btn.innerHTML = original; return;
-  }
-
   try {
-    const res = await fetch('{{ url_for("public.submit_review") }}', {
+    const res = await fetch('{{ url_for("api.submit_review") }}', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
         'X-CSRFToken': CSRF_TOKEN
       },
-      body: new URLSearchParams({
-        name: payload.name,
-        property: payload.property,
-        rating: payload.rating,
-        text: payload.text,
-        csrf_token: payload.csrf_token || CSRF_TOKEN
-      }),
-      redirect: 'manual'
+      body: JSON.stringify(payload)
     });
 
-    /* Form-based route redirects back, so success is usually a 302.
-       We treat both 2xx and opaque-redirect as success here. */
-    if (res.status >= 200 && res.status < 400) {
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && (data.success !== false)) {
       showToast('Thank you! Your review is pending moderation.', 'success');
       form.reset();
+      form.querySelectorAll('.field-input').forEach(f => {
+        f.classList.remove('valid','invalid');
+        f.closest('div')?.querySelector('.field-error')?.classList.add('hidden');
+      });
       setStarRating(5);
+      updateReviewCounter(document.getElementById('reviewText'));
       closeReviewModal();
     } else {
-      showToast('Could not submit review. Please try again.', 'error');
+      showToast(data.error || 'Could not submit review. Please try again.', 'error');
     }
   } catch (err) {
     showToast('Network error. Please try again.', 'error');
@@ -554,12 +723,42 @@ async function handleReviewSubmit(e) {
   }
 }
 
-/* ---------- ESC closes review modal ---------- */
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeReviewModal();
 });
 
-/* ---------- Marquee (carousel) ---------- */
+/* ---------- Stats counters ---------- */
+function setupStatsCounters() {
+  const blocks = document.querySelectorAll('[data-stat]');
+  if (blocks.length === 0 || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target.querySelector('[data-count-to]');
+      if (!el) { io.unobserve(entry.target); return; }
+      const target = parseFloat(el.dataset.countTo);
+      const decimals = parseInt(el.dataset.decimals || '0', 10);
+      const suffix = el.dataset.suffix || '';
+      animateNumber(el, target, decimals, suffix, 1400);
+      io.unobserve(entry.target);
+    });
+  }, { threshold: 0.4 });
+  blocks.forEach(b => io.observe(b));
+}
+function animateNumber(el, target, decimals, suffix, duration) {
+  const start = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = target * eased;
+    el.textContent = val.toFixed(decimals) + suffix;
+    if (t < 1) requestAnimationFrame(tick);
+    else el.textContent = target.toFixed(decimals) + suffix;
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---------- Reviews marquee ---------- */
 function rebuildReviewsMarquee() {
   const rt = document.getElementById('reviewsCarouselTrack');
   const rs = document.getElementById('reviewsSource');
@@ -570,8 +769,19 @@ function rebuildReviewsMarquee() {
 
 /* ---------- Init ---------- */
 document.addEventListener('DOMContentLoaded', () => {
+  readFiltersFromURL();
   renderReviews();
   setStarRating(5);
+  updateReviewCounter(document.getElementById('reviewText'));
+  setupStatsCounters();
+
+  const form = document.getElementById('reviewForm');
+  if (form) {
+    form.querySelectorAll('.field-input').forEach(f => {
+      f.addEventListener('blur', () => validateReviewField(f));
+      f.addEventListener('input', () => { if (f.classList.contains('invalid')) validateReviewField(f); });
+    });
+  }
 
   rebuildReviewsMarquee();
   setTimeout(rebuildReviewsMarquee, 400);
@@ -583,6 +793,8 @@ document.addEventListener('DOMContentLoaded', () => {
     rt = setTimeout(rebuildReviewsMarquee, 250);
   });
   if (document.fonts?.ready) document.fonts.ready.then(() => setTimeout(rebuildReviewsMarquee, 300));
+
+  window.addEventListener('popstate', () => { readFiltersFromURL(); renderReviews(); });
 });
 </script>
 {% endblock %}

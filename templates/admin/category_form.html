@@ -1,0 +1,544 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit' if category else 'Add' }} Category · Admin Console{% endblock %}
+{% set active_section = 'categories' %}
+{% block page_title %}{{ 'Edit Category' if category else 'Add Category' }}{% endblock %}
+{% block page_subtitle %}
+  {{ 'Update how guests see this category' if category else 'Create a new estate category' }}
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="Breadcrumb" class="text-[11px] text-charcoal/50 mb-0.5 hidden sm:flex items-center gap-1.5">
+  <a href="{{ url_for('admin.dashboard') }}" class="hover:text-gold transition-colors">Admin</a>
+  <i class="fa-solid fa-chevron-right text-[8px]" aria-hidden="true"></i>
+  <a href="{{ url_for('admin.categories') }}" class="hover:text-gold transition-colors">Categories</a>
+  <i class="fa-solid fa-chevron-right text-[8px]" aria-hidden="true"></i>
+  <span class="text-primary font-semibold truncate max-w-[200px]">
+    {{ 'Edit' if category else 'New' }}
+  </span>
+</nav>
+{% endblock %}
+
+{% block content %}
+
+{# ============================================================
+   Flash messages
+   ============================================================ #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mb-5 space-y-2" aria-live="polite">
+      {% for cat, msg in messages %}
+        {% set is_error = cat in ('error', 'danger') %}
+        <div role="alert"
+             class="flex items-start gap-2 p-3 rounded-xl border text-xs
+                    {% if is_error %}
+                      border-red-200 bg-red-50 text-red-700
+                    {% else %}
+                      border-emerald-200 bg-emerald-50 text-emerald-700
+                    {% endif %}">
+          <i class="fa-solid {% if is_error %}fa-circle-exclamation{% else %}fa-circle-check{% endif %} mt-0.5"
+             aria-hidden="true"></i>
+          <span>{{ msg }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{# ============================================================
+   CSRF / session error
+   ============================================================ #}
+{% if form.csrf_token and form.csrf_token.errors %}
+  <div role="alert"
+       class="mb-5 p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-xs flex items-start gap-3">
+    <i class="fa-solid fa-triangle-exclamation mt-0.5" aria-hidden="true"></i>
+    <div class="flex-1">
+      <p class="font-bold">Session expired</p>
+      <p class="mt-0.5">Your security token has expired. Reload to continue.</p>
+      <button type="button"
+              onclick="window.location.reload()"
+              class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-red-700 hover:text-red-900 underline">
+        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reload
+      </button>
+    </div>
+  </div>
+{% endif %}
+
+{# ============================================================
+   Two-column layout: form + live preview
+   ============================================================ #}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  {# ============================================================
+     LEFT — form
+     ============================================================ #}
+  <div class="lg:col-span-2">
+    <form method="POST"
+          id="categoryForm"
+          class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden"
+          novalidate
+          data-mode="{{ 'edit' if category else 'create' }}">
+
+      {{ form.hidden_tag() }}
+
+      {# ---------- Header ---------- #}
+      <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40">
+        <h2 class="font-serif text-2xl font-semibold text-primary">
+          {{ 'Edit Category' if category else 'New Category' }}
+        </h2>
+        <p class="text-xs text-charcoal/50 mt-1">
+          {% if category %}
+            Changes take effect on the public site immediately after saving.
+          {% else %}
+            Categories help guests filter properties on the public site.
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="p-6 space-y-5">
+
+        {# ---------- Name ---------- #}
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="{{ form.name.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider
+                          {% if form.name.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Name <span class="text-gold">*</span>
+            </label>
+            <span id="nameCounter"
+                  class="text-[10px] text-charcoal/40 tabular-nums"
+                  aria-live="polite">0 / 80</span>
+          </div>
+
+          {{ form.name(
+              id=form.name.id,
+              autofocus=true,
+              required=true,
+              maxlength="80",
+              autocomplete="off",
+              aria_invalid="true" if form.name.errors else "false",
+              aria_describedby="nameHelp nameError",
+              class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                    + ("border-red-300 bg-red-50" if form.name.errors else "border-charcoal/15"),
+              placeholder="e.g. Beachfront Bungalows"
+          ) }}
+
+          <p id="nameHelp" class="text-[11px] text-charcoal/50 mt-1.5">
+            Shown to guests in filters and listings.
+          </p>
+
+          {% if form.name.errors %}
+            <ul id="nameError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.name.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        {# ---------- Description ---------- #}
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="{{ form.description.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider
+                          {% if form.description.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Description
+            </label>
+            <span id="descCounter"
+                  class="text-[10px] text-charcoal/40 tabular-nums"
+                  aria-live="polite">0 / 500</span>
+          </div>
+
+          {{ form.description(
+              id=form.description.id,
+              rows=3,
+              maxlength="500",
+              aria_invalid="true" if form.description.errors else "false",
+              aria_describedby="descHelp descError",
+              class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm resize-none transition-all "
+                    + ("border-red-300 bg-red-50" if form.description.errors else "border-charcoal/15"),
+              placeholder="A short description guests will see when browsing this category."
+          ) }}
+
+          <p id="descHelp" class="text-[11px] text-charcoal/50 mt-1.5">
+            Optional. Keep it under 2 sentences for the best mobile display.
+          </p>
+
+          {% if form.description.errors %}
+            <ul id="descError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.description.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        {# ---------- Icon + Order ---------- #}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          {# --- Icon --- #}
+          <div>
+            <label for="{{ form.icon.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                          {% if form.icon.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Icon
+            </label>
+
+            <div class="relative">
+              {{ form.icon(
+                  id=form.icon.id,
+                  autocomplete="off",
+                  spellcheck="false",
+                  maxlength="80",
+                  aria_invalid="true" if form.icon.errors else "false",
+                  aria_describedby="iconHelp iconError",
+                  class="w-full pl-4 pr-12 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm font-mono transition-all "
+                        + ("border-red-300 bg-red-50" if form.icon.errors else "border-charcoal/15"),
+                  placeholder="fa-house-chimney"
+              ) }}
+
+              {# Live icon preview inside the input #}
+              <div class="absolute right-3 top-1/2 -translate-y-1/2
+                          w-8 h-8 rounded-lg bg-primary/10 text-primary
+                          flex items-center justify-center"
+                   aria-hidden="true">
+                <i id="iconPreview"
+                   class="fa-solid {{ form.icon.data or 'fa-house-chimney' }} text-sm"></i>
+              </div>
+            </div>
+
+            <p id="iconHelp" class="text-[11px] text-charcoal/50 mt-1.5">
+              A Font Awesome 6 class, e.g.
+              <code class="text-[10px] bg-ivory px-1 py-0.5 rounded">fa-house-chimney</code>.
+            </p>
+
+            {% if form.icon.errors %}
+              <ul id="iconError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                {% for e in form.icon.errors %}
+                  <li class="flex items-start gap-1">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    <span>{{ e }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+            {# --- Quick-pick icons --- #}
+            <div class="mt-3">
+              <p class="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold mb-1.5">
+                Suggested
+              </p>
+              <div class="flex flex-wrap gap-1.5" role="listbox" aria-label="Suggested icons">
+                {% set suggestions = [
+                  'fa-house-chimney', 'fa-umbrella-beach', 'fa-mountain-sun',
+                  'fa-tree', 'fa-water', 'fa-city', 'fa-hotel', 'fa-crown',
+                  'fa-leaf', 'fa-sailboat'
+                ] %}
+                {% for s in suggestions %}
+                  <button type="button"
+                          data-icon-pick="{{ s }}"
+                          title="{{ s }}"
+                          aria-label="Use icon {{ s }}"
+                          class="w-8 h-8 rounded-lg border border-charcoal/10 bg-ivory/40
+                                 hover:border-gold hover:bg-gold/10 hover:text-gold
+                                 text-charcoal/60 flex items-center justify-center
+                                 transition-all focus:outline-none focus:ring-2 focus:ring-gold">
+                    <i class="fa-solid {{ s }} text-xs" aria-hidden="true"></i>
+                  </button>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          {# --- Order --- #}
+          <div>
+            <label for="{{ form.order.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                          {% if form.order.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Display Order
+            </label>
+
+            {{ form.order(
+                id=form.order.id,
+                type="number",
+                min="0",
+                step="1",
+                inputmode="numeric",
+                aria_invalid="true" if form.order.errors else "false",
+                aria_describedby="orderHelp orderError",
+                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm tabular-nums transition-all "
+                      + ("border-red-300 bg-red-50" if form.order.errors else "border-charcoal/15")
+            ) }}
+
+            <p id="orderHelp" class="text-[11px] text-charcoal/50 mt-1.5">
+              Lower numbers appear first. Leave 0 to sort alphabetically.
+            </p>
+
+            {% if form.order.errors %}
+              <ul id="orderError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                {% for e in form.order.errors %}
+                  <li class="flex items-start gap-1">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    <span>{{ e }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      {# ---------- Actions ---------- #}
+      <div class="px-6 py-4 border-t border-charcoal/5 bg-ivory/30
+                  flex flex-wrap items-center justify-end gap-3">
+        <a href="{{ url_for('admin.categories') }}"
+           class="px-5 py-2.5 rounded-xl border border-charcoal/15
+                  text-sm font-semibold text-charcoal/70
+                  hover:bg-ivory transition-all">
+          Cancel
+        </a>
+
+        <button type="submit"
+                id="categorySubmitBtn"
+                class="bg-primary text-gold hover:bg-gold hover:text-primary
+                       px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider
+                       transition-all shadow-md flex items-center gap-2
+                       disabled:opacity-70 disabled:cursor-wait">
+          <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+          <span>{{ 'Update Category' if category else 'Create Category' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {# ============================================================
+     RIGHT — live preview
+     ============================================================ #}
+  <div class="space-y-6 lg:sticky lg:top-24 lg:self-start">
+
+    <div class="bg-white rounded-2xl border border-gold/20 shadow-sm">
+      <div class="px-6 py-4 border-b border-charcoal/5 bg-ivory/40">
+        <h3 class="font-serif text-lg font-semibold text-primary flex items-center gap-2">
+          <i class="fa-solid fa-eye text-gold" aria-hidden="true"></i>
+          Live Preview
+        </h3>
+        <p class="text-[11px] text-charcoal/50 mt-0.5">
+          How the card looks on the public site.
+        </p>
+      </div>
+
+      <div class="p-6">
+        <article class="bg-white rounded-2xl border border-gold/20 shadow-sm
+                        hover:shadow-md transition-all overflow-hidden">
+          <div class="h-1 w-full bg-gold/60" aria-hidden="true"></div>
+          <div class="p-6 flex flex-col">
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary
+                          flex items-center justify-center shrink-0"
+                   aria-hidden="true">
+                <i id="previewIcon" class="fa-solid {{ form.icon.data or 'fa-house-chimney' }} text-lg"></i>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Order</p>
+                <p id="previewOrder" class="text-sm font-bold text-primary tabular-nums">
+                  {{ form.order.data if form.order.data is not none else 0 }}
+                </p>
+              </div>
+            </div>
+
+            <h3 id="previewName"
+                class="font-serif text-xl font-semibold text-primary truncate">
+              {{ form.name.data or 'Category Name' }}
+            </h3>
+            <p id="previewDesc"
+               class="text-xs text-charcoal/60 mt-1 line-clamp-3 leading-relaxed min-h-[3rem]">
+              {{ form.description.data or 'No description.' }}
+            </p>
+
+            <div class="mt-4 pt-4 border-t border-charcoal/5 flex items-center justify-between">
+              <span class="text-xs text-charcoal/60 flex items-center gap-1.5">
+                <i class="fa-solid fa-house-chimney text-gold" aria-hidden="true"></i>
+                <span>0 properties</span>
+              </span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    {# ---------- Helper card ---------- #}
+    <div class="bg-ivory/60 rounded-2xl border border-gold/20 p-5">
+      <h4 class="text-xs font-bold uppercase tracking-widest text-primary/80 mb-3
+                 flex items-center gap-2">
+        <i class="fa-solid fa-lightbulb text-gold" aria-hidden="true"></i>
+        Tips
+      </h4>
+      <ul class="text-[11px] text-charcoal/60 space-y-2 leading-relaxed">
+        <li class="flex items-start gap-2">
+          <i class="fa-solid fa-check text-gold mt-0.5 shrink-0" aria-hidden="true"></i>
+          <span>Keep names short — they appear as filter pills on mobile.</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <i class="fa-solid fa-check text-gold mt-0.5 shrink-0" aria-hidden="true"></i>
+          <span>Pick an icon that clearly conveys the category at a glance.</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <i class="fa-solid fa-check text-gold mt-0.5 shrink-0" aria-hidden="true"></i>
+          <span>Order <code class="text-[10px] bg-white px-1 py-0.5 rounded">1</code> shows first;
+            <code class="text-[10px] bg-white px-1 py-0.5 rounded">0</code> sorts alphabetically.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  function ready(fn) {
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  ready(function () {
+    var form          = document.getElementById('categoryForm');
+    var submitBtn     = document.getElementById('categorySubmitBtn');
+    var iconInput     = document.getElementById('{{ form.icon.id }}');
+    var iconPreview   = document.getElementById('iconPreview');
+    var previewIcon   = document.getElementById('previewIcon');
+    var nameInput     = document.getElementById('{{ form.name.id }}');
+    var nameCounter   = document.getElementById('nameCounter');
+    var namePreview   = document.getElementById('previewName');
+    var descInput     = document.getElementById('{{ form.description.id }}');
+    var descCounter   = document.getElementById('descCounter');
+    var descPreview   = document.getElementById('previewDesc');
+    var orderInput    = document.getElementById('{{ form.order.id }}');
+    var orderPreview  = document.getElementById('previewOrder');
+
+    // ============================================================
+    // 1. Live icon preview + quick-pick
+    // ============================================================
+    function normalizeIcon(v) {
+      if (!v) return 'fa-house-chimney';
+      v = v.trim();
+      return v.startsWith('fa-') ? v : 'fa-' + v;
+    }
+
+    function updateIconPreview() {
+      if (!iconInput) return;
+      var cls = normalizeIcon(iconInput.value);
+      if (iconPreview) iconPreview.className = 'fa-solid ' + cls + ' text-sm';
+      if (previewIcon) previewIcon.className = 'fa-solid ' + cls + ' text-lg';
+    }
+
+    if (iconInput) {
+      iconInput.addEventListener('input', updateIconPreview);
+    }
+
+    // Quick-pick buttons
+    document.querySelectorAll('[data-icon-pick]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!iconInput) return;
+        iconInput.value = btn.dataset.iconPick;
+        iconInput.dispatchEvent(new Event('input', { bubbles: true }));
+        iconInput.focus();
+      });
+    });
+
+    // ============================================================
+    // 2. Name preview + character counter
+    // ============================================================
+    function updateName() {
+      if (!nameInput) return;
+      var v = nameInput.value || '';
+      if (nameCounter) nameCounter.textContent = v.length + ' / 80';
+      if (namePreview) namePreview.textContent = v || 'Category Name';
+    }
+    if (nameInput) {
+      nameInput.addEventListener('input', updateName);
+      updateName();
+    }
+
+    // ============================================================
+    // 3. Description preview + counter
+    // ============================================================
+    function updateDesc() {
+      if (!descInput) return;
+      var v = descInput.value || '';
+      if (descCounter) descCounter.textContent = v.length + ' / 500';
+      if (descPreview) descPreview.textContent = v || 'No description.';
+    }
+    if (descInput) {
+      descInput.addEventListener('input', updateDesc);
+      updateDesc();
+    }
+
+    // ============================================================
+    // 4. Order preview
+    // ============================================================
+    function updateOrder() {
+      if (!orderInput || !orderPreview) return;
+      var v = orderInput.value === '' ? 0 : orderInput.value;
+      orderPreview.textContent = v;
+    }
+    if (orderInput) {
+      orderInput.addEventListener('input', updateOrder);
+      updateOrder();
+    }
+
+    // ============================================================
+    // 5. Submit loading state + native validation
+    // ============================================================
+    if (form && submitBtn) {
+      var originalHTML = submitBtn.innerHTML;
+      form.addEventListener('submit', function () {
+        if (!form.checkValidity()) return;
+        if (!submitBtn.disabled) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>' +
+            '<span>Saving…</span>';
+        }
+      });
+
+      // bfcache safety
+      window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalHTML;
+        }
+      });
+    }
+
+    // ============================================================
+    // 6. Unsaved-changes guard
+    // ============================================================
+    if (form) {
+      var initialState = new URLSearchParams(new FormData(form)).toString();
+      var submitting   = false;
+
+      form.addEventListener('submit', function () { submitting = true; });
+
+      window.addEventListener('beforeunload', function (e) {
+        if (submitting) return;
+        var currentState = new URLSearchParams(new FormData(form)).toString();
+        if (currentState === initialState) return;
+        e.preventDefault();
+        e.returnValue = '';
+      });
+    }
+  });
+})();
+</script>
+{% endblock %}

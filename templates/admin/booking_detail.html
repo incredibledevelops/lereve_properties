@@ -1,0 +1,615 @@
+{% extends "admin/base.html" %}
+{% block title %}Booking {{ booking.confirmation_id or booking.id }} · Admin Console{% endblock %}
+{% set active_section = 'bookings' %}
+{% block page_title %}{{ booking.property or 'Booking' }}{% endblock %}
+{% block page_subtitle %}
+  {{ booking.location or 'Booking details' }}
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="Breadcrumb" class="text-[11px] text-charcoal/50 mb-0.5 hidden sm:flex items-center gap-1.5">
+  <a href="{{ url_for('admin.dashboard') }}" class="hover:text-gold transition-colors">Admin</a>
+  <i class="fa-solid fa-chevron-right text-[8px]" aria-hidden="true"></i>
+  <a href="{{ url_for('admin.bookings') }}" class="hover:text-gold transition-colors">Bookings</a>
+  <i class="fa-solid fa-chevron-right text-[8px]" aria-hidden="true"></i>
+  <span class="text-primary font-semibold truncate max-w-[200px]">
+    {{ booking.confirmation_id or booking.id }}
+  </span>
+</nav>
+{% endblock %}
+
+{% block content %}
+
+{# ============================================================
+   State banners — errors / info / cancellation
+   ============================================================ #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mb-5 space-y-2" aria-live="polite">
+      {% for cat, msg in messages %}
+        {% set is_error = cat in ('error', 'danger') %}
+        <div role="alert"
+             class="flex items-start gap-2 p-3 rounded-xl border text-xs
+                    {% if is_error %}
+                      border-red-200 bg-red-50 text-red-700
+                    {% else %}
+                      border-emerald-200 bg-emerald-50 text-emerald-700
+                    {% endif %}">
+          <i class="fa-solid {% if is_error %}fa-circle-exclamation{% else %}fa-circle-check{% endif %} mt-0.5"
+             aria-hidden="true"></i>
+          <span>{{ msg }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% if booking.status == 'cancellation-requested' %}
+  <div role="status"
+       class="mb-5 flex items-start gap-3 p-3.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs">
+    <i class="fa-solid fa-clock-rotate-left mt-0.5" aria-hidden="true"></i>
+    <div>
+      <p class="font-bold">Guest has requested cancellation.</p>
+      <p class="mt-0.5 text-amber-800/80">
+        Review and mark as <strong>Cancelled</strong> below.
+        {% if booking.cancellation_reason %}
+          Reason given: <em>{{ booking.cancellation_reason }}</em>
+        {% endif %}
+      </p>
+    </div>
+  </div>
+{% endif %}
+
+{% if booking.payment_status == 'paid' and booking.status == 'cancelled' %}
+  <div role="status"
+       class="mb-5 flex items-start gap-3 p-3.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 text-xs">
+    <i class="fa-solid fa-circle-info mt-0.5" aria-hidden="true"></i>
+    <div>
+      <p class="font-bold">This booking was paid and then cancelled.</p>
+      <p class="mt-0.5 text-blue-800/80">
+        A refund of <strong>{{ booking.payment_amount|format_currency }}</strong> may be owed to the guest.
+      </p>
+    </div>
+  </div>
+{% endif %}
+
+{# ============================================================
+   2-column layout
+   ============================================================ #}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  {# ============================================================
+     LEFT — main
+     ============================================================ #}
+  <div class="lg:col-span-2 space-y-6">
+
+    {# ---------- Hero card ---------- #}
+    <section class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+      <div class="p-6 sm:p-7">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div class="min-w-0">
+            <h2 class="font-serif text-2xl sm:text-3xl font-semibold text-primary truncate">
+              {{ booking.property or 'Unknown property' }}
+            </h2>
+            {% if booking.location %}
+              <p class="text-sm text-charcoal/60 mt-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-location-dot text-gold" aria-hidden="true"></i>
+                {{ booking.location }}
+              </p>
+            {% endif %}
+          </div>
+
+          {# Copy confirmation id #}
+          <button type="button"
+                  id="copyRefBtn"
+                  data-ref="{{ booking.confirmation_id or booking.id }}"
+                  class="shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-lg
+                         border border-charcoal/15 bg-ivory/40 hover:border-gold hover:text-gold
+                         text-[11px] font-semibold text-charcoal/70 transition-all"
+                  aria-label="Copy confirmation ID">
+            <i class="fa-regular fa-copy" aria-hidden="true"></i>
+            <span class="hidden sm:inline">{{ booking.confirmation_id or booking.id }}</span>
+            <span class="sm:hidden">Copy ID</span>
+          </button>
+        </div>
+
+        {# Metadata row #}
+        <div class="flex flex-wrap items-center gap-2">
+          {# Status pill #}
+          {% set status = booking.status or 'pending' %}
+          <span role="status"
+                class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider
+                       px-3 py-1 rounded-full
+                       {% if status == 'confirmed' %}bg-emerald-100 text-emerald-700 border border-emerald-200
+                       {% elif status == 'cancelled' %}bg-red-100 text-red-700 border border-red-200
+                       {% elif status == 'completed' %}bg-primary/10 text-primary border border-primary/20
+                       {% elif status == 'cancellation-requested' %}bg-amber-100 text-amber-800 border border-amber-200
+                       {% else %}bg-amber-100 text-amber-700 border border-amber-200{% endif %}">
+            <i class="fa-solid
+              {% if status == 'confirmed' %}fa-circle-check
+              {% elif status == 'cancelled' %}fa-circle-xmark
+              {% elif status == 'completed' %}fa-flag-checkered
+              {% elif status == 'cancellation-requested' %}fa-clock-rotate-left
+              {% else %}fa-hourglass-half{% endif %}"
+               aria-hidden="true"></i>
+            {{ status | replace('-', ' ') }}
+          </span>
+
+          {# Payment pill #}
+          {% set pay = booking.payment_status or 'pending' %}
+          <span role="status"
+                class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider
+                       px-3 py-1 rounded-full
+                       {% if pay == 'paid' %}bg-emerald-100 text-emerald-700 border border-emerald-200
+                       {% elif pay == 'failed' %}bg-red-100 text-red-700 border border-red-200
+                       {% elif pay == 'refunded' %}bg-blue-100 text-blue-700 border border-blue-200
+                       {% else %}bg-amber-100 text-amber-700 border border-amber-200{% endif %}">
+            <i class="fa-solid
+              {% if pay == 'paid' %}fa-circle-check
+              {% elif pay == 'failed' %}fa-circle-xmark
+              {% elif pay == 'refunded' %}fa-rotate-left
+              {% else %}fa-hourglass-half{% endif %}"
+               aria-hidden="true"></i>
+            {{ pay }}
+          </span>
+
+          {% if booking.created_at %}
+            <span class="text-[11px] text-charcoal/50">
+              Booked {{ booking.created_at | relative_time }}
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    {# ---------- Stay details ---------- #}
+    <section class="bg-white rounded-2xl border border-gold/20 shadow-sm">
+      <div class="p-6">
+        <h3 class="font-serif text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-calendar-days text-gold" aria-hidden="true"></i>
+          Stay Details
+        </h3>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="p-3 rounded-xl bg-ivory/60 border border-gold/10">
+            <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Check-In</p>
+            <p class="text-sm font-semibold text-primary mt-1">
+              {{ booking.check_in | format_date if booking.check_in else '—' }}
+            </p>
+          </div>
+          <div class="p-3 rounded-xl bg-ivory/60 border border-gold/10">
+            <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Check-Out</p>
+            <p class="text-sm font-semibold text-primary mt-1">
+              {{ booking.check_out | format_date if booking.check_out else '—' }}
+            </p>
+          </div>
+          <div class="p-3 rounded-xl bg-ivory/60 border border-gold/10">
+            <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Nights</p>
+            <p class="text-sm font-semibold text-primary mt-1 tabular-nums">
+              {{ booking.nights if booking.nights is defined and booking.nights is not none else '—' }}
+            </p>
+          </div>
+          <div class="p-3 rounded-xl bg-ivory/60 border border-gold/10">
+            <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Guests</p>
+            <p class="text-sm font-semibold text-primary mt-1">
+              {{ booking.guests or '—' }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {# ---------- Guest ---------- #}
+    <section class="bg-white rounded-2xl border border-gold/20 shadow-sm">
+      <div class="p-6">
+        <h3 class="font-serif text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-user text-gold" aria-hidden="true"></i>
+          Guest
+        </h3>
+
+        <div class="flex items-center gap-4 flex-wrap">
+          <div class="w-14 h-14 rounded-full bg-gold text-primary flex items-center justify-center
+                      font-serif font-bold text-xl shrink-0" aria-hidden="true">
+            {{ (booking.user_name or booking.user_email or '?')[0] | upper }}
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold text-primary truncate">{{ booking.user_name or 'Guest' }}</p>
+            {% if booking.user_email %}
+              <a href="mailto:{{ booking.user_email }}"
+                 class="text-xs text-charcoal/60 hover:text-gold transition-colors truncate block">
+                {{ booking.user_email }}
+              </a>
+            {% endif %}
+          </div>
+
+          <div class="flex items-center gap-2">
+            {% if booking.user_email %}
+              <a href="mailto:{{ booking.user_email }}?subject=Your booking {{ booking.confirmation_id or booking.id }}"
+                 class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-charcoal/15
+                        hover:border-gold hover:text-gold text-[11px] font-semibold text-charcoal/70 transition-all">
+                <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+                <span>Email</span>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {# ---------- Payment ---------- #}
+    <section class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+      <div class="p-6">
+        <h3 class="font-serif text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-gold" aria-hidden="true"></i>
+          Payment
+        </h3>
+
+        <div class="rounded-2xl overflow-hidden border border-primary/20">
+          <div class="bg-primary text-ivory p-5 space-y-2.5">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-ivory/70">
+                {{ booking.nightly_rate|format_currency }}
+                ×
+                {{ booking.nights if booking.nights is defined and booking.nights is not none else '—' }}
+                night{% if booking.nights and booking.nights != 1 %}s{% endif %}
+              </span>
+              <span>{{ booking.total|format_currency }}</span>
+            </div>
+            <div class="flex justify-between items-center pt-3 border-t border-gold/20">
+              <span class="text-sm font-bold text-gold uppercase tracking-wider">Total</span>
+              <span class="font-serif text-2xl font-bold text-gold tabular-nums">
+                {{ booking.total|format_currency }}
+              </span>
+            </div>
+          </div>
+
+          <div class="bg-ivory/60 p-4 space-y-2 text-xs">
+            <div class="flex justify-between">
+              <span class="text-charcoal/60">Payment status</span>
+              <span class="font-semibold text-primary capitalize">
+                {{ booking.payment_status or 'pending' }}
+              </span>
+            </div>
+            {% if booking.payment_reference %}
+              <div class="flex justify-between gap-3">
+                <span class="text-charcoal/60 shrink-0">Reference</span>
+                <span class="font-mono text-[11px] text-primary truncate text-right">
+                  {{ booking.payment_reference }}
+                </span>
+              </div>
+            {% endif %}
+            {% if booking.payment_channel %}
+              <div class="flex justify-between">
+                <span class="text-charcoal/60">Channel</span>
+                <span class="font-semibold text-primary capitalize">{{ booking.payment_channel }}</span>
+              </div>
+            {% endif %}
+            {% if booking.paid_at %}
+              <div class="flex justify-between">
+                <span class="text-charcoal/60">Paid</span>
+                <span class="font-semibold text-primary">{{ booking.paid_at | relative_time }}</span>
+              </div>
+            {% endif %}
+            {% if booking.payment_amount %}
+              <div class="flex justify-between">
+                <span class="text-charcoal/60">Amount received</span>
+                <span class="font-semibold text-primary tabular-nums">
+                  {{ booking.payment_amount | format_currency }}
+                </span>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {# ---------- Notes / cancellation reason ---------- #}
+    {% if booking.notes or booking.cancellation_reason %}
+      <section class="bg-white rounded-2xl border border-gold/20 shadow-sm">
+        <div class="p-6 space-y-4">
+          {% if booking.notes %}
+            <div>
+              <h4 class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold mb-2">
+                Internal notes
+              </h4>
+              <p class="text-sm text-charcoal/80 whitespace-pre-wrap leading-relaxed">
+                {{ booking.notes }}
+              </p>
+            </div>
+          {% endif %}
+          {% if booking.cancellation_reason %}
+            <div>
+              <h4 class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold mb-2">
+                Cancellation reason
+              </h4>
+              <p class="text-sm text-charcoal/80 whitespace-pre-wrap leading-relaxed">
+                {{ booking.cancellation_reason }}
+              </p>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+    {% endif %}
+
+  </div>
+
+  {# ============================================================
+     RIGHT — actions + timeline
+     ============================================================ #}
+  <div class="space-y-6">
+
+    {# ---------- Actions ---------- #}
+    <section class="bg-white rounded-2xl border border-gold/20 shadow-sm">
+      <div class="p-6">
+        <h3 class="font-serif text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-bolt text-gold" aria-hidden="true"></i>
+          Actions
+        </h3>
+
+        {# Status change form #}
+        <form method="POST"
+              action="{{ url_for('admin.booking_status', bid=booking.id) }}"
+              class="space-y-3"
+              id="bookingStatusForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <label for="statusSelect"
+                 class="block text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+            Booking status
+          </label>
+          <select id="statusSelect"
+                  name="status"
+                  class="w-full px-3 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                         focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all">
+            {% set statuses = ['pending', 'confirmed', 'completed', 'cancellation-requested', 'cancelled'] %}
+            {% for s in statuses %}
+              <option value="{{ s }}" {% if booking.status == s %}selected{% endif %}>
+                {{ s | replace('-', ' ') | title }}
+              </option>
+            {% endfor %}
+          </select>
+
+          <button type="submit"
+                  id="bookingStatusBtn"
+                  class="w-full bg-primary text-gold hover:bg-gold hover:text-primary
+                         py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider
+                         transition-all flex items-center justify-center gap-2
+                         disabled:opacity-70 disabled:cursor-wait">
+            <i class="fa-solid fa-check" aria-hidden="true"></i>
+            <span>Update Status</span>
+          </button>
+        </form>
+
+        <div class="mt-4 pt-4 border-t border-charcoal/10 space-y-2">
+          {% if booking.user_email %}
+            <a href="mailto:{{ booking.user_email }}?subject=Your booking {{ booking.confirmation_id or booking.id }}"
+               class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+                      border border-charcoal/15 text-xs font-semibold text-charcoal/70
+                      hover:border-gold hover:text-gold transition-all">
+              <i class="fa-solid fa-reply" aria-hidden="true"></i>
+              Email Guest
+            </a>
+          {% endif %}
+
+          <button type="button"
+                  onclick="window.print()"
+                  class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+                         border border-charcoal/15 text-xs font-semibold text-charcoal/70
+                         hover:border-gold hover:text-gold transition-all">
+            <i class="fa-solid fa-print" aria-hidden="true"></i>
+            Print / Save PDF
+          </button>
+        </div>
+      </div>
+    </section>
+
+    {# ---------- Timeline ---------- #}
+    <section class="bg-white rounded-2xl border border-gold/20 shadow-sm">
+      <div class="p-6">
+        <h3 class="font-serif text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-gold" aria-hidden="true"></i>
+          Timeline
+        </h3>
+
+        <ol class="relative border-l border-charcoal/10 ml-2 space-y-4">
+          {% if booking.created_at %}
+            <li class="ml-4">
+              <span class="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-gold mt-1.5"
+                    aria-hidden="true"></span>
+              <p class="text-xs font-semibold text-primary">Booking created</p>
+              <p class="text-[11px] text-charcoal/50">{{ booking.created_at | relative_time }}</p>
+            </li>
+          {% endif %}
+
+          {% if booking.paid_at %}
+            <li class="ml-4">
+              <span class="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5"
+                    aria-hidden="true"></span>
+              <p class="text-xs font-semibold text-primary">Payment received</p>
+              <p class="text-[11px] text-charcoal/50">{{ booking.paid_at | relative_time }}</p>
+            </li>
+          {% endif %}
+
+          {% if booking.updated_at and booking.updated_at != booking.created_at %}
+            <li class="ml-4">
+              <span class="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-charcoal/30 mt-1.5"
+                    aria-hidden="true"></span>
+              <p class="text-xs font-semibold text-primary">Last updated</p>
+              <p class="text-[11px] text-charcoal/50">{{ booking.updated_at | relative_time }}</p>
+            </li>
+          {% endif %}
+
+          <li class="ml-4">
+            <span class="absolute -left-[5px] w-2.5 h-2.5 rounded-full bg-primary mt-1.5"
+                  aria-hidden="true"></span>
+            <p class="text-xs font-semibold text-primary">
+              Current status: <span class="capitalize">{{ booking.status or 'pending' }}</span>
+            </p>
+            <p class="text-[11px] text-charcoal/50">
+              Payment: <span class="capitalize">{{ booking.payment_status or 'pending' }}</span>
+            </p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    {# ---------- Reference ---------- #}
+    <section class="bg-white rounded-2xl border border-gold/20 shadow-sm">
+      <div class="p-6">
+        <h3 class="font-serif text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-hashtag text-gold" aria-hidden="true"></i>
+          Reference
+        </h3>
+
+        <dl class="space-y-3 text-xs">
+          <div>
+            <dt class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+              Confirmation ID
+            </dt>
+            <dd class="font-mono text-[11px] text-primary mt-1 break-all">
+              {{ booking.confirmation_id or booking.id }}
+            </dd>
+          </div>
+          {% if booking.property_id %}
+            <div>
+              <dt class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+                Property ID
+              </dt>
+              <dd class="font-mono text-[11px] text-primary mt-1 break-all">
+                {{ booking.property_id }}
+              </dd>
+            </div>
+          {% endif %}
+          {% if booking.user_id %}
+            <div>
+              <dt class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+                Guest ID
+              </dt>
+              <dd class="font-mono text-[11px] text-primary mt-1 break-all">
+                {{ booking.user_id }}
+              </dd>
+            </div>
+          {% endif %}
+        </dl>
+      </div>
+    </section>
+
+    {# ---------- Danger zone ---------- #}
+    {% if booking.status not in ('cancelled', 'completed') %}
+      <section class="bg-white rounded-2xl border border-red-200 shadow-sm">
+        <div class="p-6">
+          <h3 class="font-serif text-lg font-semibold text-red-600 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+            Danger Zone
+          </h3>
+          <p class="text-xs text-charcoal/60 mb-4">
+            Cancelling will mark the booking as cancelled and notify the guest.
+            {% if booking.payment_status == 'paid' %}
+              A refund of <strong>{{ booking.payment_amount|format_currency }}</strong> may be owed.
+            {% endif %}
+          </p>
+          <form method="POST"
+                action="{{ url_for('admin.booking_status', bid=booking.id) }}"
+                id="cancelBookingForm"
+                data-ref="{{ booking.confirmation_id or booking.id }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="status" value="cancelled">
+            <button type="submit"
+                    class="w-full bg-red-500 text-white hover:bg-red-600
+                           py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider
+                           transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-ban" aria-hidden="true"></i>
+              <span>Cancel Booking</span>
+            </button>
+          </form>
+        </div>
+      </section>
+    {% endif %}
+
+  </div>
+</div>
+
+{# ============================================================
+   Bottom actions (mobile-friendly)
+   ============================================================ #}
+<div class="mt-6 flex flex-wrap justify-between items-center gap-3">
+  <a href="{{ url_for('admin.bookings') }}"
+     class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-charcoal/15
+            text-xs font-bold uppercase tracking-wider text-charcoal/70
+            hover:border-gold hover:text-gold transition-all">
+    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+    Back to Bookings
+  </a>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  function ready(fn) {
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  ready(function () {
+
+    // ---------- Copy reference ----------
+    var copyBtn = document.getElementById('copyRefBtn');
+    if (copyBtn && navigator.clipboard) {
+      copyBtn.addEventListener('click', function () {
+        var ref = copyBtn.dataset.ref || '';
+        if (!ref) return;
+        navigator.clipboard.writeText(ref).then(function () {
+          var original = copyBtn.innerHTML;
+          copyBtn.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i><span>Copied</span>';
+          copyBtn.classList.add('border-emerald-300', 'text-emerald-600');
+          setTimeout(function () {
+            copyBtn.innerHTML = original;
+            copyBtn.classList.remove('border-emerald-300', 'text-emerald-600');
+          }, 1500);
+        }).catch(function () {});
+      });
+    }
+
+    // ---------- Status form: confirm + loading state ----------
+    var statusForm = document.getElementById('bookingStatusForm');
+    var statusBtn  = document.getElementById('bookingStatusBtn');
+    var statusSel  = document.getElementById('statusSelect');
+    if (statusForm && statusBtn && statusSel) {
+      statusForm.addEventListener('submit', function (e) {
+        var next = statusSel.value;
+        if (next === 'cancelled' && !window.confirm('Mark this booking as cancelled?')) {
+          e.preventDefault();
+          return;
+        }
+        if (!statusBtn.disabled) {
+          statusBtn.disabled = true;
+          statusBtn.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Updating…</span>';
+        }
+      });
+    }
+
+    // ---------- Danger zone cancel: typed ref confirm ----------
+    var cancelForm = document.getElementById('cancelBookingForm');
+    if (cancelForm) {
+      cancelForm.addEventListener('submit', function (e) {
+        var ref = cancelForm.dataset.ref || '';
+        var typed = window.prompt(
+          'This will cancel booking ' + ref + '.\n\n' +
+          'Type the reference to confirm:'
+        );
+        if (typed !== ref) {
+          e.preventDefault();
+        }
+      });
+    }
+  });
+})();
+</script>
+{% endblock %}

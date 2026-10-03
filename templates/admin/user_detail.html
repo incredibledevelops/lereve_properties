@@ -1,0 +1,670 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ user.name }} · User · Admin Console{% endblock %}
+{% set active_section = 'users' %}
+{% block page_title %}{{ user.name }}{% endblock %}
+{% block page_subtitle %}User details &amp; activity{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="Breadcrumb" class="text-[11px] text-charcoal/50 mb-0.5 hidden sm:flex items-center gap-1.5">
+  <a href="{{ url_for('admin.dashboard') }}" class="hover:text-gold transition-colors">Admin</a>
+  <i class="fa-solid fa-chevron-right text-[8px]" aria-hidden="true"></i>
+  <a href="{{ url_for('admin.users') }}" class="hover:text-gold transition-colors">Users</a>
+  <i class="fa-solid fa-chevron-right text-[8px]" aria-hidden="true"></i>
+  <span class="text-primary font-semibold truncate max-w-[200px]">{{ user.name }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+
+{# ============================================================
+   Self-edit notice
+   ============================================================ #}
+{% if is_self %}
+  <div class="mb-5 flex items-start gap-3 p-3.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 text-xs"
+       role="status">
+    <i class="fa-solid fa-circle-info mt-0.5" aria-hidden="true"></i>
+    <div>
+      <p class="font-bold">You are editing your own account.</p>
+      <p class="mt-0.5 text-blue-700/80">
+        Role and active status are locked to prevent you from accidentally removing your own admin access.
+      </p>
+    </div>
+  </div>
+{% endif %}
+
+{# ============================================================
+   Flash messages (right above the form, same style as auth)
+   ============================================================ #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mb-5 space-y-2" aria-live="polite">
+      {% for cat, msg in messages %}
+        {% set is_error = cat in ('error', 'danger') %}
+        <div role="alert"
+             class="flex items-start gap-2 p-3 rounded-xl border text-xs
+                    {% if is_error %}
+                      border-red-200 bg-red-50 text-red-700
+                    {% else %}
+                      border-emerald-200 bg-emerald-50 text-emerald-700
+                    {% endif %}">
+          <i class="fa-solid {% if is_error %}fa-circle-exclamation{% else %}fa-circle-check{% endif %} mt-0.5"
+             aria-hidden="true"></i>
+          <span>{{ msg }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  {# ============================================================
+     LEFT — main edit form
+     ============================================================ #}
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+      <div class="flex items-start justify-between gap-3 mb-5">
+        <div>
+          <h3 class="font-serif text-xl font-semibold text-primary">Edit User</h3>
+          <p class="text-xs text-charcoal/50 mt-1">
+            Changes save immediately on submit. Leave password blank to keep the current one.
+          </p>
+        </div>
+      </div>
+
+      <form method="POST" class="space-y-5" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          {# --- Name --- #}
+          <div>
+            <label for="{{ form.name.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                          {% if form.name.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Name <span class="text-gold">*</span>
+            </label>
+            {{ form.name(
+                id=form.name.id,
+                required=true,
+                aria_invalid="true" if form.name.errors else "false",
+                aria_describedby="editUserNameError",
+                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                      + ("border-red-300 bg-red-50" if form.name.errors else "border-charcoal/15")
+            ) }}
+            {% if form.name.errors %}
+              <ul id="editUserNameError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                {% for e in form.name.errors %}
+                  <li class="flex items-start gap-1">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    <span>{{ e }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+
+          {# --- Email --- #}
+          <div>
+            <label for="{{ form.email.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                          {% if form.email.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Email <span class="text-gold">*</span>
+            </label>
+            {{ form.email(
+                id=form.email.id,
+                type="email",
+                autocomplete="email",
+                required=true,
+                aria_invalid="true" if form.email.errors else "false",
+                aria_describedby="editUserEmailError",
+                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                      + ("border-red-300 bg-red-50" if form.email.errors else "border-charcoal/15")
+            ) }}
+            {% if form.email.errors %}
+              <ul id="editUserEmailError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                {% for e in form.email.errors %}
+                  <li class="flex items-start gap-1">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    <span>{{ e }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+
+          {# --- Phone --- #}
+          <div>
+            <label for="{{ form.phone.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                          {% if form.phone.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Phone
+            </label>
+            {{ form.phone(
+                id=form.phone.id,
+                type="tel",
+                autocomplete="tel",
+                inputmode="tel",
+                aria_invalid="true" if form.phone.errors else "false",
+                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                      + ("border-red-300 bg-red-50" if form.phone.errors else "border-charcoal/15")
+            ) }}
+            {% if form.phone.errors %}
+              <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                {% for e in form.phone.errors %}
+                  <li class="flex items-start gap-1">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    <span>{{ e }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+
+          {# --- Country --- #}
+          <div>
+            <label for="{{ form.country.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                          {% if form.country.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Country
+            </label>
+            {{ form.country(
+                id=form.country.id,
+                autocomplete="country-name",
+                aria_invalid="true" if form.country.errors else "false",
+                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                      + ("border-red-300 bg-red-50" if form.country.errors else "border-charcoal/15")
+            ) }}
+            {% if form.country.errors %}
+              <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                {% for e in form.country.errors %}
+                  <li class="flex items-start gap-1">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    <span>{{ e }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+
+          {# --- Tier --- #}
+          <div>
+            <label for="{{ form.tier.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                          {% if form.tier.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Tier
+            </label>
+            {{ form.tier(
+                id=form.tier.id,
+                aria_invalid="true" if form.tier.errors else "false",
+                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                      + ("border-red-300 bg-red-50" if form.tier.errors else "border-charcoal/15")
+            ) }}
+            {% if form.tier.errors %}
+              <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                {% for e in form.tier.errors %}
+                  <li class="flex items-start gap-1">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    <span>{{ e }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+
+          {# --- Role --- #}
+          <div>
+            <label for="{{ form.role.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                          {% if form.role.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              Role
+              {% if is_self %}
+                <i class="fa-solid fa-lock text-[10px] text-charcoal/40 ml-1" aria-hidden="true"
+                   title="You cannot change your own role"></i>
+              {% endif %}
+            </label>
+            {{ form.role(
+                id=form.role.id,
+                disabled=is_self,
+                aria_invalid="true" if form.role.errors else "false",
+                aria_describedby="editUserRoleHint",
+                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                      + ("border-red-300 bg-red-50" if form.role.errors else "border-charcoal/15")
+                      + (" opacity-60 cursor-not-allowed" if is_self else "")
+            ) }}
+            {% if is_self %}
+              <p id="editUserRoleHint" class="text-[11px] text-charcoal/50 mt-1.5">
+                You cannot change your own role.
+              </p>
+            {% elif form.role.errors %}
+              <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                {% for e in form.role.errors %}
+                  <li class="flex items-start gap-1">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    <span>{{ e }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </div>
+
+        {# --- New Password --- #}
+        <div>
+          <label for="{{ form.new_password.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                        {% if form.new_password.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            New Password
+          </label>
+          <div class="relative">
+            {{ form.new_password(
+                id=form.new_password.id,
+                type="password",
+                autocomplete="new-password",
+                placeholder="Leave blank to keep the current password",
+                aria_invalid="true" if form.new_password.errors else "false",
+                aria_describedby="editUserPwHint editUserPwError",
+                class="w-full px-4 py-2.5 pr-12 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                      + ("border-red-300 bg-red-50" if form.new_password.errors else "border-charcoal/15")
+            ) }}
+            <button type="button"
+                    id="editUserPwToggle"
+                    data-target="{{ form.new_password.id }}"
+                    data-icon="editUserPwIcon"
+                    aria-label="Show password"
+                    aria-pressed="false"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 p-1
+                           text-charcoal/40 hover:text-gold transition-colors
+                           focus:outline-none focus:ring-2 focus:ring-gold rounded-full">
+              <i id="editUserPwIcon" class="fa-regular fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          {# Strength meter #}
+          <div id="editUserPwStrength" class="mt-2" aria-live="polite">
+            <div class="h-1 w-full bg-charcoal/10 rounded-full overflow-hidden">
+              <div id="editUserPwBar"
+                   class="h-full w-0 rounded-full transition-all duration-300"
+                   style="background:#ef4444;"></div>
+            </div>
+            <p id="editUserPwHint" class="text-[10px] mt-1 text-charcoal/50"></p>
+          </div>
+
+          {% if form.new_password.errors %}
+            <ul id="editUserPwError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.new_password.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        {# --- Active toggle --- #}
+        <label for="{{ form.is_active.id }}"
+               class="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all
+                      {% if form.is_active.errors %}border-red-300 bg-red-50
+                      {% else %}border-charcoal/10 hover:border-gold/40 bg-ivory/30{% endif %}
+                      {% if is_self %}opacity-60 cursor-not-allowed{% endif %}">
+          {{ form.is_active(
+              id=form.is_active.id,
+              disabled=is_self,
+              class="accent-gold w-4 h-4 mt-0.5"
+          ) }}
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-primary">Account Active</p>
+            <p class="text-xs text-charcoal/60 mt-0.5">
+              {% if is_self %}
+                You cannot deactivate your own account.
+              {% else %}
+                Inactive users cannot sign in. Their data is preserved.
+              {% endif %}
+            </p>
+          </div>
+          {% if is_self %}
+            <i class="fa-solid fa-lock text-charcoal/40 mt-1" aria-hidden="true"></i>
+          {% endif %}
+        </label>
+
+        {# --- Actions --- #}
+        <div class="pt-4 border-t border-charcoal/10 flex flex-wrap justify-end gap-3">
+          <a href="{{ url_for('admin.users') }}"
+             class="px-5 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold
+                    hover:bg-ivory transition-all">
+            Cancel
+          </a>
+          <button type="submit"
+                  id="editUserSubmitBtn"
+                  class="bg-primary text-gold hover:bg-gold hover:text-primary
+                         px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider
+                         transition-all shadow-md flex items-center gap-2
+                         disabled:opacity-70 disabled:cursor-wait">
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+            <span>Save Changes</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    {# ============================================================
+       DANGER ZONE
+       ============================================================ #}
+    {% if not is_self %}
+      <div class="bg-white rounded-2xl p-6 border border-red-200 shadow-sm">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0"
+               aria-hidden="true">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div>
+            <h3 class="font-serif text-lg font-semibold text-red-600">Danger Zone</h3>
+            <p class="text-xs text-charcoal/60 mt-0.5">
+              Deleting this user removes their account permanently.
+              Bookings, inquiries and messages are retained for audit purposes but are no longer
+              linked to a signable account.
+            </p>
+          </div>
+        </div>
+
+        <form method="POST"
+              action="{{ url_for('admin.user_delete', uid=user.id) }}"
+              id="deleteUserForm"
+              data-user-email="{{ user.email }}"
+              data-user-name="{{ user.name }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit"
+                  class="bg-red-500 text-white hover:bg-red-600
+                         px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider
+                         transition-all flex items-center gap-2">
+            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            <span>Delete User</span>
+          </button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  {# ============================================================
+     RIGHT — profile + activity
+     ============================================================ #}
+  <div class="space-y-6">
+
+    {# --- Identity card --- #}
+    <div class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm text-center">
+      <div class="w-20 h-20 mx-auto rounded-full bg-gold text-primary flex items-center justify-center font-serif font-bold text-3xl mb-3"
+           aria-hidden="true">
+        {{ user.initials }}
+      </div>
+      <p class="font-serif text-lg font-semibold text-primary truncate">{{ user.name }}</p>
+      <p class="text-xs text-charcoal/50 truncate">{{ user.email }}</p>
+
+      <div class="flex items-center justify-center gap-2 mt-3 flex-wrap">
+        <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-gold/15 text-gold-dark border border-gold/30">
+          {{ user.tier }}
+        </span>
+        <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full
+                     {% if user.is_admin %}bg-primary/10 text-primary border border-primary/20
+                     {% else %}bg-ivory-dark text-charcoal/70 border border-charcoal/10{% endif %}">
+          {{ 'Super Admin' if user.is_admin else 'Client' }}
+        </span>
+        {% if not user._is_active %}
+          <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">
+            Inactive
+          </span>
+        {% endif %}
+      </div>
+
+      {# --- Quick actions --- #}
+      <div class="mt-5 pt-5 border-t border-charcoal/10 grid grid-cols-2 gap-2">
+        <button type="button"
+                id="copyUserEmail"
+                data-email="{{ user.email }}"
+                class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-charcoal/15
+                       text-[11px] font-semibold text-charcoal/70 hover:border-gold hover:text-gold transition-all">
+          <i class="fa-regular fa-copy" aria-hidden="true"></i>
+          <span>Copy email</span>
+        </button>
+
+        <a href="mailto:{{ user.email }}"
+           class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-charcoal/15
+                  text-[11px] font-semibold text-charcoal/70 hover:border-gold hover:text-gold transition-all">
+          <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+          <span>Email</span>
+        </a>
+      </div>
+    </div>
+
+    {# --- Activity summary --- #}
+    <div class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+      <h4 class="font-serif text-lg font-semibold text-primary mb-4">Activity</h4>
+      <div class="space-y-3 text-sm">
+        <div class="flex justify-between items-center">
+          <span class="text-charcoal/60">Joined</span>
+          <span class="font-semibold text-primary">{{ user.member_since|format_date }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-charcoal/60">Last login</span>
+          <span class="font-semibold text-primary">
+            {% if user.last_login %}{{ user.last_login|relative_time }}{% else %}Never{% endif %}
+          </span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-charcoal/60">Bookings</span>
+          <span class="font-semibold text-primary tabular-nums">{{ user_bookings|length }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-charcoal/60">Inquiries</span>
+          <span class="font-semibold text-primary tabular-nums">{{ user_inquiries|length }}</span>
+        </div>
+      </div>
+    </div>
+
+    {# --- Recent bookings --- #}
+    <div class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="font-serif text-lg font-semibold text-primary">Recent Bookings</h4>
+        {% if user_bookings|length > 5 %}
+          <a href="{{ url_for('admin.bookings') }}?q={{ user.email }}"
+             class="text-[10px] font-bold uppercase tracking-wider text-gold hover:text-gold-dark">
+            View all
+          </a>
+        {% endif %}
+      </div>
+
+      {% if user_bookings %}
+        <div class="space-y-2">
+          {% for b in user_bookings[:5] %}
+            <a href="{{ url_for('admin.booking_detail', bid=b.id) if b.id else '#' }}"
+               class="block p-3 rounded-xl hover:bg-ivory/60 transition-all border border-transparent hover:border-gold/20">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-xs font-semibold text-primary truncate flex-1">
+                  {{ b.property or 'Unknown property' }}
+                </p>
+                {% set status = b.status or 'pending' %}
+                <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0
+                             {% if status == 'confirmed' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                             {% elif status == 'cancelled' %}bg-red-50 text-red-600 border border-red-200
+                             {% elif status == 'completed' %}bg-primary/10 text-primary border border-primary/20
+                             {% else %}bg-gold/15 text-gold-dark border border-gold/30{% endif %}">
+                  {{ status }}
+                </span>
+              </div>
+              <p class="text-[10px] text-charcoal/50 mt-1">
+                {{ b.check_in or '—' }} → {{ b.check_out or '—' }}
+              </p>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="flex flex-col items-center justify-center py-6 text-center">
+          <i class="fa-solid fa-calendar-xmark text-2xl text-charcoal/20 mb-2" aria-hidden="true"></i>
+          <p class="text-xs text-charcoal/50">No bookings yet.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    {# --- Recent inquiries --- #}
+    <div class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="font-serif text-lg font-semibold text-primary">Recent Inquiries</h4>
+        {% if user_inquiries|length > 5 %}
+          <a href="{{ url_for('admin.inquiries') }}"
+             class="text-[10px] font-bold uppercase tracking-wider text-gold hover:text-gold-dark">
+            View all
+          </a>
+        {% endif %}
+      </div>
+
+      {% if user_inquiries %}
+        <div class="space-y-2">
+          {% for i in user_inquiries[:5] %}
+            <div class="p-3 rounded-xl hover:bg-ivory/60 transition-all border border-transparent hover:border-gold/20">
+              <p class="text-xs font-semibold text-primary truncate">
+                {{ i.property or i.subject or 'General inquiry' }}
+              </p>
+              <p class="text-[10px] text-charcoal/50 mt-1">
+                {% if i.created_at %}{{ i.created_at|relative_time }}{% else %}—{% endif %}
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="flex flex-col items-center justify-center py-6 text-center">
+          <i class="fa-solid fa-envelope-open text-2xl text-charcoal/20 mb-2" aria-hidden="true"></i>
+          <p class="text-xs text-charcoal/50">No inquiries yet.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  function ready(fn) {
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  ready(function () {
+
+    // ============================================================
+    // 1. Password toggle
+    // ============================================================
+    var pwToggle = document.getElementById('editUserPwToggle');
+    if (pwToggle) {
+      pwToggle.addEventListener('click', function () {
+        var input = document.getElementById(pwToggle.dataset.target);
+        var icon  = document.getElementById(pwToggle.dataset.icon);
+        if (!input || !icon) return;
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+        pwToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        pwToggle.setAttribute('aria-pressed', String(show));
+        input.focus();
+      });
+    }
+
+    // ============================================================
+    // 2. Password strength meter
+    // ============================================================
+    var pw     = document.getElementById('{{ form.new_password.id }}');
+    var pwBar  = document.getElementById('editUserPwBar');
+    var pwHint = document.getElementById('editUserPwHint');
+
+    function scorePassword(v) {
+      if (!v) return { label: '', color: '#ef4444', width: '0%' };
+      var score = 0;
+      if (v.length >= 6)  score++;
+      if (v.length >= 10) score++;
+      if (/[A-Z]/.test(v) && /[a-z]/.test(v)) score++;
+      if (/\d/.test(v))   score++;
+      if (/[^A-Za-z0-9]/.test(v)) score++;
+      if (score <= 1) return { label: 'Weak',   color: '#ef4444', width: '25%'  };
+      if (score === 2) return { label: 'Fair',  color: '#f59e0b', width: '50%'  };
+      if (score === 3) return { label: 'Good',  color: '#10b981', width: '75%'  };
+      return             { label: 'Strong', color: '#059669', width: '100%' };
+    }
+
+    if (pw && pwBar && pwHint) {
+      pw.addEventListener('input', function () {
+        var s = scorePassword(pw.value);
+        pwBar.style.width      = s.width;
+        pwBar.style.background = s.color;
+        pwHint.textContent     = s.label ? 'Strength: ' + s.label : '';
+        pwHint.style.color     = s.color;
+      });
+    }
+
+    // ============================================================
+    // 3. Copy email button
+    // ============================================================
+    var copyBtn = document.getElementById('copyUserEmail');
+    if (copyBtn && navigator.clipboard) {
+      copyBtn.addEventListener('click', function () {
+        var email = copyBtn.dataset.email || '';
+        if (!email) return;
+        navigator.clipboard.writeText(email).then(function () {
+          var original = copyBtn.innerHTML;
+          copyBtn.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i><span>Copied</span>';
+          copyBtn.classList.add('text-emerald-600', 'border-emerald-300');
+          setTimeout(function () {
+            copyBtn.innerHTML = original;
+            copyBtn.classList.remove('text-emerald-600', 'border-emerald-300');
+          }, 1500);
+        }).catch(function () {});
+      });
+    }
+
+    // ============================================================
+    // 4. Delete confirmation (typed)
+    // ============================================================
+    var deleteForm = document.getElementById('deleteUserForm');
+    if (deleteForm) {
+      deleteForm.addEventListener('submit', function (e) {
+        var email = deleteForm.dataset.userEmail || '';
+        var typed = window.prompt(
+          'This will permanently delete the user: ' + email + '\n\n' +
+          'Type the email address to confirm deletion:'
+        );
+        if (typed !== email) {
+          e.preventDefault();
+          if (typed !== null) {
+            // user typed something wrong — brief visual shake on the button
+            var btn = deleteForm.querySelector('button[type="submit"]');
+            if (btn) {
+              btn.classList.add('animate-pulse');
+              setTimeout(function () { btn.classList.remove('animate-pulse'); }, 600);
+            }
+          }
+        }
+      });
+    }
+
+    // ============================================================
+    // 5. Save button loading state
+    // ============================================================
+    var form = document.querySelector('form[method="POST"]:not(#deleteUserForm)');
+    var submitBtn = document.getElementById('editUserSubmitBtn');
+    if (form && submitBtn) {
+      form.addEventListener('submit', function () {
+        if (!form.checkValidity()) return;
+        if (!submitBtn.disabled) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Saving…</span>';
+        }
+      });
+    }
+  });
+})();
+</script>
+{% endblock %}

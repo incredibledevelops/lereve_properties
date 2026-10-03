@@ -1,0 +1,558 @@
+{% extends "admin/base.html" %}
+{% block title %}Analytics · Admin Console{% endblock %}
+{% set active_section = 'analytics' %}
+{% block page_title %}Analytics{% endblock %}
+{% block page_subtitle %}Site-wide performance and engagement{% endblock %}
+
+{% block content %}
+
+{# ============================================================
+   TOOLBAR — range + refresh + export
+   ============================================================ #}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+
+  {# Range pills #}
+  <div class="flex flex-wrap gap-2" role="tablist" aria-label="Time range">
+    {% for d in [7, 30, 90, 180] %}
+      <a href="{{ url_for('admin.analytics', days=d) }}"
+         role="tab"
+         aria-selected="{{ 'true' if days == d else 'false' }}"
+         class="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all
+           {% if days == d %}
+             bg-primary text-gold shadow-sm
+           {% else %}
+             border border-primary/20 bg-white text-primary hover:border-gold
+           {% endif %}">
+        Last {{ d }} days
+      </a>
+    {% endfor %}
+  </div>
+
+  {# Actions #}
+  <div class="flex items-center gap-2">
+    <button type="button"
+            id="analyticsRefresh"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-white
+                   text-primary hover:border-gold hover:text-gold transition-all
+                   text-xs font-bold uppercase tracking-wider">
+      <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+      <span>Refresh</span>
+    </button>
+
+    <a href="{{ url_for('admin.analytics', days=days, format='csv') }}"
+       class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-white
+              text-primary hover:border-gold hover:text-gold transition-all
+              text-xs font-bold uppercase tracking-wider">
+      <i class="fa-solid fa-file-csv" aria-hidden="true"></i>
+      <span>Export CSV</span>
+    </a>
+  </div>
+</div>
+
+{# ============================================================
+   KPI ROW — with delta vs previous period
+   ============================================================ #}
+{% set kpi_cards = [
+  {'key': 'page_view',      'label': 'Page Views',      'value': events.page_view     or 0},
+  {'key': 'property_view',  'label': 'Property Views',  'value': events.property_view or 0},
+  {'key': 'search',         'label': 'Searches',        'value': events.search        or 0},
+  {'key': 'register',       'label': 'New Users',       'value': events.register      or 0},
+] %}
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  {% for k in kpi_cards %}
+    {% set prev  = (events_prev or {}).get(k.key, 0) %}
+    {% set delta = (k.value - prev) if prev else None %}
+    {% set pct   = ((delta / prev) * 100) | round(1) if prev else None %}
+
+    <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm
+                hover:shadow-md transition-shadow">
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+        {{ k.label }}
+      </span>
+      <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
+        {{ "{:,}".format(k.value) }}
+      </p>
+
+      {% if pct is not none %}
+        {% set positive = pct >= 0 %}
+        <p class="text-[11px] mt-1 flex items-center gap-1
+                  {% if positive %}text-emerald-600{% else %}text-red-600{% endif %}">
+          <i class="fa-solid {% if positive %}fa-arrow-trend-up{% else %}fa-arrow-trend-down{% endif %}"
+             aria-hidden="true"></i>
+          <span>{{ '+' if positive else '' }}{{ pct }}%</span>
+          <span class="text-charcoal/40 font-normal">vs prev {{ days }}d</span>
+        </p>
+      {% else %}
+        <p class="text-[11px] mt-1 text-charcoal/40">&nbsp;</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+{# ============================================================
+   CHARTS — main row
+   ============================================================ #}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+  {# --- Bookings & Revenue --- #}
+  <section class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-serif text-lg font-semibold text-primary">Bookings &amp; Revenue</h3>
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold">
+        {{ days }} days
+      </span>
+    </div>
+
+    {% if bookings_daily %}
+      <div class="relative" style="height:220px;">
+        <canvas id="bookingsChart"
+                role="img"
+                aria-label="Line chart of bookings and revenue over the last {{ days }} days"></canvas>
+      </div>
+    {% else %}
+      <div class="flex flex-col items-center justify-center py-12 text-center">
+        <i class="fa-solid fa-chart-line text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
+        <p class="text-xs text-charcoal/50">No bookings recorded in this period.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  {# --- Page Views --- #}
+  <section class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-serif text-lg font-semibold text-primary">Page Views</h3>
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold">
+        {{ days }} days
+      </span>
+    </div>
+
+    {% if page_views %}
+      <div class="relative" style="height:220px;">
+        <canvas id="viewsChart"
+                role="img"
+                aria-label="Bar chart of page views over the last {{ days }} days"></canvas>
+      </div>
+    {% else %}
+      <div class="flex flex-col items-center justify-center py-12 text-center">
+        <i class="fa-solid fa-chart-column text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
+        <p class="text-xs text-charcoal/50">No page views recorded in this period.</p>
+      </div>
+    {% endif %}
+  </section>
+</div>
+
+{# ============================================================
+   CHARTS — second row
+   ============================================================ #}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+  {# --- Booking Status --- #}
+  <section class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-serif text-lg font-semibold text-primary">Booking Status</h3>
+      {% if status_breakdown %}
+        <span class="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold">
+          {{ status_breakdown.values() | sum }} total
+        </span>
+      {% endif %}
+    </div>
+
+    {% if status_breakdown %}
+      <div class="relative" style="height:240px;">
+        <canvas id="statusChart"
+                role="img"
+                aria-label="Doughnut chart of booking statuses"></canvas>
+      </div>
+    {% else %}
+      <div class="flex flex-col items-center justify-center py-12 text-center">
+        <i class="fa-solid fa-circle-half-stroke text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
+        <p class="text-xs text-charcoal/50">No bookings yet.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  {# --- User Growth --- #}
+  <section class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-serif text-lg font-semibold text-primary">User Growth</h3>
+      <span class="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold">
+        New clients
+      </span>
+    </div>
+
+    {% if user_growth %}
+      <div class="relative" style="height:240px;">
+        <canvas id="usersChart"
+                role="img"
+                aria-label="Line chart of new user registrations over the last {{ days }} days"></canvas>
+      </div>
+    {% else %}
+      <div class="flex flex-col items-center justify-center py-12 text-center">
+        <i class="fa-solid fa-user-plus text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
+        <p class="text-xs text-charcoal/50">No new registrations in this period.</p>
+      </div>
+    {% endif %}
+  </section>
+</div>
+
+{# ============================================================
+   LEADERBOARDS — searches + properties
+   ============================================================ #}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  {# --- Top Searches --- #}
+  <section class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+    <h3 class="font-serif text-lg font-semibold text-primary mb-4">Top Search Terms</h3>
+
+    {% set has_searches = top_searches and top_searches | selectattr('_id') | list %}
+    {% if has_searches %}
+      <ul class="space-y-1 text-sm">
+        {% for s in top_searches if s._id %}
+          <li class="flex items-center justify-between gap-3 p-2.5 rounded-lg hover:bg-ivory/60 transition-colors">
+            <span class="text-charcoal/80 truncate">
+              <i class="fa-solid fa-magnifying-glass text-[10px] text-gold mr-2" aria-hidden="true"></i>
+              {{ s._id }}
+            </span>
+            <span class="font-bold text-primary tabular-nums shrink-0">
+              {{ "{:,}".format(s.count or 0) }}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="flex flex-col items-center justify-center py-10 text-center">
+        <i class="fa-solid fa-magnifying-glass text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
+        <p class="text-xs text-charcoal/50">No searches recorded in this period.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  {# --- Top Properties --- #}
+  <section class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+    <h3 class="font-serif text-lg font-semibold text-primary mb-4">Most Viewed Properties</h3>
+
+    {% if top_props %}
+      <ul class="space-y-1 text-sm">
+        {% for p in top_props %}
+          <li class="flex items-center justify-between gap-3 p-2.5 rounded-lg hover:bg-ivory/60 transition-colors">
+            <span class="text-charcoal/80 truncate flex items-center gap-2 min-w-0">
+              <i class="fa-solid fa-house-chimney text-[10px] text-gold shrink-0" aria-hidden="true"></i>
+              <span class="truncate">{{ p.title or 'Unknown property' }}</span>
+            </span>
+            <span class="font-bold text-primary tabular-nums shrink-0">
+              {{ "{:,}".format(p.count or 0) }}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="flex flex-col items-center justify-center py-10 text-center">
+        <i class="fa-solid fa-house-chimney text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
+        <p class="text-xs text-charcoal/50">No property views recorded in this period.</p>
+      </div>
+    {% endif %}
+  </section>
+</div>
+
+{# ============================================================
+   ACCESSIBLE SUMMARY TABLE (screen-reader friendly)
+   ============================================================ #}
+<details class="mt-8 bg-white rounded-2xl border border-gold/20 shadow-sm">
+  <summary class="cursor-pointer px-6 py-4 font-serif text-sm font-semibold text-primary
+                  flex items-center gap-2 hover:bg-ivory/40 rounded-2xl">
+    <i class="fa-solid fa-table-list text-gold" aria-hidden="true"></i>
+    View raw data as a table
+  </summary>
+
+  <div class="px-6 pb-6 pt-2 overflow-x-auto">
+    <table class="w-full text-xs">
+      <caption class="sr-only">Analytics events summary for the last {{ days }} days</caption>
+      <thead>
+        <tr class="text-left text-[10px] uppercase tracking-widest text-charcoal/50 border-b border-charcoal/10">
+          <th class="py-2 pr-3 font-bold">Event</th>
+          <th class="py-2 px-3 font-bold text-right">Count</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-charcoal/5">
+        {% for key, val in (events or {}).items() %}
+          <tr>
+            <td class="py-2 pr-3 text-charcoal/80">{{ key | replace('_', ' ') | title }}</td>
+            <td class="py-2 px-3 text-right font-bold text-primary tabular-nums">
+              {{ "{:,}".format(val or 0) }}
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="2" class="py-4 text-center text-charcoal/40">No events recorded.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>
+
+{% endblock %}
+
+
+{% block scripts %}
+{# Chart.js — loaded once, with a fallback check #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+        integrity="sha384-9nhczxUqK87ggFh2wFvQpT9PJbLce9y27+8CqQ8F9sL3zJqz3q3T6kx0Dfzj0p1T"
+        crossorigin="anonymous"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Guard: if Chart.js didn't load, show a friendly fallback ----------
+  if (typeof window.Chart === 'undefined') {
+    document.querySelectorAll('canvas').forEach(cv => {
+      const wrap = cv.parentElement;
+      if (!wrap) return;
+      wrap.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full text-center">
+          <i class="fa-solid fa-triangle-exclamation text-2xl text-red-500 mb-2"></i>
+          <p class="text-xs text-charcoal/60">
+            Chart library failed to load.<br>
+            <button type="button" onclick="window.location.reload()"
+                    class="text-gold underline mt-2">Reload page</button>
+          </p>
+        </div>`;
+    });
+    return;
+  }
+
+  // ---------- Data (injected by the view) ----------
+  const bookingsData = {{ bookings_daily|tojson }};
+  const viewsData    = {{ page_views|tojson }};
+  const statusData   = {{ status_breakdown|tojson }};
+  const usersData    = {{ user_growth|tojson }};
+
+  // ---------- Palette ----------
+  const gold    = '#c9a84c';
+  const primary = '#1a3a2a';
+  const emerald = '#10b981';
+
+  // ---------- Chart.js global defaults (per-chart overrides below) ----------
+  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+  Chart.defaults.font.size   = 11;
+  Chart.defaults.color       = 'rgba(44,44,42,0.55)';
+  Chart.defaults.plugins.tooltip.backgroundColor = primary;
+  Chart.defaults.plugins.tooltip.titleColor      = gold;
+  Chart.defaults.plugins.tooltip.bodyColor       = '#f7f3ed';
+  Chart.defaults.plugins.tooltip.padding         = 10;
+  Chart.defaults.plugins.tooltip.cornerRadius    = 8;
+  Chart.defaults.plugins.legend.labels.usePointStyle = true;
+  Chart.defaults.plugins.legend.labels.boxWidth      = 8;
+
+  const gridColor = 'rgba(44,44,42,0.06)';
+
+  // ============================================================
+  // 1. Bookings & Revenue (dual axis)
+  // ============================================================
+  const bookingsCanvas = document.getElementById('bookingsChart');
+  if (bookingsCanvas && bookingsData.length) {
+    new Chart(bookingsCanvas, {
+      data: {
+        labels: bookingsData.map(d => d._id),
+        datasets: [
+          {
+            type: 'line',
+            label: 'Bookings',
+            data: bookingsData.map(d => d.count || 0),
+            borderColor: primary,
+            backgroundColor: 'rgba(26,58,42,0.08)',
+            borderWidth: 2,
+            tension: 0.35,
+            fill: true,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            yAxisID: 'y',
+          },
+          {
+            type: 'line',
+            label: 'Revenue (₵)',
+            data: bookingsData.map(d => d.revenue || 0),
+            borderColor: gold,
+            backgroundColor: 'rgba(201,168,76,0.08)',
+            borderWidth: 2,
+            tension: 0.35,
+            fill: false,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            yAxisID: 'y1',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', align: 'end' },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                if (ctx.dataset.yAxisID === 'y1') {
+                  return `${ctx.dataset.label}: ₵${(ctx.parsed.y || 0).toLocaleString()}`;
+                }
+                return `${ctx.dataset.label}: ${ctx.parsed.y || 0}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+          y: {
+            position: 'left',
+            grid: { color: gridColor },
+            beginAtZero: true,
+            ticks: { precision: 0 },
+            title: { display: true, text: 'Bookings', font: { size: 10 } },
+          },
+          y1: {
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            beginAtZero: true,
+            ticks: {
+              callback: (v) => '₵' + (v >= 1000 ? (v / 1000) + 'k' : v),
+            },
+            title: { display: true, text: 'Revenue', font: { size: 10 } },
+          },
+        },
+      },
+    });
+  }
+
+  // ============================================================
+  // 2. Page Views (bar)
+  // ============================================================
+  const viewsCanvas = document.getElementById('viewsChart');
+  if (viewsCanvas && viewsData.length) {
+    new Chart(viewsCanvas, {
+      type: 'bar',
+      data: {
+        labels: viewsData.map(d => d._id),
+        datasets: [{
+          label: 'Page Views',
+          data: viewsData.map(d => d.count || 0),
+          backgroundColor: primary,
+          hoverBackgroundColor: gold,
+          borderRadius: 4,
+          maxBarThickness: 24,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
+          y: { grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } },
+        },
+      },
+    });
+  }
+
+  // ============================================================
+  // 3. Booking Status (doughnut)
+  // ============================================================
+  const statusCanvas = document.getElementById('statusChart');
+  if (statusCanvas && statusData && Object.keys(statusData).length) {
+    const statusColors = {
+      confirmed:  emerald,
+      pending:    gold,
+      cancelled:  '#dc2626',
+      completed:  primary,
+      refunded:   '#f59e0b',
+    };
+    const labels = Object.keys(statusData);
+    const colors = labels.map(l => statusColors[l] || '#94a3b8');
+
+    new Chart(statusCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+        datasets: [{
+          data: labels.map(l => statusData[l]),
+          backgroundColor: colors,
+          borderColor: '#fff',
+          borderWidth: 2,
+          hoverOffset: 8,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                const pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
+                return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  // ============================================================
+  // 4. User Growth (line)
+  // ============================================================
+  const usersCanvas = document.getElementById('usersChart');
+  if (usersCanvas && usersData.length) {
+    new Chart(usersCanvas, {
+      type: 'line',
+      data: {
+        labels: usersData.map(d => d._id),
+        datasets: [{
+          label: 'New Users',
+          data: usersData.map(d => d.count || 0),
+          borderColor: gold,
+          backgroundColor: 'rgba(201,168,76,0.15)',
+          borderWidth: 2,
+          tension: 0.35,
+          fill: true,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+          y: { grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } },
+        },
+      },
+    });
+  }
+
+  // ============================================================
+  // 5. Refresh button — soft reload
+  // ============================================================
+  const refreshBtn = document.getElementById('analyticsRefresh');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function () {
+      const original = refreshBtn.innerHTML;
+      refreshBtn.disabled = true;
+      refreshBtn.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Refreshing…</span>';
+      window.location.reload();
+      // No need to restore — page unloads.
+      setTimeout(() => {
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = original;
+      }, 4000);
+    });
+  }
+})();
+</script>
+{% endblock %}

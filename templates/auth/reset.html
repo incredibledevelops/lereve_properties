@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% block title %}Reset Password · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-4 relative">
+
+  {# ---------- Background ---------- #}
+  <div class="absolute inset-0 bg-gradient-to-br from-primary to-primary-dark" aria-hidden="true"></div>
+  <div class="absolute inset-0 opacity-10 kente-pattern pointer-events-none" aria-hidden="true"></div>
+
+  <div class="relative z-10 w-full max-w-md my-8">
+
+    {# ---------- Brand mark ---------- #}
+    <div class="text-center mb-6">
+      <a href="{{ url_for('auth.index') }}" class="inline-block" aria-label="{{ SITE_NAME }} — Home">
+        <div class="w-14 h-14 mx-auto rounded-full bg-gold flex items-center justify-center text-primary border border-gold/40 mb-4">
+          <i class="fa-solid fa-lock text-xl" aria-hidden="true"></i>
+        </div>
+      </a>
+      <h1 class="font-serif text-3xl font-semibold text-ivory">Set New Password</h1>
+      <p class="text-xs text-ivory/60 mt-1 tracking-widest uppercase">
+        Password Reset
+      </p>
+    </div>
+
+    {# ---------- Card ---------- #}
+    <div class="bg-ivory rounded-3xl shadow-2xl border border-gold/30 p-8 sm:p-10">
+
+      {# ---------- Flash messages ---------- #}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="space-y-2 mb-5" aria-live="polite">
+            {% for category, message in messages %}
+              {% set is_error = category in ('error', 'danger') %}
+              <div role="alert"
+                   class="flex items-start gap-2 p-3 rounded-xl border text-xs
+                          {% if is_error %}
+                            border-red-200 bg-red-50 text-red-700
+                          {% else %}
+                            border-emerald-200 bg-emerald-50 text-emerald-700
+                          {% endif %}">
+                <i class="fa-solid {% if is_error %}fa-circle-exclamation{% else %}fa-circle-check{% endif %} mt-0.5"
+                   aria-hidden="true"></i>
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <p class="text-xs text-charcoal/70 mb-6 text-center leading-relaxed">
+        Choose a strong new password for your account.<br>
+        You'll be signed in as soon as it's saved.
+      </p>
+
+      <form method="POST" id="resetForm" class="space-y-4" novalidate aria-label="Reset password form">
+        {{ form.hidden_tag() }}
+        {# NOTE: no hidden `token` input — the token lives in the URL. #}
+
+        {# ----- New Password ----- #}
+        <div>
+          <label for="{{ form.password.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1
+                        {% if form.password.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            New Password <span class="text-gold">*</span>
+          </label>
+
+          <div class="relative">
+            {{ form.password(
+                id=form.password.id,
+                type="password",
+                autocomplete="new-password",
+                required=true,
+                minlength="6",
+                aria_invalid="true" if form.password.errors else "false",
+                aria_describedby="resetPasswordError resetPasswordStrength",
+                class="w-full px-4 py-3 pr-12 rounded-xl border bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                      + ("border-red-300 bg-red-50" if form.password.errors else "border-charcoal/15"),
+                placeholder="Min 6 chars"
+            ) }}
+
+            <button type="button"
+                    id="resetPwToggle"
+                    data-target="{{ form.password.id }}"
+                    data-icon="resetPwIcon"
+                    aria-label="Show password"
+                    aria-pressed="false"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 p-1
+                           text-charcoal/40 hover:text-gold transition-colors
+                           focus:outline-none focus:ring-2 focus:ring-gold rounded-full">
+              <i id="resetPwIcon" class="fa-regular fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          {# Strength meter #}
+          <div id="resetPasswordStrength" class="mt-2" aria-live="polite">
+            <div class="h-1 w-full bg-charcoal/10 rounded-full overflow-hidden">
+              <div id="resetPwBar"
+                   class="h-full w-0 rounded-full transition-all duration-300"
+                   style="background:#ef4444;"></div>
+            </div>
+            <p id="resetPwHint" class="text-[10px] mt-1 text-charcoal/50"></p>
+          </div>
+
+          {% if form.password.errors %}
+            <ul id="resetPasswordError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.password.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        {# ----- Confirm ----- #}
+        <div>
+          <label for="{{ form.confirm.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1
+                        {% if form.confirm.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Confirm New Password <span class="text-gold">*</span>
+          </label>
+
+          <div class="relative">
+            {{ form.confirm(
+                id=form.confirm.id,
+                type="password",
+                autocomplete="new-password",
+                required=true,
+                minlength="6",
+                aria_invalid="true" if form.confirm.errors else "false",
+                aria_describedby="resetConfirmError resetConfirmHint",
+                class="w-full px-4 py-3 pr-12 rounded-xl border bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
+                      + ("border-red-300 bg-red-50" if form.confirm.errors else "border-charcoal/15"),
+                placeholder="Repeat new password"
+            ) }}
+
+            <button type="button"
+                    id="resetConfirmToggle"
+                    data-target="{{ form.confirm.id }}"
+                    data-icon="resetConfirmIcon"
+                    aria-label="Show confirmation"
+                    aria-pressed="false"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 p-1
+                           text-charcoal/40 hover:text-gold transition-colors
+                           focus:outline-none focus:ring-2 focus:ring-gold rounded-full">
+              <i id="resetConfirmIcon" class="fa-regular fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          {# Match indicator #}
+          <p id="resetConfirmHint" class="text-[10px] mt-1 text-charcoal/50" aria-live="polite"></p>
+
+          {% if form.confirm.errors %}
+            <ul id="resetConfirmError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.confirm.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        {# ----- Submit ----- #}
+        <button type="submit"
+                id="resetSubmitBtn"
+                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary
+                       py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs
+                       transition-all shadow-luxury flex items-center justify-center gap-2
+                       disabled:opacity-70 disabled:cursor-wait">
+          <i class="fa-solid fa-check" aria-hidden="true"></i>
+          <span>Reset Password</span>
+        </button>
+      </form>
+
+      {# ---------- Expiry helper ---------- #}
+      <p class="mt-5 text-[11px] text-charcoal/50 text-center leading-relaxed">
+        Reset links expire after <strong class="text-charcoal/70">1 hour</strong>.<br>
+        Link already expired?
+        <a href="{{ url_for('auth.forgot_password') }}"
+           class="text-gold hover:text-gold-dark font-semibold underline">
+          Request a new one
+        </a>.
+      </p>
+
+      {# ---------- Back link ---------- #}
+      <div class="mt-6 pt-5 border-t border-charcoal/10 text-center">
+        <a href="{{ url_for('auth.login') }}"
+           class="group inline-flex items-center gap-2 text-xs text-gold hover:text-gold-dark
+                  font-semibold uppercase tracking-widest transition-colors">
+          <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-0.5"
+             aria-hidden="true"></i>
+          <span>Back to Sign In</span>
+        </a>
+      </div>
+    </div>
+
+    {# ---------- Public site link ---------- #}
+    <div class="text-center mt-6">
+      <a href="{{ PUBLIC_SITE_URL }}"
+         class="text-ivory/60 hover:text-gold text-xs uppercase tracking-widest transition-colors">
+        <i class="fa-solid fa-arrow-left mr-1" aria-hidden="true"></i>
+        Back to Public Site
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Generic accessible password toggle ----------
+  function wirePasswordToggle(toggleId) {
+    const toggle = document.getElementById(toggleId);
+    if (!toggle) return;
+    toggle.addEventListener('click', function () {
+      const input = document.getElementById(toggle.dataset.target);
+      const icon  = document.getElementById(toggle.dataset.icon);
+      if (!input || !icon) return;
+
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+      toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      toggle.setAttribute('aria-pressed', String(show));
+      input.focus();
+    });
+  }
+  wirePasswordToggle('resetPwToggle');
+  wirePasswordToggle('resetConfirmToggle');
+
+  // ---------- Password strength meter ----------
+  const pw     = document.getElementById('{{ form.password.id }}');
+  const pwBar  = document.getElementById('resetPwBar');
+  const pwHint = document.getElementById('resetPwHint');
+
+  function scorePassword(v) {
+    if (!v) return { label: '', color: '#ef4444', width: '0%' };
+    let score = 0;
+    if (v.length >= 6)  score++;
+    if (v.length >= 10) score++;
+    if (/[A-Z]/.test(v) && /[a-z]/.test(v)) score++;
+    if (/\d/.test(v))   score++;
+    if (/[^A-Za-z0-9]/.test(v)) score++;
+
+    if (score <= 1) return { label: 'Weak',   color: '#ef4444', width: '25%'  };
+    if (score === 2) return { label: 'Fair',  color: '#f59e0b', width: '50%'  };
+    if (score === 3) return { label: 'Good',  color: '#10b981', width: '75%'  };
+    return             { label: 'Strong', color: '#059669', width: '100%' };
+  }
+
+  if (pw && pwBar && pwHint) {
+    pw.addEventListener('input', function () {
+      const s = scorePassword(pw.value);
+      pwBar.style.width = s.width;
+      pwBar.style.background = s.color;
+      pwHint.textContent = s.label ? `Strength: ${s.label}` : '';
+      pwHint.style.color = s.color;
+    });
+  }
+
+  // ---------- Live "passwords match" indicator ----------
+  const confirm     = document.getElementById('{{ form.confirm.id }}');
+  const confirmHint = document.getElementById('resetConfirmHint');
+
+  function checkMatch() {
+    if (!confirm || !confirmHint) return;
+    if (!confirm.value) { confirmHint.textContent = ''; return; }
+    if (pw.value === confirm.value) {
+      confirmHint.textContent = '✓ Passwords match';
+      confirmHint.style.color = '#059669';
+    } else {
+      confirmHint.textContent = '✗ Passwords do not match';
+      confirmHint.style.color = '#ef4444';
+    }
+  }
+  if (pw)      pw.addEventListener('input', checkMatch);
+  if (confirm) confirm.addEventListener('input', checkMatch);
+
+  // ---------- Submit loading state ----------
+  const form = document.getElementById('resetForm');
+  const btn  = document.getElementById('resetSubmitBtn');
+  if (!form || !btn) return;
+
+  const originalHTML = btn.innerHTML;
+
+  form.addEventListener('submit', function () {
+    if (!form.checkValidity()) return;   // browser shows native bubble
+    if (!btn.disabled) {
+      btn.disabled = true;
+      btn.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>' +
+        '<span>Updating…</span>';
+    }
+  });
+
+  // Restore button if the page is restored via bfcache (back button)
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) {
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+    }
+  });
+})();
+</script>
+{% endblock %}

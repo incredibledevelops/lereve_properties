@@ -1,0 +1,53 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit' if review else 'Add' }} Review · Admin Console{% endblock %}
+{% set active_section = 'reviews' %}
+{% block page_title %}{{ 'Edit Review' if review else 'Add Review' }}{% endblock %}
+
+{% block content %}
+
+<div class="max-w-2xl mx-auto bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
+  <form method="POST" class="p-6 sm:p-8 space-y-5">
+    {{ form.hidden_tag() }}
+    <input type="hidden" id="formAction" name="action" value="save">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Guest Name *</label>
+        {{ form.name(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Property *</label>
+        {{ form.property(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Rating *</label>
+        {{ form.rating(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Status *</label>
+        {{ form.status(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Avatar URL</label>
+        {{ form.avatar(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm", placeholder="https://…") }}
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Review Text *</label>
+        {{ form.text(rows=5, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm resize-none") }}
+      </div>
+    </div>
+
+    <div class="pt-4 border-t border-charcoal/10 flex flex-wrap justify-end gap-3">
+      <a href="{{ url_for('admin.reviews') }}" class="px-5 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold hover:bg-ivory transition-all">Cancel</a>
+      {% if not review %}
+        <button type="submit" onclick="document.getElementById('formAction').value='save_and_new'"
+                class="border border-primary text-primary hover:bg-primary hover:text-gold px-5 py-3 rounded-xl text-sm font-bold uppercase">Save &amp; Add Another</button>
+      {% endif %}
+      <button type="submit" class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-md">
+        <i class="fa-solid fa-floppy-disk mr-1"></i> {{ 'Update' if review else 'Create' }}
+      </button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

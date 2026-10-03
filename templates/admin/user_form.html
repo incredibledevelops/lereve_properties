@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit' if user else 'Add' }} User · Admin Console{% endblock %}
+{% set active_section = 'users' %}
+{% block page_title %}{{ 'Edit User' if user else 'Add New User' }}{% endblock %}
+
+{% block content %}
+
+<nav class="flex items-center gap-2 text-xs text-charcoal/60 mb-5">
+  <a href="{{ url_for('admin.dashboard') }}" class="hover:text-gold">Dashboard</a>
+  <i class="fa-solid fa-chevron-right text-[9px]"></i>
+  <a href="{{ url_for('admin.users') }}" class="hover:text-gold">Users</a>
+  <i class="fa-solid fa-chevron-right text-[9px]"></i>
+  <span class="text-primary font-semibold">New</span>
+</nav>
+
+<div class="max-w-2xl mx-auto bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
+  <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40">
+    <h2 class="font-serif text-2xl font-semibold text-primary">Create User</h2>
+  </div>
+
+  <form method="POST" class="p-6 space-y-5">
+    {{ form.hidden_tag() }}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label for="{{ form.name.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Name *</label>
+        {{ form.name(id=form.name.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label for="{{ form.email.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Email *</label>
+        {{ form.email(id=form.email.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label for="{{ form.phone.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Phone</label>
+        {{ form.phone(id=form.phone.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label for="{{ form.country.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Country</label>
+        {{ form.country(id=form.country.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label for="{{ form.password.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Password *</label>
+        {{ form.password(id=form.password.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label for="{{ form.tier.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Tier</label>
+        {{ form.tier(id=form.tier.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label for="{{ form.role.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Role</label>
+        {{ form.role(id=form.role.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+    </div>
+
+    <div class="pt-4 border-t border-charcoal/10 flex justify-end gap-3">
+      <a href="{{ url_for('admin.users') }}" class="px-5 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold hover:bg-ivory transition-all">Cancel</a>
+      <button type="submit" class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-md">
+        <i class="fa-solid fa-floppy-disk mr-1"></i> Create User
+      </button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

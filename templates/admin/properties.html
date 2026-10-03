@@ -1,0 +1,106 @@
+{% extends "admin/base.html" %}
+{% block title %}Properties · Admin Console{% endblock %}
+{% set active_section = 'properties' %}
+{% block page_title %}Properties{% endblock %}
+{% block page_subtitle %}Manage all estate listings{% endblock %}
+
+{% block content %}
+
+<div class="flex flex-col lg:flex-row gap-3 mb-4">
+  <form method="GET" class="relative flex-1">
+    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40 text-sm"></i>
+    <input type="text" name="q" value="{{ q }}" placeholder="Search properties…"
+           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-white focus:ring-2 focus:ring-gold text-sm">
+  </form>
+  <a href="{{ url_for('admin.property_create') }}" class="bg-primary text-gold hover:bg-gold hover:text-primary px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md flex items-center gap-2">
+    <i class="fa-solid fa-plus"></i> Add Property
+  </a>
+</div>
+
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-ivory-dark/60 text-primary">
+        <tr class="text-left text-[11px] uppercase tracking-wider">
+          <th class="px-5 py-3 font-bold">Property</th>
+          <th class="px-5 py-3 font-bold">Category</th>
+          <th class="px-5 py-3 font-bold">Location</th>
+          <th class="px-5 py-3 font-bold">Price</th>
+          <th class="px-5 py-3 font-bold">Rating</th>
+          <th class="px-5 py-3 font-bold text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-charcoal/5">
+        {% for p in properties %}
+          <tr class="hover:bg-ivory/50 transition-colors">
+            <td class="px-5 py-3">
+              <div class="flex items-center gap-3">
+                {% if p.image %}
+                  <img src="{{ p.image }}" class="w-12 h-12 rounded-lg object-cover border border-gold/20 flex-shrink-0" loading="lazy">
+                {% else %}
+                  <div class="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-house-chimney text-sm"></i>
+                  </div>
+                {% endif %}
+                <div class="min-w-0">
+                  <p class="font-semibold text-primary text-sm truncate max-w-[200px]">{{ p.title }}</p>
+                  <p class="text-[11px] text-charcoal/50">{{ p.beds }} bd · {{ p.baths }} ba · {{ p.guests }} guests</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3">
+              <span class="text-[10px] font-bold uppercase text-primary bg-gold/15 px-2.5 py-1 rounded-full border border-gold/30">{{ p.category or '—' }}</span>
+            </td>
+            <td class="px-5 py-3 text-xs text-charcoal/70 truncate max-w-[160px]">{{ p.location or '—' }}</td>
+            <td class="px-5 py-3">
+              <p class="font-serif text-base font-bold text-primary">{{ p.price|format_currency }}</p>
+            </td>
+            <td class="px-5 py-3">
+              <span class="text-xs font-bold text-primary"><i class="fa-solid fa-star text-gold mr-1"></i>{{ '{:.1f}'.format(p.rating or 0) }}</span>
+            </td>
+            <td class="px-5 py-3">
+              <div class="flex items-center justify-end gap-1.5">
+                <a href="{{ url_for('admin.property_edit', pid=p.id) }}" class="w-8 h-8 rounded-lg bg-ivory hover:bg-gold text-primary flex items-center justify-center transition-all">
+                  <i class="fa-solid fa-pen text-xs"></i>
+                </a>
+                <form method="POST" action="{{ url_for('admin.property_delete', pid=p.id) }}" onsubmit="return confirm('Delete this property?')" class="inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-500 hover:text-white text-red-500 flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-trash text-xs"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" class="px-5 py-16 text-center">
+              <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+                <i class="fa-solid fa-house-chimney text-gold text-2xl"></i>
+              </div>
+              <p class="text-sm text-charcoal/60 mb-4">No properties yet.</p>
+              <a href="{{ url_for('admin.property_create') }}" class="inline-flex items-center gap-2 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
+                <i class="fa-solid fa-plus"></i> Add First Property
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if pagination.pages > 1 %}
+  <div class="flex items-center justify-between mt-5">
+    <p class="text-xs text-charcoal/60">Showing <b>{{ pagination.items|length }}</b> of <b>{{ pagination.total }}</b></p>
+    <div class="flex items-center gap-2">
+      <a href="?page={{ pagination.page - 1 }}{% if q %}&q={{ q }}{% endif %}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white text-xs font-bold uppercase {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}">Prev</a>
+      <span class="px-3 py-2 text-xs text-charcoal/60">Page {{ pagination.page }} / {{ pagination.pages }}</span>
+      <a href="?page={{ pagination.page + 1 }}{% if q %}&q={{ q }}{% endif %}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white text-xs font-bold uppercase {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}">Next</a>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

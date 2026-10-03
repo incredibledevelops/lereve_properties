@@ -12,7 +12,7 @@
 
   <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
     <span class="inline-block py-1 px-4 rounded-full border border-gold/40 text-gold text-xs uppercase tracking-[0.25em] mb-5 backdrop-blur-sm bg-primary/40">
-      Exclusive Portfolio · Accra, Ghana
+      Your dream stay, our passion
     </span>
     <h1 class="font-serif text-4xl sm:text-6xl font-light text-ivory tracking-wide leading-tight max-w-4xl mx-auto mb-5">
       Our <span class="italic text-gold font-normal">Apartments &amp; Homes</span>
@@ -24,10 +24,10 @@
 </section>
 
 <!-- ============ SEARCH & FILTER BAR ============ -->
-<section class="relative -mt-12 z-20">
+<section class="relative -mt-12 z-30">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="glass-card text-charcoal rounded-3xl p-4 sm:p-6 shadow-luxury border border-gold/30">
-      <form onsubmit="event.preventDefault(); applyHeroFilters();" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <form onsubmit="event.preventDefault(); applyHeroFilters();" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end" role="search">
         <div class="flex flex-col">
           <label for="filterLocation" class="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-1.5 flex items-center gap-1.5">
             <i class="fa-solid fa-location-dot text-gold" aria-hidden="true"></i> Destination
@@ -54,7 +54,8 @@
             <span id="priceDisplay" class="text-xs font-bold text-primary">₵50,000</span>
           </div>
           <input type="range" id="filterPrice" min="1000" max="50000" step="500" value="50000"
-                 oninput="updatePriceLabel(this.value)" class="w-full cursor-pointer h-2">
+                 oninput="updatePriceLabel(this.value)" class="w-full cursor-pointer h-2"
+                 aria-label="Maximum nightly price">
         </div>
         <div class="flex gap-2">
           <button type="submit"
@@ -62,9 +63,10 @@
             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search
           </button>
           <button type="button" onclick="openFilterSheet()"
-                  class="md:hidden bg-ivory text-primary border border-primary/20 hover:border-gold px-4 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all"
+                  class="md:hidden relative bg-ivory text-primary border border-primary/20 hover:border-gold px-4 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all"
                   aria-label="More filters">
             <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+            <span id="mobileFilterCount" class="hidden absolute -top-1.5 -right-1.5 bg-gold text-primary font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-ivory">0</span>
           </button>
         </div>
       </form>
@@ -76,7 +78,7 @@
 <section class="py-8 bg-ivory-dark/40 border-b border-gold/10">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex flex-wrap gap-2 justify-center">
-      <button onclick="filterCategory('all', this)"
+      <button onclick="filterCategory('all', this)" data-category="all"
               class="category-btn active border border-primary bg-primary text-gold px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all">
         All Stays
       </button>
@@ -92,42 +94,48 @@
   </div>
 </section>
 
-<!-- ============ RESULTS HEADER ============ -->
-<section class="pt-10 pb-4 bg-ivory-dark/40">
+<!-- ============ RESULTS HEADER (sticky) ============ -->
+<section class="pt-8 pb-4 bg-ivory-dark/40">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
-      <div>
-        <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-2">Refine Results</span>
-        <h2 class="font-serif text-3xl sm:text-4xl font-light text-primary">Browse <span class="italic text-gold">Estates</span></h2>
-        <p id="propertyCount" class="text-xs text-charcoal/60 mt-2 font-light"></p>
-      </div>
-      <div class="flex items-center gap-3 flex-wrap">
-        <div class="flex items-center gap-1 bg-white rounded-full border border-charcoal/15 p-1">
-          <button onclick="setView('grid')" id="viewGridBtn" aria-label="Grid view"
-                  class="view-toggle w-8 h-8 rounded-full flex items-center justify-center transition-all bg-primary text-gold">
-            <i class="fa-solid fa-grip text-xs" aria-hidden="true"></i>
-          </button>
-          <button onclick="setView('list')" id="viewListBtn" aria-label="List view"
-                  class="view-toggle w-8 h-8 rounded-full flex items-center justify-center transition-all text-primary">
-            <i class="fa-solid fa-list text-xs" aria-hidden="true"></i>
-          </button>
+    <div class="sticky top-20 z-20 -mx-4 px-4 py-3 bg-ivory-dark/80 backdrop-blur-md border-b border-gold/10 mb-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="flex items-baseline gap-3 flex-wrap">
+          <h2 class="font-serif text-2xl sm:text-3xl font-light text-primary">Browse <span class="italic text-gold">Estates</span></h2>
+          <p id="propertyCount" class="text-xs text-charcoal/60 font-light" aria-live="polite"></p>
         </div>
-        <label for="sortSelect" class="sr-only">Sort by</label>
-        <select id="sortSelect" onchange="applySortAndRender()"
-                class="px-4 py-2.5 rounded-xl border border-charcoal/15 bg-white focus:outline-none focus:ring-2 focus:ring-gold text-xs font-semibold text-primary">
-          <option value="recommended">Recommended</option>
-          <option value="price-asc">Price: Low to High</option>
-          <option value="price-desc">Price: High to Low</option>
-          <option value="rating-desc">Top Rated</option>
-          <option value="newest">Newest</option>
-        </select>
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="flex items-center gap-1 bg-white rounded-full border border-charcoal/15 p-1" role="group" aria-label="View mode">
+            <button onclick="setView('grid')" id="viewGridBtn" aria-label="Grid view" aria-pressed="true"
+                    class="view-toggle w-8 h-8 rounded-full flex items-center justify-center transition-all bg-primary text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+              <i class="fa-solid fa-grip text-xs" aria-hidden="true"></i>
+            </button>
+            <button onclick="setView('list')" id="viewListBtn" aria-label="List view" aria-pressed="false"
+                    class="view-toggle w-8 h-8 rounded-full flex items-center justify-center transition-all text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+              <i class="fa-solid fa-list text-xs" aria-hidden="true"></i>
+            </button>
+          </div>
+          <label for="sortSelect" class="sr-only">Sort by</label>
+          <select id="sortSelect" onchange="applySortAndRender()"
+                  class="px-4 py-2.5 rounded-xl border border-charcoal/15 bg-white focus:outline-none focus:ring-2 focus:ring-gold text-xs font-semibold text-primary">
+            <option value="recommended">Recommended</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating-desc">Top Rated</option>
+            <option value="newest">Newest</option>
+          </select>
+        </div>
       </div>
     </div>
 
     <!-- Active filter chips -->
     <div id="activeFilters" class="hidden flex-wrap gap-2 mb-4"></div>
 
-    <!-- Skeleton loader (shown briefly during initial render) -->
+    <!-- Quick suggestion chips when no filters -->
+    <div id="quickSuggestions" class="hidden flex-wrap gap-2 mb-4">
+      <span class="text-[10px] uppercase tracking-widest font-bold text-primary/60 self-center mr-1">Popular:</span>
+    </div>
+
+    <!-- Skeleton loader -->
     <div id="skeletonGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {% for _ in range(6) %}
         <div class="bg-white rounded-3xl overflow-hidden border border-gold/20">
@@ -152,7 +160,14 @@
     <div id="noResults" class="hidden text-center py-16 bg-white/50 rounded-3xl border border-dashed border-gold/40">
       <i class="fa-solid fa-house-circle-xmark text-4xl text-gold mb-3" aria-hidden="true"></i>
       <h3 class="font-serif text-2xl font-semibold text-primary mb-2">No Matching Estates Found</h3>
-      <p class="text-charcoal/70 text-sm max-w-md mx-auto mb-6">Try adjusting your filters or price range.</p>
+      <p id="noResultsMsg" class="text-charcoal/70 text-sm max-w-md mx-auto mb-6">Try adjusting your filters or price range.</p>
+
+      <!-- Suggested relaxations -->
+      <div id="noResultsSuggestions" class="hidden max-w-md mx-auto mb-6">
+        <p class="text-[10px] uppercase tracking-widest font-bold text-primary/60 mb-2">Try relaxing</p>
+        <div id="noResultsSuggestionsList" class="flex flex-wrap gap-2 justify-center"></div>
+      </div>
+
       <button onclick="resetAllFilters()"
               class="bg-primary text-gold px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all">
         <i class="fa-solid fa-rotate-left mr-1" aria-hidden="true"></i> Reset All Filters
@@ -163,55 +178,55 @@
 
 <!-- ============ FILTER SHEET (mobile) ============ -->
 <div id="filterSheetBackdrop" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm z-40 md:hidden" onclick="closeFilterSheet()"></div>
-<div id="filterSheet" class="fixed left-0 right-0 bottom-0 z-50 md:hidden translate-y-full transition-transform duration-300 bg-white rounded-t-3xl shadow-2xl border-t border-gold/40 max-h-[85vh] overflow-y-auto">
+<div id="filterSheet" class="fixed left-0 right-0 bottom-0 z-50 md:hidden translate-y-full transition-transform duration-300 bg-white rounded-t-3xl shadow-2xl border-t border-gold/40 max-h-[85vh] overflow-y-auto"
+     role="dialog" aria-modal="true" aria-label="Filters">
   <div class="sticky top-0 bg-white z-10 p-4 border-b border-charcoal/10 flex items-center justify-between">
-    <h3 class="font-serif text-xl font-semibold text-primary">Filters</h3>
-    <button onclick="closeFilterSheet()" class="w-9 h-9 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold flex items-center justify-center"
+    <div>
+      <h3 class="font-serif text-xl font-semibold text-primary">Filters</h3>
+      <p id="sheetFilterCount" class="text-[11px] text-charcoal/60 font-medium mt-0.5">No filters applied</p>
+    </div>
+    <button onclick="closeFilterSheet()" class="w-9 h-9 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
             aria-label="Close filters">
       <i class="fa-solid fa-xmark" aria-hidden="true"></i>
     </button>
   </div>
   <div class="p-5 space-y-6">
-
-    <!-- Bedrooms -->
     <div>
       <span class="block text-xs font-bold uppercase tracking-widest text-primary/80 mb-2">
         <i class="fa-solid fa-bed text-gold mr-1" aria-hidden="true"></i> Minimum Bedrooms
       </span>
       <div class="flex flex-wrap gap-2">
         <button onclick="setBedroomFilter(0, this)" data-beds="0"
-                class="bed-filter active px-4 py-2 rounded-full text-xs font-semibold border border-primary bg-primary text-gold">Any</button>
+                class="bed-filter active px-4 py-2 rounded-full text-xs font-semibold border border-primary bg-primary text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">Any</button>
         <button onclick="setBedroomFilter(1, this)" data-beds="1"
-                class="bed-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary">1+</button>
+                class="bed-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">1+</button>
         <button onclick="setBedroomFilter(2, this)" data-beds="2"
-                class="bed-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary">2+</button>
+                class="bed-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">2+</button>
         <button onclick="setBedroomFilter(3, this)" data-beds="3"
-                class="bed-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary">3+</button>
+                class="bed-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">3+</button>
         <button onclick="setBedroomFilter(4, this)" data-beds="4"
-                class="bed-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary">4+</button>
+                class="bed-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">4+</button>
       </div>
     </div>
 
-    <!-- Guests -->
     <div>
       <span class="block text-xs font-bold uppercase tracking-widest text-primary/80 mb-2">
         <i class="fa-solid fa-users text-gold mr-1" aria-hidden="true"></i> Guests
       </span>
       <div class="flex flex-wrap gap-2">
         <button onclick="setGuestFilter(0, this)" data-guests="0"
-                class="guest-filter active px-4 py-2 rounded-full text-xs font-semibold border border-primary bg-primary text-gold">Any</button>
+                class="guest-filter active px-4 py-2 rounded-full text-xs font-semibold border border-primary bg-primary text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">Any</button>
         <button onclick="setGuestFilter(2, this)" data-guests="2"
-                class="guest-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary">2+</button>
+                class="guest-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">2+</button>
         <button onclick="setGuestFilter(4, this)" data-guests="4"
-                class="guest-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary">4+</button>
+                class="guest-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">4+</button>
         <button onclick="setGuestFilter(6, this)" data-guests="6"
-                class="guest-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary">6+</button>
+                class="guest-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">6+</button>
         <button onclick="setGuestFilter(10, this)" data-guests="10"
-                class="guest-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary">10+</button>
+                class="guest-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">10+</button>
       </div>
     </div>
 
-    <!-- Amenities -->
     <div>
       <span class="block text-xs font-bold uppercase tracking-widest text-primary/80 mb-2">
         <i class="fa-solid fa-star text-gold mr-1" aria-hidden="true"></i> Amenities
@@ -219,18 +234,25 @@
       <div id="amenitiesContainer" class="flex flex-wrap gap-2"></div>
     </div>
 
-    <div class="pt-4 border-t border-charcoal/10 flex gap-3">
+    <div class="pt-4 border-t border-charcoal/10 flex gap-3 sticky bottom-0 bg-white pb-1">
       <button onclick="resetAllFilters()"
-              class="flex-1 border border-primary text-primary hover:bg-primary hover:text-gold py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
+              class="flex-1 border border-primary text-primary hover:bg-primary hover:text-gold py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
         Clear All
       </button>
       <button onclick="closeFilterSheet(); renderPropertyListings();"
-              class="flex-1 bg-primary text-gold hover:bg-gold hover:text-primary py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
+              class="flex-1 bg-primary text-gold hover:bg-gold hover:text-primary py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
         Apply Filters
       </button>
     </div>
   </div>
 </div>
+
+<!-- ============ BACK TO TOP ============ -->
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})"
+        class="fixed bottom-6 right-6 z-30 w-11 h-11 rounded-full bg-primary text-gold border border-gold/40 shadow-luxury flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+        aria-label="Back to top">
+  <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+</button>
 
 <!-- ============ PAGE-SCOPED STYLES ============ -->
 <style>
@@ -246,10 +268,7 @@
     transform: translateY(0);
   }
 
-  /* List view */
-  #propertyGrid.list-view {
-    grid-template-columns: 1fr !important;
-  }
+  #propertyGrid.list-view { grid-template-columns: 1fr !important; }
   #propertyGrid.list-view .property-card-inner {
     display: grid;
     grid-template-columns: minmax(240px, 320px) 1fr;
@@ -264,6 +283,15 @@
     #propertyGrid.list-view .property-card-inner > .card-image-wrap { aspect-ratio: 4 / 3 !important; min-height: 0; }
   }
 
+  /* Filter count badge */
+  .filter-count-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 1.1rem; height: 1.1rem; padding: 0 0.3rem;
+    background: #c9a84c; color: #1a3a2a;
+    border-radius: 999px; font-size: 0.65rem; font-weight: 700;
+    margin-left: 0.4rem;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .property-card { opacity: 1; transform: none; transition: none; }
     #filterSheet { transition: none !important; }
@@ -275,10 +303,6 @@
 <script>
 /* ============================================================
    STAYS PAGE — page-specific data + functions only.
-   Shared globals (CSRF_TOKEN, IS_LOGGED_IN, IS_ADMIN, CURRENT_USER,
-   favorites, showingFavoritesOnly, escapeHtml, formatGHS, showToast,
-   openModal, closeModal, closeQuickViewModal, closeBookingModal,
-   toggleFavorite, updateFavoritesBadge) live in base.html.
    ============================================================ */
 
 const RAW_PROPERTIES = {{ properties|tojson }};
@@ -306,14 +330,12 @@ function normalizeProperty(p) {
 }
 const PROPERTIES = RAW_PROPERTIES.map(normalizeProperty);
 
-/* ---------- Seed favorites from server + localStorage ---------- */
 WISHLIST_IDS.forEach(id => favorites.add(String(id)));
 try {
   const local = JSON.parse(localStorage.getItem('leReveFavorites') || '[]');
   local.forEach(id => favorites.add(String(id)));
 } catch(e) {}
 
-/* ---------- Filter state ---------- */
 let activeCategory   = 'all';
 let activeBeds       = 0;
 let activeGuests     = 0;
@@ -322,32 +344,63 @@ let activeSort       = 'recommended';
 let currentView      = 'grid';
 let debounceTimer    = null;
 
-/* ---------- Restore persisted preferences ---------- */
-try {
-  const savedSort = localStorage.getItem('leReveStaysSort');
-  if (savedSort) {
-    activeSort = savedSort;
-    const sel = document.getElementById('sortSelect');
-    if (sel) sel.value = savedSort;
-  }
-  const savedView = localStorage.getItem('leReveStaysView');
-  if (savedView === 'grid' || savedView === 'list') {
-    currentView = savedView;
-  }
-  const savedLoc = localStorage.getItem('leReveStaysLastLocation');
-  if (savedLoc) {
-    const locInput = document.getElementById('filterLocation');
-    if (locInput) locInput.value = savedLoc;
-  }
-} catch(e) {}
+/* ---------- URL sync ---------- */
+function readFiltersFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const loc    = params.get('loc') || '';
+  const type   = params.get('type') || 'all';
+  const price  = params.get('price') || '50000';
+  const cat    = params.get('cat') || 'all';
+  const beds   = parseInt(params.get('beds') || '0', 10);
+  const guests = parseInt(params.get('guests') || '0', 10);
+  const sort   = params.get('sort') || 'recommended';
+  const view   = params.get('view') || 'grid';
+  const fav    = params.get('fav') === '1';
+  const am     = params.getAll('am');
 
-/* ---------- Debounce helper ---------- */
+  const locEl = document.getElementById('filterLocation');
+  const typeEl = document.getElementById('filterType');
+  const priceEl = document.getElementById('filterPrice');
+  if (locEl) locEl.value = loc;
+  if (typeEl) typeEl.value = type;
+  if (priceEl) { priceEl.value = price; updatePriceLabel(price); }
+
+  activeCategory  = cat;
+  activeBeds      = beds;
+  activeGuests    = guests;
+  activeSort      = sort;
+  currentView     = view;
+  showingFavoritesOnly = fav;
+  activeAmenities = new Set(am);
+
+  try { localStorage.setItem('leReveStaysSort', sort); } catch(e) {}
+  try { localStorage.setItem('leReveStaysView', view); } catch(e) {}
+}
+function writeFiltersToURL() {
+  const loc   = (document.getElementById('filterLocation')?.value || '').trim();
+  const type  = document.getElementById('filterType')?.value || 'all';
+  const price = document.getElementById('filterPrice')?.value || '50000';
+  const params = new URLSearchParams();
+  if (loc) params.set('loc', loc);
+  if (type && type !== 'all') params.set('type', type);
+  if (price && price !== '50000') params.set('price', price);
+  if (activeCategory && activeCategory !== 'all') params.set('cat', activeCategory);
+  if (activeBeds > 0) params.set('beds', String(activeBeds));
+  if (activeGuests > 0) params.set('guests', String(activeGuests));
+  if (activeSort && activeSort !== 'recommended') params.set('sort', activeSort);
+  if (currentView && currentView !== 'grid') params.set('view', currentView);
+  if (showingFavoritesOnly) params.set('fav', '1');
+  activeAmenities.forEach(a => params.append('am', a));
+  const qs = params.toString();
+  const url = qs ? `${window.location.pathname}?${qs}#listings` : `${window.location.pathname}#listings`;
+  history.replaceState(null, '', url);
+}
+
 function debouncedRender() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(renderPropertyListings, 250);
 }
 
-/* ---------- Apply hero filter ---------- */
 function applyHeroFilters() {
   showingFavoritesOnly = false;
   const locInput = document.getElementById('filterLocation');
@@ -355,15 +408,16 @@ function applyHeroFilters() {
     try { localStorage.setItem('leReveStaysLastLocation', locInput.value.trim()); } catch(e) {}
   }
   renderPropertyListings();
+  /* Scroll to results */
+  const resultsTop = document.querySelector('section.pt-8');
+  if (resultsTop) resultsTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-/* ---------- Price label ---------- */
 function updatePriceLabel(val) {
   const el = document.getElementById('priceDisplay');
   if (el) el.textContent = formatGHS(parseInt(val, 10));
 }
 
-/* ---------- Category filter ---------- */
 function filterCategory(cat, btn) {
   activeCategory = cat;
   showingFavoritesOnly = false;
@@ -382,7 +436,6 @@ function filterCategory(cat, btn) {
   renderPropertyListings();
 }
 
-/* ---------- Bedroom filter ---------- */
 function setBedroomFilter(n, btn) {
   activeBeds = n;
   document.querySelectorAll('.bed-filter').forEach(b => {
@@ -393,10 +446,10 @@ function setBedroomFilter(n, btn) {
     btn.classList.add('active', 'bg-primary', 'text-gold');
     btn.classList.remove('bg-white');
   }
+  updateSheetFilterCount();
   renderPropertyListings();
 }
 
-/* ---------- Guest filter ---------- */
 function setGuestFilter(n, btn) {
   activeGuests = n;
   document.querySelectorAll('.guest-filter').forEach(b => {
@@ -407,10 +460,10 @@ function setGuestFilter(n, btn) {
     btn.classList.add('active', 'bg-primary', 'text-gold');
     btn.classList.remove('bg-white');
   }
+  updateSheetFilterCount();
   renderPropertyListings();
 }
 
-/* ---------- Amenity filter (toggle) ---------- */
 function toggleAmenity(name, btn) {
   if (activeAmenities.has(name)) {
     activeAmenities.delete(name);
@@ -421,10 +474,10 @@ function toggleAmenity(name, btn) {
     btn.classList.add('active', 'bg-primary', 'text-gold');
     btn.classList.remove('bg-white');
   }
+  updateSheetFilterCount();
   renderPropertyListings();
 }
 
-/* ---------- Sort ---------- */
 function applySortAndRender() {
   const sel = document.getElementById('sortSelect');
   activeSort = sel ? sel.value : 'recommended';
@@ -432,7 +485,6 @@ function applySortAndRender() {
   renderPropertyListings();
 }
 
-/* ---------- View toggle ---------- */
 function setView(mode) {
   currentView = mode;
   try { localStorage.setItem('leReveStaysView', mode); } catch(e) {}
@@ -441,23 +493,27 @@ function setView(mode) {
   if (mode === 'grid') {
     gridBtn?.classList.add('bg-primary', 'text-gold');
     gridBtn?.classList.remove('text-primary');
+    gridBtn?.setAttribute('aria-pressed', 'true');
     listBtn?.classList.remove('bg-primary', 'text-gold');
     listBtn?.classList.add('text-primary');
+    listBtn?.setAttribute('aria-pressed', 'false');
   } else {
     listBtn?.classList.add('bg-primary', 'text-gold');
     listBtn?.classList.remove('text-primary');
+    listBtn?.setAttribute('aria-pressed', 'true');
     gridBtn?.classList.remove('bg-primary', 'text-gold');
     gridBtn?.classList.add('text-primary');
+    gridBtn?.setAttribute('aria-pressed', 'false');
   }
   const grid = document.getElementById('propertyGrid');
   if (grid) grid.classList.toggle('list-view', mode === 'list');
 }
 
-/* ---------- Mobile filter sheet ---------- */
 function openFilterSheet() {
   const sheet = document.getElementById('filterSheet');
   const back  = document.getElementById('filterSheetBackdrop');
   if (!sheet) return;
+  updateSheetFilterCount();
   sheet.classList.remove('hidden');
   back?.classList.remove('hidden');
   requestAnimationFrame(() => sheet.classList.add('open'));
@@ -472,8 +528,19 @@ function closeFilterSheet() {
     back?.classList.add('hidden');
   }, 300);
 }
+function updateSheetFilterCount() {
+  const count = (activeBeds > 0 ? 1 : 0) + (activeGuests > 0 ? 1 : 0) + activeAmenities.size;
+  const sheetCountEl = document.getElementById('sheetFilterCount');
+  if (sheetCountEl) {
+    sheetCountEl.textContent = count === 0 ? 'No filters applied' : `${count} filter${count === 1 ? '' : 's'} applied`;
+  }
+  const badge = document.getElementById('mobileFilterCount');
+  if (badge) {
+    badge.textContent = count;
+    badge.classList.toggle('hidden', count === 0);
+  }
+}
 
-/* ---------- Build amenity list dynamically ---------- */
 function buildAmenitiesList() {
   const container = document.getElementById('amenitiesContainer');
   if (!container) return;
@@ -484,12 +551,62 @@ function buildAmenitiesList() {
     container.innerHTML = '<span class="text-xs text-charcoal/50">No amenities available</span>';
     return;
   }
-  container.innerHTML = amenities.map(a =>
-    `<button onclick="toggleAmenity(${JSON.stringify(a)}, this)" data-amenity="${escapeHtml(a)}"
-             class="amenity-filter px-4 py-2 rounded-full text-xs font-semibold border border-primary/20 bg-white text-primary hover:border-primary transition-all">
+  container.innerHTML = amenities.map(a => {
+    const isActive = activeAmenities.has(a);
+    return `<button onclick="toggleAmenity(${JSON.stringify(a)}, this)" data-amenity="${escapeHtml(a)}"
+             class="amenity-filter px-4 py-2 rounded-full text-xs font-semibold border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold ${isActive ? 'active bg-primary text-gold border-primary' : 'bg-white text-primary border-primary/20 hover:border-primary'}">
       ${escapeHtml(a)}
-    </button>`
-  ).join('');
+    </button>`;
+  }).join('');
+}
+
+/* ---------- Quick suggestion chips ---------- */
+function renderQuickSuggestions() {
+  const wrap = document.getElementById('quickSuggestions');
+  if (!wrap) return;
+  const hasFilters = activeCategory !== 'all' ||
+    (document.getElementById('filterLocation')?.value || '').trim() ||
+    (document.getElementById('filterType')?.value || 'all') !== 'all' ||
+    parseInt(document.getElementById('filterPrice')?.value || '50000', 10) < 50000 ||
+    activeBeds > 0 || activeGuests > 0 || activeAmenities.size > 0;
+
+  if (hasFilters) {
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  wrap.classList.add('flex');
+
+  const suggestions = [];
+  /* Top-rated */
+  suggestions.push({ label: '⭐ Top rated', clear: () => { activeSort = 'rating-desc'; const s = document.getElementById('sortSelect'); if (s) s.value = 'rating-desc'; applySortAndRender(); } });
+  /* Best value */
+  suggestions.push({ label: '💰 Under ₵5,000', clear: () => { const p = document.getElementById('filterPrice'); if (p) { p.value = '5000'; updatePriceLabel('5000'); } renderPropertyListings(); } });
+  /* 2+ bedrooms */
+  suggestions.push({ label: '🛏 2+ bedrooms', clear: () => { setBedroomFilter(2, document.querySelector('.bed-filter[data-beds="2"]')); } });
+  /* 4+ guests */
+  suggestions.push({ label: '👥 4+ guests', clear: () => { setGuestFilter(4, document.querySelector('.guest-filter[data-guests="4"]')); } });
+  /* Favorites */
+  if (favorites.size > 0) {
+    suggestions.push({ label: '❤️ My favorites', clear: () => { showingFavoritesOnly = true; renderPropertyListings(); } });
+  }
+  /* Categories as quick chips */
+  document.querySelectorAll('.category-btn[data-category]').forEach(b => {
+    const cat = b.dataset.category;
+    if (cat && cat !== 'all' && suggestions.length < 8) {
+      suggestions.push({ label: `✨ ${cat}`, clear: () => filterCategory(cat) });
+    }
+  });
+
+  wrap.innerHTML = `<span class="text-[10px] uppercase tracking-widest font-bold text-primary/60 self-center mr-1">Popular:</span>` +
+    suggestions.slice(0, 8).map((s, i) =>
+      `<button onclick="__quickSuggestion(${i})" class="px-3 py-1.5 rounded-full bg-white border border-primary/20 text-primary text-[11px] font-semibold uppercase tracking-wider hover:border-gold hover:bg-gold/10 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">${escapeHtml(s.label)}</button>`
+    ).join('');
+  window.__quickSuggestionClearers = suggestions.slice(0, 8).map(s => s.clear);
+}
+function __quickSuggestion(i) {
+  const fn = (window.__quickSuggestionClearers || [])[i];
+  if (typeof fn === 'function') fn();
 }
 
 /* ---------- Active filter chips ---------- */
@@ -515,13 +632,13 @@ function renderActiveFilters() {
     chips.push({ label: `Max ${formatGHS(priceVal)}`, clear: () => { document.getElementById('filterPrice').value = '50000'; updatePriceLabel('50000'); renderPropertyListings(); } });
   }
   if (activeBeds > 0) {
-    chips.push({ label: `${activeBeds}+ beds`, clear: () => { activeBeds = 0; document.querySelectorAll('.bed-filter').forEach((b, i) => { if (i === 0) { b.classList.add('active','bg-primary','text-gold'); b.classList.remove('bg-white'); } else { b.classList.remove('active','bg-primary','text-gold'); b.classList.add('bg-white','text-primary'); } }); renderPropertyListings(); } });
+    chips.push({ label: `${activeBeds}+ beds`, clear: () => { activeBeds = 0; document.querySelectorAll('.bed-filter').forEach((b, i) => { if (i === 0) { b.classList.add('active','bg-primary','text-gold'); b.classList.remove('bg-white'); } else { b.classList.remove('active','bg-primary','text-gold'); b.classList.add('bg-white','text-primary'); } }); updateSheetFilterCount(); renderPropertyListings(); } });
   }
   if (activeGuests > 0) {
-    chips.push({ label: `${activeGuests}+ guests`, clear: () => { activeGuests = 0; document.querySelectorAll('.guest-filter').forEach((b, i) => { if (i === 0) { b.classList.add('active','bg-primary','text-gold'); b.classList.remove('bg-white'); } else { b.classList.remove('active','bg-primary','text-gold'); b.classList.add('bg-white','text-primary'); } }); renderPropertyListings(); } });
+    chips.push({ label: `${activeGuests}+ guests`, clear: () => { activeGuests = 0; document.querySelectorAll('.guest-filter').forEach((b, i) => { if (i === 0) { b.classList.add('active','bg-primary','text-gold'); b.classList.remove('bg-white'); } else { b.classList.remove('active','bg-primary','text-gold'); b.classList.add('bg-white','text-primary'); } }); updateSheetFilterCount(); renderPropertyListings(); } });
   }
   activeAmenities.forEach(a => {
-    chips.push({ label: a, clear: () => { activeAmenities.delete(a); document.querySelectorAll('.amenity-filter').forEach(b => { if (b.dataset.amenity === a) { b.classList.remove('active','bg-primary','text-gold'); b.classList.add('bg-white','text-primary'); } }); renderPropertyListings(); } });
+    chips.push({ label: a, clear: () => { activeAmenities.delete(a); document.querySelectorAll('.amenity-filter').forEach(b => { if (b.dataset.amenity === a) { b.classList.remove('active','bg-primary','text-gold'); b.classList.add('bg-white','text-primary'); } }); updateSheetFilterCount(); renderPropertyListings(); } });
   });
   if (showingFavoritesOnly) {
     chips.push({ label: '❤️ Favorites only', clear: () => { showingFavoritesOnly = false; renderPropertyListings(); } });
@@ -529,23 +646,23 @@ function renderActiveFilters() {
 
   if (chips.length === 0) {
     wrap.classList.add('hidden');
+    wrap.classList.remove('flex');
     wrap.innerHTML = '';
     return;
   }
 
   wrap.classList.remove('hidden');
-  wrap.className = 'flex flex-wrap gap-2 mb-4';
+  wrap.classList.add('flex');
   wrap.innerHTML = chips.map((c, i) =>
-    `<button onclick="__clearChip(${i})" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-primary text-[11px] font-semibold uppercase tracking-wider hover:border-gold hover:bg-gold/10 transition-all">
+    `<button onclick="__clearChip(${i})" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-primary text-[11px] font-semibold uppercase tracking-wider hover:border-gold hover:bg-gold/10 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
       ${escapeHtml(c.label)}
       <i class="fa-solid fa-xmark text-[10px]" aria-hidden="true"></i>
     </button>`
   ).join('') +
-  `<button onclick="resetAllFilters()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-600 text-[11px] font-semibold uppercase tracking-wider hover:bg-red-500/20 transition-all">
+  `<button onclick="resetAllFilters()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-600 text-[11px] font-semibold uppercase tracking-wider hover:bg-red-500/20 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
     Clear all <i class="fa-solid fa-trash text-[10px]" aria-hidden="true"></i>
   </button>`;
 
-  /* Stash chip clearers for the onclick handlers */
   window.__chipClearers = chips.map(c => c.clear);
 }
 function __clearChip(i) {
@@ -553,7 +670,6 @@ function __clearChip(i) {
   if (typeof fn === 'function') fn();
 }
 
-/* ---------- Sorting ---------- */
 function sortFiltered(list) {
   const arr = list.slice();
   switch (activeSort) {
@@ -568,7 +684,6 @@ function sortFiltered(list) {
       });
     }
     default: {
-      /* Recommended: featured = has discount first, then by rating, then by reviews count */
       return arr.sort((a, b) => {
         const aDisc = a.original_price > a.price ? 1 : 0;
         const bDisc = b.original_price > b.price ? 1 : 0;
@@ -580,14 +695,8 @@ function sortFiltered(list) {
   }
 }
 
-/* ---------- Render ---------- */
-function renderPropertyListings() {
-  const grid       = document.getElementById('propertyGrid');
-  const skeleton   = document.getElementById('skeletonGrid');
-  const noResults  = document.getElementById('noResults');
-  const countEl    = document.getElementById('propertyCount');
-  if (!grid) return;
-
+/* ---------- Get filtered list (extracted for reuse) ---------- */
+function getFilteredProperties() {
   const locationVal = (document.getElementById('filterLocation')?.value || '').toLowerCase().trim();
   const typeVal     = document.getElementById('filterType')?.value || 'all';
   const maxPriceVal = parseInt(document.getElementById('filterPrice')?.value || '50000', 10);
@@ -610,9 +719,73 @@ function renderPropertyListings() {
     return true;
   });
 
-  filtered = sortFiltered(filtered);
+  return sortFiltered(filtered);
+}
 
-  /* Reveal grid, hide skeleton */
+/* ---------- No-results suggestions ---------- */
+function renderNoResultsSuggestions(allCount) {
+  const wrap = document.getElementById('noResultsSuggestions');
+  const list = document.getElementById('noResultsSuggestionsList');
+  const msg  = document.getElementById('noResultsMsg');
+  if (!wrap || !list) return;
+
+  if (allCount === 0) {
+    wrap.classList.add('hidden');
+    if (msg) msg.textContent = 'There are no estates listed yet — please check back soon.';
+    return;
+  }
+
+  if (msg) msg.textContent = `None of the ${allCount} estates match your filters. Try relaxing one of these:`;
+
+  const suggestions = [];
+  if (activeAmenities.size > 0) {
+    suggestions.push({ label: `Clear ${activeAmenities.size} amenit${activeAmenities.size === 1 ? 'y' : 'ies'}`, action: () => { activeAmenities.clear(); document.querySelectorAll('.amenity-filter').forEach(b => { b.classList.remove('active','bg-primary','text-gold'); b.classList.add('bg-white','text-primary'); }); updateSheetFilterCount(); renderPropertyListings(); } });
+  }
+  if (activeBeds > 0) {
+    suggestions.push({ label: `Remove ${activeBeds}+ beds`, action: () => setBedroomFilter(0, document.querySelector('.bed-filter[data-beds="0"]')) });
+  }
+  if (activeGuests > 0) {
+    suggestions.push({ label: `Remove ${activeGuests}+ guests`, action: () => setGuestFilter(0, document.querySelector('.guest-filter[data-guests="0"]')) });
+  }
+  const price = parseInt(document.getElementById('filterPrice')?.value || '50000', 10);
+  if (price < 50000) {
+    suggestions.push({ label: `Raise price to ${formatGHS(50000)}`, action: () => { const p = document.getElementById('filterPrice'); if (p) { p.value = '50000'; updatePriceLabel('50000'); } renderPropertyListings(); } });
+  }
+  const loc = (document.getElementById('filterLocation')?.value || '').trim();
+  if (loc) {
+    suggestions.push({ label: `Clear "${loc}"`, action: () => { document.getElementById('filterLocation').value = ''; renderPropertyListings(); } });
+  }
+  if (activeCategory !== 'all') {
+    suggestions.push({ label: `Clear "${activeCategory}"`, action: () => filterCategory('all') });
+  }
+  if (showingFavoritesOnly) {
+    suggestions.push({ label: 'Show all (not just favorites)', action: () => { showingFavoritesOnly = false; renderPropertyListings(); } });
+  }
+
+  if (suggestions.length === 0) {
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  list.innerHTML = suggestions.map((s, i) =>
+    `<button onclick="__noResultAction(${i})" class="px-3 py-1.5 rounded-full bg-white border border-gold/40 text-primary text-[11px] font-semibold uppercase tracking-wider hover:bg-gold/10 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">${escapeHtml(s.label)}</button>`
+  ).join('');
+  window.__noResultActions = suggestions.map(s => s.action);
+}
+function __noResultAction(i) {
+  const fn = (window.__noResultActions || [])[i];
+  if (typeof fn === 'function') fn();
+}
+
+function renderPropertyListings() {
+  const grid       = document.getElementById('propertyGrid');
+  const skeleton   = document.getElementById('skeletonGrid');
+  const noResults  = document.getElementById('noResults');
+  const countEl    = document.getElementById('propertyCount');
+  if (!grid) return;
+
+  const filtered = getFilteredProperties();
+
   if (skeleton) skeleton.classList.add('hidden');
   grid.classList.remove('hidden');
 
@@ -623,9 +796,12 @@ function renderPropertyListings() {
   }
 
   renderActiveFilters();
+  renderQuickSuggestions();
+  writeFiltersToURL();
 
   if (filtered.length === 0) {
     grid.innerHTML = '';
+    renderNoResultsSuggestions(PROPERTIES.length);
     noResults?.classList.remove('hidden');
     return;
   }
@@ -639,27 +815,30 @@ function renderPropertyListings() {
     const isPopular = prop.rating >= 4.9 || prop.reviews_count >= 20;
 
     return `
-      <article class="property-card bg-white rounded-3xl overflow-hidden shadow-luxury border border-gold/20 hover:border-gold hover:shadow-xl transition-all group">
+      <article class="property-card bg-white rounded-3xl overflow-hidden shadow-luxury border border-gold/20 hover:border-gold hover:-translate-y-1 hover:shadow-xl transition-all group">
         <div class="property-card-inner flex flex-col h-full">
           <div class="card-image-wrap relative aspect-[4/3] overflow-hidden bg-primary-dark">
             <img src="${escapeHtml(prop.image)}" alt="${escapeHtml(prop.title)}"
                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
             <div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-black/20"></div>
 
-            <!-- Top-left badges -->
             <div class="absolute top-4 left-4 flex flex-col gap-1.5 items-start">
               <span class="bg-primary/90 text-gold backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-gold/30">${escapeHtml(prop.category)}</span>
               ${isNew ? '<span class="bg-emerald-500 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full">New</span>' : ''}
               ${isPopular && !isNew ? '<span class="bg-gold text-primary text-[9px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full">Popular</span>' : ''}
             </div>
 
-            <!-- Favorite -->
-            <button onclick="toggleFavorite('${prop.id}')" aria-label="Save to wishlist"
+            <button onclick="toggleFavorite('${prop.id}')" aria-label="${isFav ? 'Remove from' : 'Save to'} wishlist" aria-pressed="${isFav}"
                     class="absolute top-4 right-4 w-9 h-9 rounded-full ${isFav ? 'bg-gold text-primary' : 'bg-primary/70 text-white hover:bg-gold hover:text-primary'} backdrop-blur-sm flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all shadow-md">
               <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" aria-hidden="true"></i>
             </button>
 
             ${savingsPct > 0 ? `<div class="absolute bottom-4 left-4 bg-gold text-primary font-bold text-xs px-3 py-1 rounded-lg shadow-md">Save ${savingsPct}%</div>` : ''}
+
+            <button onclick="openQuickView('${prop.id}')" aria-label="Quick view ${escapeHtml(prop.title)}"
+                    class="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-white/90 text-primary hover:bg-gold hover:text-primary backdrop-blur-sm flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+              <i class="fa-solid fa-expand text-sm" aria-hidden="true"></i>
+            </button>
           </div>
 
           <div class="p-6 flex-1 flex flex-col justify-between">
@@ -710,7 +889,6 @@ function renderPropertyListings() {
       </article>`;
   }).join('');
 
-  /* Reveal animation */
   requestAnimationFrame(() => {
     grid.querySelectorAll('.property-card').forEach((el, i) => {
       setTimeout(() => el.classList.add('is-visible'), i * 40);
@@ -718,7 +896,6 @@ function renderPropertyListings() {
   });
 }
 
-/* ---------- Reset all filters ---------- */
 function resetAllFilters() {
   activeCategory = 'all';
   activeBeds     = 0;
@@ -757,7 +934,22 @@ function resetAllFilters() {
     b.classList.add('bg-white', 'text-primary');
   });
 
+  updateSheetFilterCount();
   renderPropertyListings();
+}
+
+/* ---------- Back to top ---------- */
+function setupBackToTop() {
+  const btn = document.getElementById('backToTop');
+  if (!btn) return;
+  const onScroll = () => {
+    const show = window.scrollY > 400;
+    btn.classList.toggle('opacity-0', !show);
+    btn.classList.toggle('pointer-events-none', !show);
+    btn.classList.toggle('opacity-100', show);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 }
 
 /* ============================================================
@@ -774,7 +966,7 @@ function openQuickView(id) {
           <img id="modalMainImg" src="${escapeHtml(prop.image)}" alt="${escapeHtml(prop.title)}" class="w-full h-full object-cover">
         </div>
         ${prop.gallery.length > 1 ? `<div class="flex gap-2 flex-wrap">${prop.gallery.map(u => `
-          <button onclick="document.getElementById('modalMainImg').src='${escapeHtml(u)}'" class="w-16 h-16 rounded-lg overflow-hidden border border-gold/30 hover:border-gold"><img src="${escapeHtml(u)}" class="w-full h-full object-cover" alt=""></button>`).join('')}</div>` : ''}
+          <button onclick="document.getElementById('modalMainImg').src='${escapeHtml(u)}'" class="w-16 h-16 rounded-lg overflow-hidden border border-gold/30 hover:border-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gold" aria-label="View image"><img src="${escapeHtml(u)}" class="w-full h-full object-cover" alt=""></button>`).join('')}</div>` : ''}
         <div class="mt-6 pt-6 border-t border-gold/20">
           <span class="text-xs uppercase tracking-widest text-gold block mb-1">Location</span>
           <p class="font-serif text-xl">${escapeHtml(prop.location)}</p>
@@ -784,7 +976,7 @@ function openQuickView(id) {
         <div>
           <div class="flex items-center gap-2 mb-2 flex-wrap">
             <span class="bg-gold/20 text-gold-dark text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-gold/40">${escapeHtml(prop.category)}</span>
-            <span class="text-xs font-bold text-primary"><i class="fa-solid fa-star text-gold"></i> ${prop.rating}</span>
+            <span class="text-xs font-bold text-primary"><i class="fa-solid fa-star text-gold" aria-hidden="true"></i> ${prop.rating}</span>
           </div>
           <h2 class="font-serif text-3xl font-semibold text-primary mb-3">${escapeHtml(prop.title)}</h2>
           <p class="text-charcoal/80 text-sm leading-relaxed mb-6 font-light">${escapeHtml(prop.description)}</p>
@@ -794,12 +986,12 @@ function openQuickView(id) {
             <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Guests</span><span class="font-serif text-xl font-bold text-primary">${prop.guests}</span></div>
           </div>
           ${prop.amenities.length ? `<h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Inclusive Privileges</h4>
-            <div class="flex flex-wrap gap-2 mb-8">${prop.amenities.map(a => `<span class="bg-primary/5 text-primary text-xs px-3 py-1.5 rounded-xl border border-primary/10 flex items-center gap-1.5"><i class="fa-solid fa-check text-gold text-xs"></i> ${escapeHtml(a)}</span>`).join('')}</div>` : ''}
+            <div class="flex flex-wrap gap-2 mb-8">${prop.amenities.map(a => `<span class="bg-primary/5 text-primary text-xs px-3 py-1.5 rounded-xl border border-primary/10 flex items-center gap-1.5"><i class="fa-solid fa-check text-gold text-xs" aria-hidden="true"></i> ${escapeHtml(a)}</span>`).join('')}</div>` : ''}
         </div>
         <div class="pt-4 border-t border-charcoal/10 flex items-center justify-between gap-3 flex-wrap">
           <div><span class="font-serif text-3xl font-bold text-primary">${formatGHS(prop.price)}</span> <span class="text-xs text-charcoal/70">/ night</span></div>
           <button onclick="closeQuickViewModal(); openBookingModal('${prop.id}');"
-                  class="bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+                  class="bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
             Book This Estate
           </button>
         </div>
@@ -820,18 +1012,18 @@ function openBookingModal(propertyId) {
     content.innerHTML = `
       <div class="p-8 sm:p-10 text-center">
         <div class="w-16 h-16 mx-auto rounded-full bg-gold/15 text-gold flex items-center justify-center mb-4">
-          <i class="fa-solid fa-lock text-2xl"></i>
+          <i class="fa-solid fa-lock text-2xl" aria-hidden="true"></i>
         </div>
         <h3 class="font-serif text-3xl font-semibold text-primary mb-2">Sign In to Book</h3>
         <p class="text-sm text-charcoal/70 mb-6 max-w-sm mx-auto">
           Create a free account or sign in to reserve <strong>${escapeHtml(prop.title)}</strong>.
         </p>
         <div class="flex flex-col sm:flex-row gap-3">
-          <a href="{{ url_for('auth.login') }}" class="flex-1 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
-            <i class="fa-solid fa-right-to-bracket mr-1"></i> Sign In
+          <a href="{{ url_for('auth.login') }}" class="flex-1 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+            <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
           </a>
-          <a href="{{ url_for('auth.register') }}" class="flex-1 bg-gold text-primary hover:bg-primary hover:text-gold px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
-            <i class="fa-solid fa-user-plus mr-1"></i> Create Account
+          <a href="{{ url_for('auth.register') }}" class="flex-1 bg-gold text-primary hover:bg-primary hover:text-gold px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+            <i class="fa-solid fa-user-plus mr-1" aria-hidden="true"></i> Create Account
           </a>
         </div>
         <p class="text-[10px] text-charcoal/40 mt-5">
@@ -875,14 +1067,14 @@ function buildInquiryFormHTML(prop, defaults) {
         <div class="min-w-0">
           <span class="text-[10px] uppercase tracking-widest text-gold font-bold">Book This Estate</span>
           <h3 class="font-serif text-2xl font-semibold text-primary leading-tight mt-1">${escapeHtml(prop.title)}</h3>
-          <p class="text-xs text-charcoal/60 mt-0.5"><i class="fa-solid fa-location-dot text-gold mr-1"></i>${escapeHtml(prop.location)}</p>
+          <p class="text-xs text-charcoal/60 mt-0.5"><i class="fa-solid fa-location-dot text-gold mr-1" aria-hidden="true"></i>${escapeHtml(prop.location)}</p>
         </div>
       </div>
       <div class="p-3 rounded-xl bg-ivory border border-gold/20 mb-5 flex items-center justify-between">
         <span class="text-xs text-charcoal/60">Nightly rate</span>
         <span class="font-serif text-lg font-bold text-primary">${formatGHS(prop.price)}</span>
       </div>
-      <form id="bookingInquiryForm" class="space-y-4">
+      <form id="bookingInquiryForm" class="space-y-4" novalidate>
         <input type="hidden" name="property" value="${escapeHtml(prop.title)}">
         <input type="hidden" name="property_id" value="${escapeHtml(prop.id)}">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -909,10 +1101,10 @@ function buildInquiryFormHTML(prop, defaults) {
         <div><label for="bookingMessage" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Special Requests</label>
           <textarea id="bookingMessage" name="message" rows="3" maxlength="2000" placeholder="Chef dietary requirements, airport transfers, extended-stay questions..." class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea></div>
         <button type="submit" id="bookingSubmitBtn"
-                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs focus:outline-none transition-all shadow-luxury flex items-center justify-center gap-2">
-          <i class="fa-solid fa-paper-plane"></i><span>Submit Reservation Request</span>
+                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all shadow-luxury flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+          <i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Submit Reservation Request</span>
         </button>
-        ${defaults.isGuest ? `<p class="text-[10px] text-center text-charcoal/50"><i class="fa-solid fa-info-circle mr-1"></i>Submitting as guest — a concierge will contact you within 2 hours.</p>` : ''}
+        ${defaults.isGuest ? `<p class="text-[10px] text-center text-charcoal/50"><i class="fa-solid fa-info-circle mr-1" aria-hidden="true"></i>Submitting as guest — a concierge will contact you within 2 hours.</p>` : ''}
       </form>
     </div>`;
 }
@@ -920,12 +1112,27 @@ function buildInquiryFormHTML(prop, defaults) {
 function bindInquiryFormEvents() {
   const form = document.getElementById('bookingInquiryForm');
   if (!form) return;
+
+  /* Live check-out min update */
+  const checkIn  = form.querySelector('#bookingCheckIn');
+  const checkOut = form.querySelector('#bookingCheckOut');
+  if (checkIn && checkOut) {
+    checkIn.addEventListener('change', () => {
+      if (checkIn.value) {
+        const next = new Date(checkIn.value);
+        next.setDate(next.getDate() + 1);
+        checkOut.min = next.toISOString().split('T')[0];
+        if (checkOut.value && checkOut.value <= checkIn.value) checkOut.value = checkOut.min;
+      }
+    });
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('bookingSubmitBtn');
     const original = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Sending…</span>';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Sending…</span>';
     const fd = new FormData(form);
     const payload = {
       name:(fd.get('name')||'').toString().trim(),
@@ -946,7 +1153,7 @@ function bindInquiryFormEvents() {
       btn.disabled = false; btn.innerHTML = original; return;
     }
     try {
-      const res = await fetch('{{ url_for("public.submit_inquiry") }}', {
+      const res = await fetch('{{ url_for("api.create_inquiry") }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
         body: JSON.stringify(payload)
@@ -963,21 +1170,56 @@ function bindInquiryFormEvents() {
 
 /* ---------- Init ---------- */
 document.addEventListener('DOMContentLoaded', () => {
-  /* Sync view toggle button state */
+  readFiltersFromURL();
   setView(currentView);
 
-  /* Sync sort dropdown state */
   const sortSel = document.getElementById('sortSelect');
   if (sortSel) sortSel.value = activeSort;
 
-  /* Build amenity filter list from actual properties */
-  buildAmenitiesList();
+  /* Reflect bed/guest filter in the mobile sheet */
+  document.querySelectorAll('.bed-filter').forEach(b => {
+    const n = parseInt(b.dataset.beds, 10);
+    const isActive = n === activeBeds;
+    b.classList.toggle('active', isActive);
+    if (isActive) { b.classList.add('bg-primary','text-gold'); b.classList.remove('bg-white'); }
+    else { b.classList.remove('bg-primary','text-gold'); b.classList.add('bg-white','text-primary'); }
+  });
+  document.querySelectorAll('.guest-filter').forEach(b => {
+    const n = parseInt(b.dataset.guests, 10);
+    const isActive = n === activeGuests;
+    b.classList.toggle('active', isActive);
+    if (isActive) { b.classList.add('bg-primary','text-gold'); b.classList.remove('bg-white'); }
+    else { b.classList.remove('bg-primary','text-gold'); b.classList.add('bg-white','text-primary'); }
+  });
 
-  /* Initial render (keep skeleton for a brief moment so it's not a flash) */
+  buildAmenitiesList();
+  updateSheetFilterCount();
+  setupBackToTop();
+
   setTimeout(() => {
     renderPropertyListings();
     updateFavoritesBadge();
   }, 250);
+
+  window.addEventListener('popstate', () => {
+    readFiltersFromURL();
+    setView(currentView);
+    buildAmenitiesList();
+    updateSheetFilterCount();
+    renderPropertyListings();
+  });
+
+  /* Sync filter changes to other tabs */
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'leReveFavorites') {
+      try {
+        const ids = JSON.parse(e.newValue || '[]');
+        favorites = new Set(ids.map(String));
+        updateFavoritesBadge();
+        renderPropertyListings();
+      } catch(err) {}
+    }
+  });
 });
 </script>
 {% endblock %}

@@ -11,24 +11,38 @@
   <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
 
   <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-    <p class="why-eyebrow mb-4">Why Le Rêve</p>
-    <h1 class="font-serif text-4xl sm:text-6xl font-light text-ivory tracking-wide leading-tight max-w-4xl mx-auto mb-6">
+    <p class="why-eyebrow mb-4 animate-fade-in">Why Le Rêve</p>
+    <h1 class="font-serif text-4xl sm:text-6xl font-light text-ivory tracking-wide leading-tight max-w-4xl mx-auto mb-6 animate-fade-in" style="animation-delay:.1s">
       Five things guests <span class="italic text-gold font-normal">come back for</span>
     </h1>
-    <p class="text-ivory/80 text-base sm:text-lg font-light max-w-2xl mx-auto leading-relaxed mb-10">
+    <p class="text-ivory/80 text-base sm:text-lg font-light max-w-2xl mx-auto leading-relaxed mb-10 animate-fade-in" style="animation-delay:.2s">
       We didn't build a rental business. We built a hospitality experience — and there's a difference.
     </p>
 
-    <!-- Hero CTAs -->
-    <div class="flex flex-col sm:flex-row gap-3 justify-center">
-      <a href="{{ url_for('public.stays') }}"
-         class="bg-gold text-primary hover:bg-white px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+    <div class="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in" style="animation-delay:.3s">
+      <a href="{{ url_for('auth.stays') }}"
+         class="bg-gold text-primary hover:bg-white px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary">
         <i class="fa-solid fa-house-chimney mr-2" aria-hidden="true"></i> Browse Stays
       </a>
-      <a href="{{ url_for('public.contact') }}"
-         class="border border-ivory/40 text-ivory hover:bg-ivory hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
+      <a href="{{ url_for('auth.contact') }}"
+         class="border border-ivory/40 text-ivory hover:bg-ivory hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
         <i class="fa-solid fa-paper-plane mr-2" aria-hidden="true"></i> Talk to Concierge
       </a>
+    </div>
+
+    <!-- Quick trust indicators -->
+    <div class="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-ivory/70 text-xs font-medium animate-fade-in" style="animation-delay:.4s">
+      <span class="inline-flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-gold" aria-hidden="true"></i> 100% verified apartments
+      </span>
+      <span class="hidden sm:inline-block w-px h-4 bg-ivory/20"></span>
+      <span class="inline-flex items-center gap-2">
+        <i class="fa-solid fa-bolt text-gold" aria-hidden="true"></i> 2-hour response time
+      </span>
+      <span class="hidden sm:inline-block w-px h-4 bg-ivory/20"></span>
+      <span class="inline-flex items-center gap-2">
+        <i class="fa-solid fa-shield-halved text-gold" aria-hidden="true"></i> Free cancellation, 7 days
+      </span>
     </div>
   </div>
 </section>
@@ -36,20 +50,20 @@
 <!-- ============ STATS STRIP ============ -->
 <section class="py-12 bg-primary-dark text-ivory border-y border-gold/20">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-    <div>
-      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">500+</span>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-to="500" data-suffix="+">0+</span>
       <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Guest Nights Hosted</span>
     </div>
-    <div>
-      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">4.98 ★</span>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-to="4.98" data-decimals="2" data-suffix=" ★">0 ★</span>
       <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Average Rating</span>
     </div>
-    <div>
-      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">15 min</span>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-to="15" data-suffix=" min">0 min</span>
       <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">From Kotoka Airport</span>
     </div>
-    <div>
-      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">24 / 7</span>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-text="24 / 7">24 / 7</span>
       <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Concierge Support</span>
     </div>
   </div>
@@ -60,7 +74,7 @@
   <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
   <div class="relative max-w-7xl mx-auto px-6 md:px-16">
 
-    <div class="text-center mb-14 max-w-2xl mx-auto">
+    <div class="text-center mb-14 max-w-2xl mx-auto reveal">
       <p class="why-eyebrow mb-4">The Le Rêve Difference</p>
       <h2 class="font-serif text-3xl sm:text-4xl font-light text-ivory leading-tight">
         Every detail, <span class="italic text-gold font-normal">considered.</span>
@@ -107,6 +121,14 @@
         <blockquote class="why-quote">Le Rêve means "the dream." And the dream is that every traveler to Africa can find a home worth coming back to.</blockquote>
       </div>
     </div>
+
+    <!-- Inline CTA after cards -->
+    <div class="text-center mt-12 reveal">
+      <a href="{{ url_for('auth.stays') }}"
+         class="inline-flex items-center gap-2 border border-gold/40 text-gold hover:bg-gold hover:text-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> See the Apartments
+      </a>
+    </div>
   </div>
 </section>
 
@@ -115,7 +137,7 @@
   <div class="kente-pattern absolute inset-0 opacity-30 pointer-events-none"></div>
   <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    <div class="text-center mb-12 max-w-2xl mx-auto">
+    <div class="text-center mb-12 max-w-2xl mx-auto reveal">
       <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">Compare</span>
       <h2 class="font-serif text-3xl sm:text-4xl font-light text-primary">
         Le Rêve vs. <span class="italic text-gold">the alternatives</span>
@@ -125,57 +147,176 @@
       </p>
     </div>
 
-    <div class="overflow-x-auto rounded-3xl border border-gold/30 shadow-luxury bg-white">
+    <!-- Mobile-friendly toggle: table on md+, cards on mobile -->
+    <div class="hidden md:block overflow-x-auto rounded-3xl border border-gold/30 shadow-luxury bg-white reveal">
       <table class="w-full text-left text-sm min-w-[640px]">
+        <caption class="sr-only">Comparison of Le Rêve, hotels, and typical rentals</caption>
         <thead>
           <tr class="bg-primary text-ivory">
-            <th class="p-5 font-serif text-base font-semibold w-2/5">Feature</th>
-            <th class="p-5 text-center text-xs font-bold uppercase tracking-widest text-gold border-l border-gold/20">
+            <th scope="col" class="p-5 font-serif text-base font-semibold w-2/5">Feature</th>
+            <th scope="col" class="p-5 text-center text-xs font-bold uppercase tracking-widest text-gold border-l border-gold/20">
               <i class="fa-solid fa-crown mr-1" aria-hidden="true"></i> Le Rêve
             </th>
-            <th class="p-5 text-center text-xs font-bold uppercase tracking-widest text-ivory/70 border-l border-gold/20">Hotels</th>
-            <th class="p-5 text-center text-xs font-bold uppercase tracking-widest text-ivory/70 border-l border-gold/20">Rentals</th>
+            <th scope="col" class="p-5 text-center text-xs font-bold uppercase tracking-widest text-ivory/70 border-l border-gold/20">Hotels</th>
+            <th scope="col" class="p-5 text-center text-xs font-bold uppercase tracking-widest text-ivory/70 border-l border-gold/20">Rentals</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-charcoal/10">
           <tr class="hover:bg-gold/5 transition-colors">
             <td class="p-5 font-medium text-charcoal">Local concierge, 24/7</td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i></td>
           </tr>
           <tr class="hover:bg-gold/5 transition-colors">
             <td class="p-5 font-medium text-charcoal">Genuine Accra insights</td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i></td>
           </tr>
           <tr class="hover:bg-gold/5 transition-colors">
             <td class="p-5 font-medium text-charcoal">Whole-home privacy</td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i></td>
           </tr>
           <tr class="hover:bg-gold/5 transition-colors">
             <td class="p-5 font-medium text-charcoal">Chef &amp; airport transfers</td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-half-stroke text-gold/60 text-lg" aria-label="Sometimes"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-half-stroke text-gold/60 text-lg" role="img" aria-label="Sometimes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i></td>
           </tr>
           <tr class="hover:bg-gold/5 transition-colors">
             <td class="p-5 font-medium text-charcoal">Below hotel pricing</td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i></td>
           </tr>
           <tr class="hover:bg-gold/5 transition-colors">
-            <td class="p-5 font-medium text-charcoal">Handpicked &amp; vetted estates</td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
-            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+            <td class="p-5 font-medium text-charcoal">Handpicked &amp; vetted apartments</td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i></td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile comparison cards -->
+    <div class="md:hidden space-y-3 reveal">
+      <div class="bg-white border border-gold/30 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-charcoal/10">
+          <span class="text-xs font-bold uppercase tracking-widest text-primary">Local concierge, 24/7</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+          <div class="p-2 rounded-lg bg-gold/10 border border-gold/30">
+            <div class="font-bold uppercase tracking-widest text-gold mb-1">Le Rêve</div>
+            <i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Hotels</div>
+            <i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Rentals</div>
+            <i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white border border-gold/30 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-charcoal/10">
+          <span class="text-xs font-bold uppercase tracking-widest text-primary">Genuine Accra insights</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+          <div class="p-2 rounded-lg bg-gold/10 border border-gold/30">
+            <div class="font-bold uppercase tracking-widest text-gold mb-1">Le Rêve</div>
+            <i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Hotels</div>
+            <i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Rentals</div>
+            <i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white border border-gold/30 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-charcoal/10">
+          <span class="text-xs font-bold uppercase tracking-widest text-primary">Whole-home privacy</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+          <div class="p-2 rounded-lg bg-gold/10 border border-gold/30">
+            <div class="font-bold uppercase tracking-widest text-gold mb-1">Le Rêve</div>
+            <i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Hotels</div>
+            <i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Rentals</div>
+            <i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white border border-gold/30 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-charcoal/10">
+          <span class="text-xs font-bold uppercase tracking-widest text-primary">Chef &amp; airport transfers</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+          <div class="p-2 rounded-lg bg-gold/10 border border-gold/30">
+            <div class="font-bold uppercase tracking-widest text-gold mb-1">Le Rêve</div>
+            <i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Hotels</div>
+            <i class="fa-solid fa-circle-half-stroke text-gold/60 text-lg" role="img" aria-label="Sometimes"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Rentals</div>
+            <i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white border border-gold/30 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-charcoal/10">
+          <span class="text-xs font-bold uppercase tracking-widest text-primary">Below hotel pricing</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+          <div class="p-2 rounded-lg bg-gold/10 border border-gold/30">
+            <div class="font-bold uppercase tracking-widest text-gold mb-1">Le Rêve</div>
+            <i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Hotels</div>
+            <i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Rentals</div>
+            <i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white border border-gold/30 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-charcoal/10">apartments</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+          <div class="p-2 rounded-lg bg-gold/10 border border-gold/30">
+            <div class="font-bold uppercase tracking-widest text-gold mb-1">Le Rêve</div>
+            <i class="fa-solid fa-circle-check text-gold text-lg" role="img" aria-label="Yes"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Hotels</div>
+            <i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i>
+          </div>
+          <div class="p-2 rounded-lg bg-ivory">
+            <div class="font-bold uppercase tracking-widest text-charcoal/50 mb-1">Rentals</div>
+            <i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" role="img" aria-label="No"></i>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -183,7 +324,7 @@
 <!-- ============ TESTIMONIALS ============ -->
 {% if reviews %}
 <section class="py-20 md:py-28 bg-ivory-dark/40 relative overflow-hidden">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 reveal">
     <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">In Their Own Words</span>
     <h2 class="font-serif text-3xl sm:text-4xl font-light text-primary">Guests who <span class="italic text-gold">came back</span></h2>
   </div>
@@ -209,7 +350,7 @@
               </div>
               <div class="flex items-center gap-4 pt-4 border-t border-charcoal/5">
                 <img src="{{ avatar_url|e }}" alt="{{ r.name or 'Guest' }}" class="w-12 h-12 rounded-full object-cover border-2 border-gold" loading="lazy"
-                     onerror="this.src='https://ui-avatars.com/api/?name={{ (r.name or 'Guest')|urlencode }}&amp;background=c9a84c&amp;color=1a3a2a';">
+                     onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (r.name or 'Guest')|urlencode }}&amp;background=c9a84c&amp;color=1a3a2a';">
                 <div class="min-w-0">
                   <h4 class="font-serif text-base font-semibold text-primary truncate">{{ r.name|e or 'Anonymous' }}</h4>
                   <p class="text-xs text-gold truncate">{{ r.property|e or '—' }}</p>
@@ -227,23 +368,24 @@
 <!-- ============ FAQ ============ -->
 <section class="py-20 md:py-28 bg-ivory">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-12">
+    <div class="text-center mb-12 reveal">
       <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">Good to Know</span>
       <h2 class="font-serif text-3xl sm:text-4xl font-light text-primary">Frequently <span class="italic text-gold">asked</span></h2>
+      <p class="text-charcoal/60 text-sm font-light mt-4">Can't find what you're looking for? <a href="{{ url_for('auth.contact') }}" class="text-gold hover:underline font-semibold">Ask us directly</a>.</p>
     </div>
 
     <div class="space-y-3" id="faqList">
-      <details class="faq-item group">
+      <details class="faq-item" id="faq-booking">
         <summary class="faq-summary">
-          <span>How do I book an estate?</span>
+          <span>How do I book an apartment?</span>
           <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
         </summary>
         <div class="faq-body">
-          Browse our <a href="{{ url_for('public.stays') }}" class="text-gold hover:underline font-semibold">Stays collection</a>, pick your estate, and click "Book". You'll get a confirmation from our concierge within 2 hours. You can also submit a bespoke inquiry for stays not listed publicly.
+          Browse our <a href="{{ url_for('auth.stays') }}" class="text-gold hover:underline font-semibold">Stays collection</a>, pick your apartment, and click "Book". You'll get a confirmation from our concierge within 2 hours. You can also submit a bespoke inquiry for stays not listed publicly.
         </div>
       </details>
 
-      <details class="faq-item group">
+      <details class="faq-item" id="faq-inclusions">
         <summary class="faq-summary">
           <span>What's included in the nightly rate?</span>
           <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
@@ -253,17 +395,17 @@
         </div>
       </details>
 
-      <details class="faq-item group">
+      <details class="faq-item" id="faq-location">
         <summary class="faq-summary">
           <span>Is the location really 15 minutes from the airport?</span>
           <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
         </summary>
         <div class="faq-body">
-          Yes — most of our estates are a 15-minute drive from Kotoka International Airport, depending on traffic. Airport pickup can be arranged for an additional fee.
+          Yes — most of our apartments are a 15-minute drive from Kotoka International Airport, depending on traffic. Airport pickup can be arranged for an additional fee.
         </div>
       </details>
 
-      <details class="faq-item group">
+      <details class="faq-item" id="faq-business">
         <summary class="faq-summary">
           <span>Can I book for a business trip or longer stay?</span>
           <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
@@ -273,7 +415,7 @@
         </div>
       </details>
 
-      <details class="faq-item group">
+      <details class="faq-item" id="faq-cancel">
         <summary class="faq-summary">
           <span>What if I need to cancel?</span>
           <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
@@ -289,7 +431,7 @@
 <!-- ============ FINAL CTA ============ -->
 <section class="py-20 md:py-24 bg-primary relative overflow-hidden">
   <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
-  <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+  <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
     <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">Ready When You Are</span>
     <h2 class="font-serif text-3xl sm:text-5xl font-light text-ivory mb-6">
       Come as a guest. <span class="italic text-gold">Return as family.</span>
@@ -298,35 +440,35 @@
       Reserve your sanctuary, or speak with a private advisor to design your perfect Accra stay.
     </p>
     <div class="flex flex-col sm:flex-row gap-3 justify-center">
-      <a href="{{ url_for('public.stays') }}"
-         class="bg-gold text-primary hover:bg-white px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+      <a href="{{ url_for('auth.stays') }}"
+         class="bg-gold text-primary hover:bg-white px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary">
         <i class="fa-solid fa-house-chimney mr-2" aria-hidden="true"></i> Browse Stays
       </a>
-      <a href="{{ url_for('public.contact') }}"
-         class="border border-ivory/40 text-ivory hover:bg-ivory hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
-        <i class="fa-solid fa-paper-plane mr-2" aria-hidden="true"></i> Talk to Concierge
+      <a href="https://wa.me/233547975252?text=Hi%20Le%20R%C3%AAve%2C%20I%27d%20like%20to%20talk%20to%20a%20concierge."
+         target="_blank" rel="noopener"
+         class="border border-ivory/40 text-ivory hover:bg-ivory hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+        <i class="fa-brands fa-whatsapp mr-2" aria-hidden="true"></i> Chat on WhatsApp
       </a>
     </div>
   </div>
 </section>
 
+<!-- ============ BACK TO TOP ============ -->
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})"
+        class="fixed bottom-6 right-6 z-30 w-11 h-11 rounded-full bg-primary text-gold border border-gold/40 shadow-luxury flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+        aria-label="Back to top">
+  <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+</button>
+
 <!-- ============ PAGE-SCOPED STYLES ============ -->
 <style>
-  /* Why card enhancements */
-  .why-card {
-    position: relative;
-    overflow: hidden;
-  }
+  .why-card { position: relative; overflow: hidden; }
   .why-card .why-icon {
     position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    width: 2.5rem;
-    height: 2.5rem;
+    top: 1.5rem; right: 1.5rem;
+    width: 2.5rem; height: 2.5rem;
     border-radius: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     background: rgba(201, 168, 76, 0.12);
     color: #c9a84c;
     font-size: 1rem;
@@ -338,7 +480,6 @@
   }
   .why-card-quote .why-icon { display: none; }
 
-  /* Scroll-reveal */
   .reveal {
     opacity: 0;
     transform: translateY(24px);
@@ -349,7 +490,6 @@
     transform: translateY(0);
   }
 
-  /* FAQ */
   .faq-item {
     background: #fff;
     border: 1px solid rgba(201, 168, 76, 0.25);
@@ -375,6 +515,11 @@
     user-select: none;
   }
   .faq-summary::-webkit-details-marker { display: none; }
+  .faq-summary:focus-visible {
+    outline: 2px solid #c9a84c;
+    outline-offset: -2px;
+    border-radius: 1rem;
+  }
   .faq-chevron {
     color: #c9a84c;
     transition: transform .25s ease;
@@ -393,6 +538,7 @@
     .reveal { opacity: 1; transform: none; transition: none; }
     .why-card:hover .why-icon { transform: none; }
     .faq-chevron { transition: none; }
+    .animate-fade-in { animation: none; }
   }
 </style>
 {% endblock %}
@@ -401,10 +547,9 @@
 <script>
 /* ============================================================
    WHY US PAGE — page-specific only.
-   Shared globals (buildEndlessMarquee, etc.) live in base.html.
    ============================================================ */
 
-/* ---- Scroll-reveal for why cards ---- */
+/* ---------- Scroll reveal with staggered delays ---------- */
 function initScrollReveal() {
   const els = document.querySelectorAll('.reveal');
   if (!els.length || !('IntersectionObserver' in window)) {
@@ -423,7 +568,38 @@ function initScrollReveal() {
   els.forEach(el => io.observe(el));
 }
 
-/* ---- Reviews marquee ---- */
+/* ---------- Animated stats counters ---------- */
+function setupStatsCounters() {
+  const blocks = document.querySelectorAll('[data-stat]');
+  if (blocks.length === 0 || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target.querySelector('[data-count-to]');
+      if (!el) { io.unobserve(entry.target); return; }
+      const target = parseFloat(el.dataset.countTo);
+      const decimals = parseInt(el.dataset.decimals || '0', 10);
+      const suffix = el.dataset.suffix || '';
+      animateNumber(el, target, decimals, suffix, 1400);
+      io.unobserve(entry.target);
+    });
+  }, { threshold: 0.4 });
+  blocks.forEach(b => io.observe(b));
+}
+function animateNumber(el, target, decimals, suffix, duration) {
+  const start = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = target * eased;
+    el.textContent = val.toFixed(decimals) + suffix;
+    if (t < 1) requestAnimationFrame(tick);
+    else el.textContent = target.toFixed(decimals) + suffix;
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---------- Reviews marquee ---------- */
 function initReviewsMarquee() {
   const track  = document.getElementById('whyReviewsTrack');
   const source = document.getElementById('whyReviewsSource');
@@ -433,21 +609,65 @@ function initReviewsMarquee() {
   }
 }
 
+/* ---------- Back to top ---------- */
+function setupBackToTop() {
+  const btn = document.getElementById('backToTop');
+  if (!btn) return;
+  const onScroll = () => {
+    const show = window.scrollY > 400;
+    btn.classList.toggle('opacity-0', !show);
+    btn.classList.toggle('pointer-events-none', !show);
+    btn.classList.toggle('opacity-100', show);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
+/* ---------- Deep-link FAQ via URL hash ---------- */
+function openFAQFromHash() {
+  const hash = window.location.hash;
+  if (!hash || !hash.startsWith('#faq-')) return;
+  const el = document.querySelector(hash);
+  if (el && el.tagName === 'DETAILS') {
+    el.open = true;
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
+  }
+}
+
+/* ---------- FAQ: accordion-style (only one open at a time, optional) ---------- */
+function setupFAQAccordion() {
+  const items = document.querySelectorAll('#faqList details');
+  if (items.length === 0) return;
+  items.forEach(item => {
+    item.addEventListener('toggle', () => {
+      if (item.open) {
+        /* Optional: close others for a cleaner look */
+        items.forEach(other => { if (other !== item) other.open = false; });
+      }
+    });
+  });
+}
+
+/* ---------- Init ---------- */
 document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
+  setupStatsCounters();
+  setupBackToTop();
+  setupFAQAccordion();
+  openFAQFromHash();
 
-  /* Rebuild marquee a few times to handle fonts / images / layout shifts */
   initReviewsMarquee();
   setTimeout(initReviewsMarquee, 400);
   setTimeout(initReviewsMarquee, 1200);
 
-  /* Rebuild on resize */
   let rt;
   window.addEventListener('resize', () => {
     clearTimeout(rt);
     rt = setTimeout(initReviewsMarquee, 250);
   });
   if (document.fonts?.ready) document.fonts.ready.then(() => setTimeout(initReviewsMarquee, 300));
+
+  window.addEventListener('hashchange', openFAQFromHash);
 });
 </script>
 {% endblock %}

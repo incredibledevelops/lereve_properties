@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+Disallow: /client/
+Disallow: /admin/
+Disallow: /paystack/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot
+Disallow: /reset
+
+Sitemap: {{ SITE_URL }}/sitemap.xml

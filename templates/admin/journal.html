@@ -1,0 +1,456 @@
+{% extends "admin/base.html" %}
+{% block title %}Journal · Admin Console{% endblock %}
+{% set active_section = 'journal' %}
+{% block page_title %}Journal Subscribers{% endblock %}
+{% block page_subtitle %}Private newsletter list{% endblock %}
+
+{% block content %}
+
+{# ============================================================
+   Flash messages
+   ============================================================ #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mb-5 space-y-2" aria-live="polite">
+      {% for cat, msg in messages %}
+        {% set is_error = cat in ('error', 'danger') %}
+        <div role="alert"
+             class="flex items-start gap-2 p-3 rounded-xl border text-xs
+                    {% if is_error %}
+                      border-red-200 bg-red-50 text-red-700
+                    {% else %}
+                      border-emerald-200 bg-emerald-50 text-emerald-700
+                    {% endif %}">
+          <i class="fa-solid {% if is_error %}fa-circle-exclamation{% else %}fa-circle-check{% endif %} mt-0.5"
+             aria-hidden="true"></i>
+          <span>{{ msg }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{# ============================================================
+   KPI row
+   ============================================================ #}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+  {# Total — always global, never filtered #}
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      Total Subscribers
+    </span>
+    <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
+      {{ "{:,}".format(global_total|default(total_count, true)) }}
+    </p>
+  </div>
+
+  {# This month #}
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      This Month
+    </span>
+    <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
+      {{ "{:,}".format(this_month_count|default(0)) }}
+    </p>
+  </div>
+
+  {# Last 7 days — new metric, useful for growth tracking #}
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      Last 7 Days
+    </span>
+    <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
+      {{ "{:,}".format(last_7_days|default(0)) }}
+    </p>
+  </div>
+
+  {# Actions — copy emails + export #}
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      Actions
+    </span>
+    <div class="flex gap-2 mt-3">
+      <a href="{{ url_for('admin.journal', format='csv', q=q, from=from_date, to=to_date) }}"
+         class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
+                bg-primary text-gold hover:bg-gold hover:text-primary
+                text-[10px] font-bold uppercase tracking-wider transition-all"
+         title="Download current list as CSV">
+        <i class="fa-solid fa-file-csv" aria-hidden="true"></i>
+        <span>Export</span>
+      </a>
+      <button type="button"
+              id="copyEmailsBtn"
+              class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
+                     border border-charcoal/15 hover:border-gold hover:text-gold
+                     text-[10px] font-bold uppercase tracking-wider text-charcoal/70 transition-all"
+              title="Copy all emails on this page to clipboard">
+        <i class="fa-regular fa-copy" aria-hidden="true"></i>
+        <span>Copy</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+{# ============================================================
+   Toolbar — search + date range
+   ============================================================ #}
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm p-4 mb-4">
+  <form method="GET"
+        action="{{ url_for('admin.journal') }}"
+        role="search"
+        class="flex flex-wrap items-center gap-2">
+
+    {# Search #}
+    <div class="relative flex-1 min-w-[200px]">
+      <label for="journalSearch" class="sr-only">Search subscribers</label>
+      <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2
+                text-charcoal/30 text-xs pointer-events-none" aria-hidden="true"></i>
+      <input id="journalSearch"
+             name="q"
+             type="search"
+             value="{{ q|default('') }}"
+             placeholder="Search by email…"
+             autocomplete="off"
+             class="w-full pl-8 pr-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
+                    focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+    </div>
+
+    {# Date from #}
+    <div class="flex items-center gap-1.5">
+      <label for="journalFrom" class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+        From
+      </label>
+      <input id="journalFrom"
+             name="from"
+             type="date"
+             value="{{ from_date|default('') }}"
+             class="px-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
+                    focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+    </div>
+
+    {# Date to #}
+    <div class="flex items-center gap-1.5">
+      <label for="journalTo" class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+        To
+      </label>
+      <input id="journalTo"
+             name="to"
+             type="date"
+             value="{{ to_date|default('') }}"
+             class="px-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
+                    focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+    </div>
+
+    <button type="submit"
+            class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
+                   bg-primary text-gold hover:bg-gold hover:text-primary
+                   text-[10px] font-bold uppercase tracking-wider transition-all">
+      <i class="fa-solid fa-filter" aria-hidden="true"></i>
+      <span>Apply</span>
+    </button>
+
+    {% if q or from_date or to_date %}
+      <a href="{{ url_for('admin.journal') }}"
+         class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
+                border border-charcoal/15 hover:border-red-300 hover:text-red-600
+                text-[10px] font-bold uppercase tracking-wider text-charcoal/60 transition-all">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        <span>Clear</span>
+      </a>
+    {% endif %}
+  </form>
+</div>
+
+{# ============================================================
+   Table
+   ============================================================ #}
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <caption class="sr-only">
+        Journal subscribers{% if q %} matching "{{ q }}"{% endif %}
+      </caption>
+
+      <thead class="bg-ivory-dark/60 text-primary">
+        <tr class="text-left text-[11px] uppercase tracking-wider">
+          <th scope="col" class="px-5 py-3 font-bold">Email</th>
+          <th scope="col" class="px-5 py-3 font-bold hidden sm:table-cell">Subscribed</th>
+          <th scope="col" class="px-5 py-3 font-bold text-right">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-charcoal/5">
+        {% for s in subscribers %}
+          <tr class="hover:bg-ivory/50 transition-colors">
+
+            {# --- Email --- #}
+            <td class="px-5 py-3">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-gold/20 text-gold-dark
+                            flex items-center justify-center shrink-0"
+                     aria-hidden="true">
+                  <i class="fa-solid fa-at text-xs"></i>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm text-primary truncate">{{ s.email }}</p>
+                  {# Absolute date — needed for GDPR / audit purposes #}
+                  {% if s.subscribed_at %}
+                    <p class="text-[10px] text-charcoal/40 mt-0.5 sm:hidden">
+                      {{ s.subscribed_at | format_date }}
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+
+            {# --- Subscribed --- #}
+            <td class="px-5 py-3 hidden sm:table-cell">
+              <p class="text-xs text-charcoal/70">
+                {{ s.subscribed_at | relative_time if s.subscribed_at else '—' }}
+              </p>
+              {% if s.subscribed_at %}
+                <p class="text-[10px] text-charcoal/40 mt-0.5">
+                  {{ s.subscribed_at | format_date }}
+                </p>
+              {% endif %}
+            </td>
+
+            {# --- Actions --- #}
+            <td class="px-5 py-3">
+              <div class="flex items-center justify-end gap-1.5">
+                <button type="button"
+                        class="w-9 h-9 rounded-lg bg-ivory hover:bg-gold text-primary
+                               flex items-center justify-center transition-all
+                               focus:outline-none focus:ring-2 focus:ring-gold"
+                        data-copy-email="{{ s.email }}"
+                        title="Copy email"
+                        aria-label="Copy {{ s.email }}">
+                  <i class="fa-regular fa-copy text-[11px]" aria-hidden="true"></i>
+                </button>
+
+                <a href="mailto:{{ s.email|urlencode }}"
+                   class="w-9 h-9 rounded-lg bg-ivory hover:bg-gold text-primary
+                          flex items-center justify-center transition-all
+                          focus:outline-none focus:ring-2 focus:ring-gold"
+                   title="Send email"
+                   aria-label="Send email to {{ s.email }}">
+                  <i class="fa-solid fa-envelope text-[11px]" aria-hidden="true"></i>
+                </a>
+
+                <button type="button"
+                        class="w-9 h-9 rounded-lg bg-red-50 hover:bg-red-500 hover:text-white
+                               text-red-500 flex items-center justify-center transition-all
+                               focus:outline-none focus:ring-2 focus:ring-red-400"
+                        data-delete-subscriber
+                        data-subscriber-id="{{ s.id }}"
+                        data-subscriber-email="{{ s.email }}"
+                        title="Remove subscriber"
+                        aria-label="Remove {{ s.email }}">
+                  <i class="fa-solid fa-trash text-[11px]" aria-hidden="true"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="3" class="px-5 py-16 text-center">
+              <div class="flex flex-col items-center">
+                <i class="fa-solid fa-pen-nib text-3xl text-charcoal/20 mb-3"
+                   aria-hidden="true"></i>
+                <p class="text-sm font-semibold text-primary mb-1">
+                  {% if q or from_date or to_date %}
+                    No subscribers match your filters.
+                  {% else %}
+                    No subscribers yet.
+                  {% endif %}
+                </p>
+                <p class="text-xs text-charcoal/50 mb-4 max-w-md">
+                  {% if q or from_date or to_date %}
+                    Try widening the date range or clearing the search.
+                  {% else %}
+                    When visitors subscribe to the private journal from the footer, their
+                    emails will appear here.
+                  {% endif %}
+                </p>
+                {% if q or from_date or to_date %}
+                  <a href="{{ url_for('admin.journal') }}"
+                     class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl
+                            bg-primary text-gold hover:bg-gold hover:text-primary
+                            text-[10px] font-bold uppercase tracking-wider transition-all">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    Clear filters
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ============================================================
+   Pagination
+   ============================================================ #}
+{% if pagination.pages > 1 %}
+  <div class="flex flex-wrap items-center justify-between gap-3 mt-5">
+    <p class="text-xs text-charcoal/60">
+      Showing <b>{{ pagination.items|length }}</b>
+      of <b>{{ pagination.total }}</b>
+      {% if q %} · filtered{% endif %}
+    </p>
+
+    <div class="flex items-center gap-2">
+      <a href="{{ url_for('admin.journal',
+                          page=pagination.page - 1,
+                          q=q, from=from_date, to=to_date) }}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white
+                text-xs font-bold uppercase text-primary
+                hover:border-gold hover:text-gold transition-all
+                {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}"
+         aria-label="Previous page">
+        <i class="fa-solid fa-chevron-left text-[10px]" aria-hidden="true"></i>
+        <span class="ml-1">Prev</span>
+      </a>
+
+      <span class="px-3 py-2 text-xs text-charcoal/60 tabular-nums">
+        Page {{ pagination.page }} / {{ pagination.pages }}
+      </span>
+
+      <a href="{{ url_for('admin.journal',
+                          page=pagination.page + 1,
+                          q=q, from=from_date, to=to_date) }}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white
+                text-xs font-bold uppercase text-primary
+                hover:border-gold hover:text-gold transition-all
+                {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}"
+         aria-label="Next page">
+        <span class="mr-1">Next</span>
+        <i class="fa-solid fa-chevron-right text-[10px]" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+{# ============================================================
+   Hidden delete forms
+   ============================================================ #}
+<div class="hidden">
+  {% for s in subscribers %}
+    <form id="delete-subscriber-{{ s.id }}"
+          method="POST"
+          action="{{ url_for('admin.journal_delete', sid=s.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+  {% endfor %}
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  function ready(fn) {
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  ready(function () {
+
+    // ============================================================
+    // 1. Copy single email
+    // ============================================================
+    document.querySelectorAll('[data-copy-email]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var email = btn.dataset.copyEmail || '';
+        if (!email || !navigator.clipboard) return;
+
+        navigator.clipboard.writeText(email).then(function () {
+          var original = btn.innerHTML;
+          btn.innerHTML = '<i class="fa-solid fa-check text-[11px]" aria-hidden="true"></i>';
+          btn.classList.add('bg-emerald-50', 'text-emerald-600');
+          setTimeout(function () {
+            btn.innerHTML = original;
+            btn.classList.remove('bg-emerald-50', 'text-emerald-600');
+          }, 1200);
+        }).catch(function () {});
+      });
+    });
+
+    // ============================================================
+    // 2. Copy all emails on this page
+    // ============================================================
+    var copyAllBtn = document.getElementById('copyEmailsBtn');
+    if (copyAllBtn) {
+      copyAllBtn.addEventListener('click', function () {
+        var emails = Array.from(
+          document.querySelectorAll('[data-copy-email]')
+        ).map(function (el) { return el.dataset.copyEmail; })
+         .filter(Boolean);
+
+        if (!emails.length) {
+          window.alert('No subscribers on this page.');
+          return;
+        }
+
+        var text = emails.join(', ');
+
+        function done() {
+          var original = copyAllBtn.innerHTML;
+          copyAllBtn.innerHTML =
+            '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
+            '<span>Copied ' + emails.length + '</span>';
+          copyAllBtn.classList.add('border-emerald-300', 'text-emerald-600');
+          setTimeout(function () {
+            copyAllBtn.innerHTML = original;
+            copyAllBtn.classList.remove('border-emerald-300', 'text-emerald-600');
+          }, 1600);
+        }
+
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(done).catch(function () {});
+        } else {
+          // Fallback for old browsers / insecure contexts
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); done(); } catch (e) {}
+          document.body.removeChild(ta);
+        }
+      });
+    }
+
+    // ============================================================
+    // 3. Delete subscriber with typed confirmation
+    // ============================================================
+    document.querySelectorAll('[data-delete-subscriber]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id    = btn.dataset.subscriberId;
+        var email = btn.dataset.subscriberEmail || 'this subscriber';
+        var form  = document.getElementById('delete-subscriber-' + id);
+        if (!form) return;
+
+        // Simple confirm — less friction than typed for a low-value record,
+        // but we still name the email so a mis-click is obvious.
+        if (!window.confirm(
+          'Remove ' + email + ' from the journal?\n\n' +
+          'They will no longer receive the private newsletter.'
+        )) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-[11px]" aria-hidden="true"></i>';
+        form.submit();
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

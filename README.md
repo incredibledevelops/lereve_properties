@@ -1,54 +1,125 @@
-# Le Rêve Properties — Luxury Stays Platform
+# Le Rêve Properties — Portal
 
-A full-featured luxury property booking platform built with **Flask + MongoDB + Paystack**.
-Currency: **Ghana Cedis (GHS / ₵)**.
+Client portal & admin console for **lereve-properties.com**.
 
-## ✨ Features
+## Stack
+- Flask 3 · MongoDB (PyMongo) · Paystack · Gmail SMTP
+- Deploy: **gunicorn + nginx + systemd**
+- Python 3.12 · Port **5007**
 
-### Public Site
-- Curated estate listings with AJAX filtering (category, price, location)
-- Quick-view modal with gallery
-- Wishlist (auth required)
-- Confidential inquiry form → email + database
-- Estate owner onboarding form
-- Private journal newsletter subscription
-- Reviews (moderated)
-- SEO: `robots.txt`, `sitemap.xml`
-- Legal pages: Privacy Policy & Terms of Privilege
+## Directory
+app.py # App factory
+wsgi.py # Gunicorn entry
+config.py # Env-driven config
+extensions.py # Flask extensions
+bootstrap.py # DB indexes + seeding
+models/ # Mongo models
+services/ # Mailer, Paystack, Analytics
+routes/ # auth / client / admin / paystack / api
+forms/ # WTForms
+utils/ # Decorators, pagination, formatting
+templates/ # Jinja2 (base, auth, client, admin, errors)
+static/ # CSS + JS
+logs/ # Gunicorn logs
+tests/ # Pytest smoke tests
 
-### Client Portal (`/client`)
-- Dashboard with upcoming stays, stats, activity
-- Bookings with filters (all / upcoming / past)
-- **Paystack checkout** for pending bookings (GHS)
-- Wishlist management
-- Inquiry tracking
-- Concierge chat (real-time auto-reply placeholder)
-- Profile + password change
-- Stay preferences + communication preferences
 
-### Super Admin (`/super-admin`)
-- Dashboard with KPI cards + recent inquiries
-- Full property CRUD
-- Owner submission review (approve / reject / delete)
-- Inquiry pipeline management
-- Review moderation
-- Journal subscriber management
-- Booking oversight with status updates
-- Site settings + data export / reset
-
-## 🧱 Tech Stack
-- **Flask 3.0** with Blueprints
-- **MongoDB** via `Flask-PyMongo`
-- **Flask-Login** for authentication
-- **Flask-WTF** for CSRF-safe forms
-- **Paystack** for GHS payments
-- **Tailwind CDN** + custom Cormorant Garamond / Inter typography
-
-## 🚀 Getting Started
-
-### 1. Clone & create virtual env
+## Setup
 ```bash
-git clone <repo>
-cd lereve-properties
-python -m venv venv
-source venv/bin/activate    # Windows: venv\Scripts\activate
+git clone <repo> && cd lereve-properties
+python3.12 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env: SECRET_KEY, MONGO_URI, PAYSTACK_*, MAIL_*, SUPER_ADMIN_*
+
+python app.py          # http://localhost:5007
+
+[Unit]
+Description=Le Rêve Properties (gunicorn)
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/lereve-properties
+Environment="PATH=/var/www/lereve-properties/venv/bin"
+ExecStart=/var/www/lereve-properties/venv/bin/gunicorn -c gunicorn.conf.py wsgi:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+
+
+server {
+    listen 80;
+    server_name lereve-properties.com www.lereve-properties.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name lereve-properties.com www.lereve-properties.com;
+
+    ssl_certificate     /etc/letsencrypt/live/lereve-properties.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/lereve-properties.com/privkey.pem;
+
+    client_max_body_size 10M;
+
+    location /static/ {
+        alias /var/www/lereve-properties/static/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:5007;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+    }
+}
+
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now lereve
+sudo ln -s /etc/nginx/sites-available/lereve-properties.com /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+fetch('https://lereve-properties.com/api/track', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Track-Secret': 'YOUR_ANALYTICS_TRACK_SECRET'
+  },
+  body: JSON.stringify({
+    type: 'page_view',
+    payload: { url: location.pathname }
+  })
+});
+
+
+
+
+
+
+---
+
+## ✅ Summary
+
+**Total files: 91** across all 9 parts.
+
+**To run locally:**
+```bash
+python3.12 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# edit .env with your MONGO_URI, SECRET_KEY, PAYSTACK keys, MAIL creds, and admin password
+python app.py

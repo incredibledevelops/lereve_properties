@@ -1,0 +1,498 @@
+{% extends "admin/base.html" %}
+{% block title %}Inquiries · Admin Console{% endblock %}
+{% set active_section = 'inquiries' %}
+{% block page_title %}Inquiries{% endblock %}
+{% block page_subtitle %}Guest reservation requests{% endblock %}
+
+{% block content %}
+
+{# ============================================================
+   Flash messages
+   ============================================================ #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mb-5 space-y-2" aria-live="polite">
+      {% for cat, msg in messages %}
+        {% set is_error = cat in ('error', 'danger') %}
+        <div role="alert"
+             class="flex items-start gap-2 p-3 rounded-xl border text-xs
+                    {% if is_error %}
+                      border-red-200 bg-red-50 text-red-700
+                    {% else %}
+                      border-emerald-200 bg-emerald-50 text-emerald-700
+                    {% endif %}">
+          <i class="fa-solid {% if is_error %}fa-circle-exclamation{% else %}fa-circle-check{% endif %} mt-0.5"
+             aria-hidden="true"></i>
+          <span>{{ msg }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{# ============================================================
+   KPI row
+   ============================================================ #}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      {% if status_filter %}{{ status_filter | title }}{% else %}Total{% endif %} Inquiries
+    </span>
+    <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums"
+       data-stat="inquiries">
+      {{ "{:,}".format(pagination.total or 0) }}
+    </p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">New</span>
+    <p class="font-serif text-3xl font-bold text-amber-600 mt-2 tabular-nums">
+      {{ "{:,}".format(new_count|default(0)) }}
+    </p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Contacted</span>
+    <p class="font-serif text-3xl font-bold text-blue-600 mt-2 tabular-nums">
+      {{ "{:,}".format(contacted_count|default(0)) }}
+    </p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Booked</span>
+    <p class="font-serif text-3xl font-bold text-emerald-600 mt-2 tabular-nums">
+      {{ "{:,}".format(booked_count|default(0)) }}
+    </p>
+  </div>
+</div>
+
+{# ============================================================
+   Toolbar — pills + search + date range
+   ============================================================ #}
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm p-4 mb-4">
+
+  {# Status pills #}
+  <div class="flex flex-wrap gap-2 mb-3" role="tablist" aria-label="Filter by status">
+    {% set status_options = [
+      ('',           'All',       'fa-list'),
+      ('new',        'New',       'fa-circle-dot'),
+      ('contacted',  'Contacted', 'fa-comments'),
+      ('booked',     'Booked',    'fa-circle-check'),
+      ('archived',   'Archived',  'fa-box-archive'),
+    ] %}
+    {% for v, l, i in status_options %}
+      {% set is_active = (status_filter == v) or (not status_filter and v == '') %}
+      <a href="{{ url_for('admin.inquiries', status=v) if v else url_for('admin.inquiries') }}"
+         role="tab"
+         aria-selected="{{ 'true' if is_active else 'false' }}"
+         class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full
+                text-xs font-bold uppercase tracking-wider transition-all
+                {% if is_active %}
+                  bg-primary text-gold shadow-sm
+                {% else %}
+                  border border-primary/20 bg-white text-primary
+                  hover:border-gold hover:text-gold
+                {% endif %}">
+        <i class="fa-solid {{ i }} text-[10px]" aria-hidden="true"></i>
+        <span>{{ l }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  {# Search + date range #}
+  <form method="GET"
+        action="{{ url_for('admin.inquiries') }}"
+        role="search"
+        class="flex flex-wrap items-center gap-2">
+
+    {% if status_filter %}
+      <input type="hidden" name="status" value="{{ status_filter }}">
+    {% endif %}
+
+    <div class="relative flex-1 min-w-[200px]">
+      <label for="inquirySearch" class="sr-only">Search inquiries</label>
+      <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2
+                text-charcoal/30 text-xs pointer-events-none" aria-hidden="true"></i>
+      <input id="inquirySearch"
+             name="q"
+             type="search"
+             value="{{ q|default('') }}"
+             placeholder="Search by name, email, phone, or property…"
+             autocomplete="off"
+             class="w-full pl-8 pr-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
+                    focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+    </div>
+
+    <div class="flex items-center gap-1.5">
+      <label for="inquiryFrom" class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+        From
+      </label>
+      <input id="inquiryFrom"
+             name="from"
+             type="date"
+             value="{{ from_date|default('') }}"
+             class="px-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
+                    focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+    </div>
+
+    <div class="flex items-center gap-1.5">
+      <label for="inquiryTo" class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+        To
+      </label>
+      <input id="inquiryTo"
+             name="to"
+             type="date"
+             value="{{ to_date|default('') }}"
+             class="px-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
+                    focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+    </div>
+
+    <button type="submit"
+            class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
+                   bg-primary text-gold hover:bg-gold hover:text-primary
+                   text-[10px] font-bold uppercase tracking-wider transition-all">
+      <i class="fa-solid fa-filter" aria-hidden="true"></i>
+      <span>Apply</span>
+    </button>
+
+    {% if q or from_date or to_date or status_filter %}
+      <a href="{{ url_for('admin.inquiries') }}"
+         class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
+                border border-charcoal/15 hover:border-red-300 hover:text-red-600
+                text-[10px] font-bold uppercase tracking-wider text-charcoal/60 transition-all">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        <span>Clear</span>
+      </a>
+    {% endif %}
+  </form>
+</div>
+
+{# ============================================================
+   Table
+   ============================================================ #}
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <caption class="sr-only">
+        Inquiries{% if status_filter %} filtered by {{ status_filter }}{% endif %}
+      </caption>
+
+      <thead class="bg-ivory-dark/60 text-primary">
+        <tr class="text-left text-[11px] uppercase tracking-wider">
+          <th scope="col" class="px-4 py-3 font-bold">Guest</th>
+          <th scope="col" class="px-4 py-3 font-bold hidden md:table-cell">Property</th>
+          <th scope="col" class="px-4 py-3 font-bold hidden lg:table-cell">Dates</th>
+          <th scope="col" class="px-4 py-3 font-bold hidden sm:table-cell">Received</th>
+          <th scope="col" class="px-4 py-3 font-bold">Status</th>
+          <th scope="col" class="px-4 py-3 font-bold text-right">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-charcoal/5">
+        {% for i in inquiries %}
+          {% set status_val = (i.status or 'new') | lower %}
+          <tr class="hover:bg-ivory/50 transition-colors align-top">
+
+            {# --- Guest --- #}
+            <td class="px-4 py-3">
+              <p class="font-semibold text-primary text-sm truncate">
+                {{ i.name or 'Guest' }}
+              </p>
+              {% if i.email %}
+                <a href="mailto:{{ i.email|urlencode }}"
+                   class="text-[11px] text-charcoal/60 hover:text-gold transition-colors truncate block">
+                  {{ i.email }}
+                </a>
+              {% endif %}
+              {% if i.phone %}
+                <p class="text-[10px] text-charcoal/40 mt-0.5">
+                  <i class="fa-solid fa-phone text-[9px] mr-1" aria-hidden="true"></i>
+                  {{ i.phone }}
+                </p>
+              {% endif %}
+
+              {# Preview of the message on mobile, truncated #}
+              {% if i.message and i.message.strip() %}
+                <p class="md:hidden text-[10px] text-charcoal/50 mt-1 line-clamp-2">
+                  {{ i.message.strip() }}
+                </p>
+              {% endif %}
+            </td>
+
+            {# --- Property --- #}
+            <td class="px-4 py-3 hidden md:table-cell">
+              <p class="text-xs text-primary max-w-[200px] truncate">
+                {{ i.property or 'General' }}
+              </p>
+              {% if i.message and i.message.strip() %}
+                <p class="text-[10px] text-charcoal/40 max-w-[220px] line-clamp-2 mt-0.5">
+                  {{ i.message.strip() }}
+                </p>
+              {% endif %}
+            </td>
+
+            {# --- Dates --- #}
+            <td class="px-4 py-3 hidden lg:table-cell whitespace-nowrap">
+              {% if i.check_in and i.check_out %}
+                <p class="text-xs text-charcoal/70">
+                  {{ i.check_in | format_date }}
+                  <span class="text-charcoal/30 mx-1">→</span>
+                  {{ i.check_out | format_date }}
+                </p>
+              {% else %}
+                <span class="text-xs text-charcoal/40 italic">Flexible</span>
+              {% endif %}
+            </td>
+
+            {# --- Received --- #}
+            <td class="px-4 py-3 hidden sm:table-cell">
+              <p class="text-xs text-charcoal/60 whitespace-nowrap">
+                {{ i.created_at | relative_time if i.created_at else '—' }}
+              </p>
+            </td>
+
+            {# --- Status (inline form, safe change) --- #}
+            <td class="px-4 py-3">
+              <form method="POST"
+                    action="{{ url_for('admin.inquiry_status', iid=i.id) }}"
+                    class="inline-flex items-center"
+                    data-inquiry-id="{{ i.id }}"
+                    data-inquiry-current="{{ status_val }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="status-{{ i.id }}" class="sr-only">
+                  Change status for inquiry from {{ i.name or 'guest' }}
+                </label>
+                <select id="status-{{ i.id }}"
+                        name="status"
+                        data-status-select
+                        class="text-[11px] font-bold uppercase px-3 py-1.5 rounded-full
+                               border-0 cursor-pointer focus:ring-2 focus:ring-gold
+                               appearance-none pr-7 bg-no-repeat bg-right
+                               {% if status_val == 'new' %}bg-amber-100 text-amber-700
+                               {% elif status_val == 'contacted' %}bg-blue-100 text-blue-700
+                               {% elif status_val == 'booked' %}bg-emerald-100 text-emerald-700
+                               {% else %}bg-ivory-dark text-charcoal/70{% endif %}"
+                        style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22currentColor%22><path d=%22M5.25 7.5l4.5 4.5 4.5-4.5z%22/></svg>');">
+                  <option value="new"       {% if status_val == 'new' %}selected{% endif %}>New</option>
+                  <option value="contacted" {% if status_val == 'contacted' %}selected{% endif %}>Contacted</option>
+                  <option value="booked"    {% if status_val == 'booked' %}selected{% endif %}>Booked</option>
+                  <option value="archived"  {% if status_val == 'archived' %}selected{% endif %}>Archived</option>
+                </select>
+
+                <button type="submit"
+                        data-status-apply
+                        class="hidden ml-1 w-7 h-7 rounded-full bg-primary text-gold
+                               hover:bg-gold hover:text-primary
+                               items-center justify-center transition-all"
+                        title="Apply status change"
+                        aria-label="Apply status change">
+                  <i class="fa-solid fa-check text-[10px]" aria-hidden="true"></i>
+                </button>
+              </form>
+            </td>
+
+            {# --- Actions --- #}
+            <td class="px-4 py-3">
+              <div class="flex items-center justify-end gap-1.5">
+                {% if i.email %}
+                  <a href="mailto:{{ i.email|urlencode }}?subject=Regarding your inquiry"
+                     class="w-9 h-9 rounded-lg bg-ivory hover:bg-gold text-primary
+                            flex items-center justify-center transition-all
+                            focus:outline-none focus:ring-2 focus:ring-gold"
+                     title="Reply by email"
+                     aria-label="Reply to {{ i.name or 'guest' }} by email">
+                    <i class="fa-solid fa-reply text-[11px]" aria-hidden="true"></i>
+                  </a>
+                {% endif %}
+
+                <button type="button"
+                        class="w-9 h-9 rounded-lg bg-red-50 hover:bg-red-500 hover:text-white
+                               text-red-500 flex items-center justify-center transition-all
+                               focus:outline-none focus:ring-2 focus:ring-red-400"
+                        data-delete-inquiry
+                        data-inquiry-id="{{ i.id }}"
+                        data-inquiry-name="{{ i.name or 'this inquiry' }}"
+                        title="Delete inquiry"
+                        aria-label="Delete inquiry from {{ i.name or 'guest' }}">
+                  <i class="fa-solid fa-trash text-[11px]" aria-hidden="true"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" class="px-5 py-16 text-center">
+              <div class="flex flex-col items-center">
+                <i class="fa-regular fa-envelope text-3xl text-charcoal/20 mb-3"
+                   aria-hidden="true"></i>
+                <p class="text-sm font-semibold text-primary mb-1">
+                  {% if q or from_date or to_date or status_filter %}
+                    No inquiries match your filters.
+                  {% else %}
+                    No inquiries yet.
+                  {% endif %}
+                </p>
+                <p class="text-xs text-charcoal/50 mb-4 max-w-md">
+                  {% if q or from_date or to_date or status_filter %}
+                    Try widening the date range or clearing the search.
+                  {% else %}
+                    When guests submit the contact form, their requests will appear here.
+                  {% endif %}
+                </p>
+                {% if q or from_date or to_date or status_filter %}
+                  <a href="{{ url_for('admin.inquiries') }}"
+                     class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl
+                            bg-primary text-gold hover:bg-gold hover:text-primary
+                            text-[10px] font-bold uppercase tracking-wider transition-all">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    Clear filters
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ============================================================
+   Pagination
+   ============================================================ #}
+{% if pagination.pages > 1 %}
+  <div class="flex flex-wrap items-center justify-between gap-3 mt-5">
+    <p class="text-xs text-charcoal/60">
+      Showing <b>{{ pagination.items|length }}</b>
+      of <b>{{ pagination.total }}</b>
+      {% if status_filter %}
+        <span class="text-charcoal/40">·</span>
+        <span class="capitalize">{{ status_filter }}</span>
+      {% endif %}
+    </p>
+
+    <div class="flex items-center gap-2">
+      <a href="{{ url_for('admin.inquiries',
+                          page=pagination.page - 1,
+                          status=status_filter,
+                          q=q, from=from_date, to=to_date) }}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white
+                text-xs font-bold uppercase text-primary
+                hover:border-gold hover:text-gold transition-all
+                {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}"
+         aria-label="Previous page">
+        <i class="fa-solid fa-chevron-left text-[10px]" aria-hidden="true"></i>
+        <span class="ml-1">Prev</span>
+      </a>
+
+      <span class="px-3 py-2 text-xs text-charcoal/60 tabular-nums">
+        Page {{ pagination.page }} / {{ pagination.pages }}
+      </span>
+
+      <a href="{{ url_for('admin.inquiries',
+                          page=pagination.page + 1,
+                          status=status_filter,
+                          q=q, from=from_date, to=to_date) }}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white
+                text-xs font-bold uppercase text-primary
+                hover:border-gold hover:text-gold transition-all
+                {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}"
+         aria-label="Next page">
+        <span class="mr-1">Next</span>
+        <i class="fa-solid fa-chevron-right text-[10px]" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+{# ============================================================
+   Hidden delete forms (submitted by JS after confirmation)
+   ============================================================ #}
+<div class="hidden">
+  {% for i in inquiries %}
+    <form id="delete-inquiry-{{ i.id }}"
+          method="POST"
+          action="{{ url_for('admin.inquiry_delete', iid=i.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+  {% endfor %}
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  function ready(fn) {
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  ready(function () {
+
+    // ============================================================
+    // 1. Status change: reveal Apply on change, confirm on archive
+    // ============================================================
+    document.querySelectorAll('form[data-inquiry-id]').forEach(function (form) {
+      var select = form.querySelector('[data-status-select]');
+      var apply  = form.querySelector('[data-status-apply]');
+      if (!select || !apply) return;
+
+      var original = select.value;
+
+      select.addEventListener('change', function () {
+        if (select.value === original) {
+          apply.classList.add('hidden');
+          apply.classList.remove('inline-flex');
+        } else {
+          apply.classList.remove('hidden');
+          apply.classList.add('inline-flex');
+        }
+      });
+
+      form.addEventListener('submit', function (e) {
+        // Archive requires confirmation
+        if (select.value === 'archived' && original !== 'archived') {
+          if (!window.confirm('Archive this inquiry? It will be hidden from the "New" list.')) {
+            e.preventDefault();
+            select.value = original;
+            apply.classList.add('hidden');
+            apply.classList.remove('inline-flex');
+            return;
+          }
+        }
+        apply.disabled = true;
+        apply.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin text-[10px]" aria-hidden="true"></i>';
+      });
+    });
+
+    // ============================================================
+    // 2. Delete with typed confirmation
+    // ============================================================
+    document.querySelectorAll('[data-delete-inquiry]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id   = btn.dataset.inquiryId;
+        var name = btn.dataset.inquiryName || 'this inquiry';
+        var form = document.getElementById('delete-inquiry-' + id);
+        if (!form) return;
+
+        var typed = window.prompt(
+          'Delete inquiry from "' + name + '"?\n\n' +
+          'This cannot be undone. Type "delete" to confirm:'
+        );
+        if (typed !== 'delete') return;
+
+        btn.disabled = true;
+        btn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin text-[11px]" aria-hidden="true"></i>';
+        form.submit();
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

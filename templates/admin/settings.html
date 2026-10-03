@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+{% block title %}Settings · Admin Console{% endblock %}
+{% set active_section = 'settings' %}
+{% block page_title %}Settings{% endblock %}
+{% block page_subtitle %}Site configuration &amp; data management{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+    <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40">
+      <h3 class="font-serif text-lg font-semibold text-primary">Site Configuration</h3>
+    </div>
+    <form method="POST" class="p-6 space-y-4">
+      {{ form.hidden_tag() }}
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Site Name *</label>
+        {{ form.site_name(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Contact Email *</label>
+        {{ form.contact_email(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">WhatsApp</label>
+        {{ form.whatsapp(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Instagram</label>
+        {{ form.instagram(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+      </div>
+
+      <div class="pt-2">
+        <button type="submit" class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md flex items-center gap-2">
+          <i class="fa-solid fa-floppy-disk"></i> Save Settings
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+    <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40">
+      <h3 class="font-serif text-lg font-semibold text-primary">Data Management</h3>
+    </div>
+    <div class="p-6 space-y-3">
+      <a href="{{ url_for('admin.export_data') }}" class="flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-charcoal/15 hover:border-gold hover:bg-gold/5 transition-all group">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i class="fa-solid fa-download text-sm"></i>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-primary">Export Backup</p>
+            <p class="text-[10px] text-charcoal/50">Download all data as JSON</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-charcoal/40 group-hover:text-gold"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

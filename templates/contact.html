@@ -134,6 +134,17 @@
       <div class="lg:col-span-3">
         <div class="bg-white border border-gold/30 rounded-3xl p-6 sm:p-8 shadow-luxury">
 
+          <!-- ========== PROGRESS INDICATOR ========== -->
+          <div id="formProgress" class="mb-6" aria-hidden="true">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] uppercase tracking-widest font-bold text-primary/60">Inquiry Progress</span>
+              <span id="progressLabel" class="text-[10px] uppercase tracking-widest font-bold text-gold">Step 1 of 2</span>
+            </div>
+            <div class="h-1.5 rounded-full bg-ivory-dark overflow-hidden">
+              <div id="progressBar" class="h-full bg-gradient-to-r from-gold to-gold-dark transition-all duration-500 ease-out" style="width: 0%"></div>
+            </div>
+          </div>
+
           <!-- FORM VIEW -->
           <div id="contactFormView">
             <div class="flex items-center justify-between mb-2">
@@ -151,171 +162,210 @@
               <input type="hidden" name="check_in" value="">
               <input type="hidden" name="check_out" value="">
 
-              <!-- Honeypot (hidden from real users) -->
+              <!-- Honeypot -->
               <div style="position:absolute;left:-9999px;" aria-hidden="true">
                 <label for="hpField">Leave blank</label>
                 <input type="text" id="hpField" name="website" tabindex="-1" autocomplete="off">
               </div>
 
-              <!-- Reason for contact -->
-              <div>
-                <label for="contactReason" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
-                  Reason for Contact
-                </label>
-                <select id="contactReason" name="reason"
-                        class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
-                  <option value="Bespoke Stay">Bespoke Stay Inquiry</option>
-                  <option value="Existing Booking">Existing Booking</option>
-                  <option value="Partnership">Partnership / Estate Onboarding</option>
-                  <option value="Press">Press &amp; Media</option>
-                  <option value="Support">Support &amp; Feedback</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
+              <!-- ========== STEP 1: Reason ========== -->
+              <fieldset data-step="1" class="space-y-5">
+                <legend class="sr-only">Step 1: Reason for contact</legend>
 
-              <!-- Name + Email -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Reason for contact — visual cards -->
                 <div>
-                  <label for="contactName" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
-                    Full Name <span class="text-gold">*</span>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-2">
+                    Reason for Contact <span class="text-gold">*</span>
                   </label>
-                  <input type="text" id="contactName" name="name" required maxlength="120"
-                         value="{{ current_user.name if current_user.is_authenticated and current_user.name else '' }}"
-                         placeholder="Your name" autocomplete="name"
-                         class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm transition-colors">
+                  <input type="hidden" id="contactReason" name="reason" value="Bespoke Stay" required>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Reason for contact">
+                    <button type="button" data-reason="Bespoke Stay" class="reason-card is-selected">
+                      <i class="fa-solid fa-crown" aria-hidden="true"></i>
+                      <span>Bespoke Stay</span>
+                    </button>
+                    <button type="button" data-reason="Existing Booking" class="reason-card">
+                      <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+                      <span>Existing Booking</span>
+                    </button>
+                    <button type="button" data-reason="Partnership" class="reason-card">
+                      <i class="fa-solid fa-handshake" aria-hidden="true"></i>
+                      <span>Partnership</span>
+                    </button>
+                    <button type="button" data-reason="Press" class="reason-card">
+                      <i class="fa-solid fa-newspaper" aria-hidden="true"></i>
+                      <span>Press &amp; Media</span>
+                    </button>
+                    <button type="button" data-reason="Support" class="reason-card">
+                      <i class="fa-solid fa-headset" aria-hidden="true"></i>
+                      <span>Support</span>
+                    </button>
+                    <button type="button" data-reason="Other" class="reason-card">
+                      <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>
+                      <span>Other</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Conditional: Booking reference for Existing Booking -->
+                <div id="bookingRefWrap" class="hidden animate-fade-in">
+                  <label for="contactBookingRef" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+                    Booking Reference <span class="text-gold">*</span>
+                  </label>
+                  <input type="text" id="contactBookingRef" name="booking_ref" maxlength="40"
+                         placeholder="e.g. LR-2026-XXXX"
+                         class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm transition-colors font-mono">
                   <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
                 </div>
+
+                <!-- Estate of interest -->
                 <div>
-                  <label for="contactEmail" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
-                    Email <span class="text-gold">*</span>
+                  <label for="contactProperty" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+                    Estate of Interest
                   </label>
-                  <input type="email" id="contactEmail" name="email" required maxlength="200"
-                         value="{{ current_user.email if current_user.is_authenticated and current_user.email else '' }}"
-                         placeholder="vip@domain.com" autocomplete="email"
-                         class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm transition-colors">
+                  <select name="property" id="contactProperty"
+                          class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+                    <option value="General Inquiry">General Bespoke Inquiry</option>
+                    {% for p in properties %}<option value="{{ p.title }}" data-loc="{{ p.location }}">{{ p.title }} — {{ p.location }}</option>{% endfor %}
+                  </select>
+                </div>
+              </fieldset>
+
+              <!-- ========== STEP 2: Details ========== -->
+              <fieldset data-step="2" class="space-y-5 pt-2 border-t border-charcoal/5 mt-2">
+                <legend class="sr-only">Step 2: Your details</legend>
+
+                <!-- Name + Email -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label for="contactName" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+                      Full Name <span class="text-gold">*</span>
+                    </label>
+                    <input type="text" id="contactName" name="name" required maxlength="120"
+                           value="{{ current_user.name if current_user.is_authenticated and current_user.name else '' }}"
+                           placeholder="Your name" autocomplete="name"
+                           class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm transition-colors">
+                    <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
+                  </div>
+                  <div>
+                    <label for="contactEmail" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+                      Email <span class="text-gold">*</span>
+                    </label>
+                    <input type="email" id="contactEmail" name="email" required maxlength="200"
+                           value="{{ current_user.email if current_user.is_authenticated and current_user.email else '' }}"
+                           placeholder="vip@domain.com" autocomplete="email"
+                           class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm transition-colors">
+                    <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
+                  </div>
+                </div>
+
+                <!-- Phone -->
+                <div>
+                  <label for="contactPhone" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+                    Phone <span class="text-gold">*</span>
+                  </label>
+                  <div class="relative">
+                    <input type="tel" id="contactPhone" name="phone" required maxlength="40"
+                           placeholder="+233 XX XXX XXXX" autocomplete="tel"
+                           class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm transition-colors pr-10">
+                    <span class="field-check hidden absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500">
+                      <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                    </span>
+                  </div>
                   <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
                 </div>
-              </div>
 
-              <!-- Phone -->
-              <div>
-                <label for="contactPhone" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
-                  Phone <span class="text-gold">*</span>
-                </label>
-                <div class="relative">
-                  <input type="tel" id="contactPhone" name="phone" required maxlength="40"
-                         placeholder="+233 XX XXX XXXX" autocomplete="tel"
-                         class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm transition-colors">
-                  <span class="field-check hidden absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500">
-                    <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                <!-- Preferred contact method -->
+                <div>
+                  <span class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-2">
+                    Preferred Contact Method
                   </span>
+                  <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Preferred contact method">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="preferred_method" value="WhatsApp" class="peer sr-only" checked>
+                      <span class="peer-checked:bg-primary peer-checked:text-gold peer-checked:border-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp
+                      </span>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="preferred_method" value="Email" class="peer sr-only">
+                      <span class="peer-checked:bg-primary peer-checked:text-gold peer-checked:border-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                        <i class="fa-solid fa-envelope" aria-hidden="true"></i> Email
+                      </span>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="preferred_method" value="Phone" class="peer sr-only">
+                      <span class="peer-checked:bg-primary peer-checked:text-gold peer-checked:border-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                        <i class="fa-solid fa-phone" aria-hidden="true"></i> Phone
+                      </span>
+                    </label>
+                  </div>
                 </div>
-                <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
-              </div>
 
-              <!-- Estate of interest -->
-              <div>
-                <label for="contactProperty" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
-                  Estate of Interest
-                </label>
-                <select name="property" id="contactProperty"
-                        class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
-                  <option value="General Inquiry">General Bespoke Inquiry</option>
-                  {% for p in properties %}<option value="{{ p.title }}" data-loc="{{ p.location }}">{{ p.title }} — {{ p.location }}</option>{% endfor %}
-                </select>
-              </div>
-
-              <!-- Preferred contact method -->
-              <div>
-                <span class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-2">
-                  Preferred Contact Method
-                </span>
-                <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Preferred contact method">
-                  <label class="cursor-pointer">
-                    <input type="radio" name="preferred_method" value="WhatsApp" class="peer sr-only" checked>
-                    <span class="peer-checked:bg-primary peer-checked:text-gold peer-checked:border-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
-                      <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp
-                    </span>
-                  </label>
-                  <label class="cursor-pointer">
-                    <input type="radio" name="preferred_method" value="Email" class="peer sr-only">
-                    <span class="peer-checked:bg-primary peer-checked:text-gold peer-checked:border-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
-                      <i class="fa-solid fa-envelope" aria-hidden="true"></i> Email
-                    </span>
-                  </label>
-                  <label class="cursor-pointer">
-                    <input type="radio" name="preferred_method" value="Phone" class="peer sr-only">
-                    <span class="peer-checked:bg-primary peer-checked:text-gold peer-checked:border-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
-                      <i class="fa-solid fa-phone" aria-hidden="true"></i> Phone
-                    </span>
-                  </label>
+                <!-- Preferred time -->
+                <div>
+                  <span class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-2">
+                    Preferred Contact Time
+                  </span>
+                  <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Preferred contact time">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="preferred_time" value="Anytime" class="peer sr-only" checked>
+                      <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                        Anytime
+                      </span>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="preferred_time" value="Morning" class="peer sr-only">
+                      <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                        <i class="fa-solid fa-sun" aria-hidden="true"></i> Morning
+                      </span>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="preferred_time" value="Afternoon" class="peer sr-only">
+                      <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                        <i class="fa-solid fa-cloud-sun" aria-hidden="true"></i> Afternoon
+                      </span>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="preferred_time" value="Evening" class="peer sr-only">
+                      <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                        <i class="fa-solid fa-moon" aria-hidden="true"></i> Evening
+                      </span>
+                    </label>
+                  </div>
                 </div>
-              </div>
 
-              <!-- Preferred time -->
-              <div>
-                <span class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-2">
-                  Preferred Contact Time
-                </span>
-                <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Preferred contact time">
-                  <label class="cursor-pointer">
-                    <input type="radio" name="preferred_time" value="Anytime" class="peer sr-only" checked>
-                    <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
-                      Anytime
-                    </span>
-                  </label>
-                  <label class="cursor-pointer">
-                    <input type="radio" name="preferred_time" value="Morning" class="peer sr-only">
-                    <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
-                      <i class="fa-solid fa-sun" aria-hidden="true"></i> Morning
-                    </span>
-                  </label>
-                  <label class="cursor-pointer">
-                    <input type="radio" name="preferred_time" value="Afternoon" class="peer sr-only">
-                    <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
-                      <i class="fa-solid fa-cloud-sun" aria-hidden="true"></i> Afternoon
-                    </span>
-                  </label>
-                  <label class="cursor-pointer">
-                    <input type="radio" name="preferred_time" value="Evening" class="peer sr-only">
-                    <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
-                      <i class="fa-solid fa-moon" aria-hidden="true"></i> Evening
-                    </span>
-                  </label>
+                <!-- Message -->
+                <div>
+                  <div class="flex items-end justify-between mb-1.5">
+                    <label for="contactMessage" class="block text-xs font-bold uppercase tracking-wider text-primary/80">
+                      Message
+                    </label>
+                    <span id="msgCounter" class="text-[10px] text-charcoal/50 font-medium">0 / 2000</span>
+                  </div>
+                  <textarea id="contactMessage" name="message" rows="5" maxlength="2000"
+                            oninput="updateMsgCounter(this)"
+                            placeholder="Tell us about your stay, special requests, or partnership interest..."
+                            class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea>
                 </div>
-              </div>
 
-              <!-- Message -->
-              <div>
-                <div class="flex items-end justify-between mb-1.5">
-                  <label for="contactMessage" class="block text-xs font-bold uppercase tracking-wider text-primary/80">
-                    Message
-                  </label>
-                  <span id="msgCounter" class="text-[10px] text-charcoal/50 font-medium">0 / 2000</span>
-                </div>
-                <textarea id="contactMessage" name="message" rows="5" maxlength="2000"
-                          oninput="updateMsgCounter(this)"
-                          placeholder="Tell us about your stay, special requests, or partnership interest..."
-                          class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea>
-              </div>
+                <!-- Submit -->
+                <button type="submit" id="contactSubmitBtn"
+                        class="w-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                  <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                  <span>Submit Confidential Inquiry</span>
+                </button>
 
-              <!-- Submit -->
-              <button type="submit" id="contactSubmitBtn"
-                      class="w-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury flex items-center justify-center gap-2">
-                <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
-                <span>Submit Confidential Inquiry</span>
-              </button>
-
-              <p class="text-[10px] text-center text-charcoal/50 flex items-center justify-center gap-1.5">
-                <i class="fa-solid fa-shield-halved text-gold" aria-hidden="true"></i>
-                Your information stays private. No spam, ever.
-              </p>
+                <p class="text-[10px] text-center text-charcoal/50 flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-shield-halved text-gold" aria-hidden="true"></i>
+                  Your information stays private. No spam, ever.
+                </p>
+              </fieldset>
             </form>
           </div>
 
           <!-- SUCCESS VIEW (hidden until submit) -->
           <div id="contactSuccessView" class="hidden text-center py-10">
-            <div class="w-20 h-20 mx-auto rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center mb-5">
+            <div class="w-20 h-20 mx-auto rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center mb-5 animate-fade-in">
               <i class="fa-solid fa-circle-check text-emerald-500 text-3xl" aria-hidden="true"></i>
             </div>
             <h3 class="font-serif text-3xl font-semibold text-primary mb-2">Message Received</h3>
@@ -333,7 +383,7 @@
             </div>
 
             <div class="flex flex-col sm:flex-row gap-3 justify-center">
-              <a href="{{ url_for('public.stays') }}"
+              <a href="{{ url_for('auth.stays') }}"
                  class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
                 <i class="fa-solid fa-house-chimney mr-1.5" aria-hidden="true"></i> Browse Stays
               </a>
@@ -369,7 +419,7 @@
                 <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
               </summary>
               <div class="faq-body">
-                Yes — for direct bookings, head to our <a href="{{ url_for('public.stays') }}" class="text-gold hover:underline font-semibold">Stays collection</a>. Submit the form here for bespoke requests, special rates, or stays that aren't publicly listed.
+                Yes — for direct bookings, head to our <a href="{{ url_for('auth.stays') }}" class="text-gold hover:underline font-semibold">Stays collection</a>. Submit the form here for bespoke requests, special rates, or stays that aren't publicly listed.
               </div>
             </details>
 
@@ -398,6 +448,13 @@
     </div>
   </div>
 </section>
+
+<!-- ============ BACK TO TOP ============ -->
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})"
+        class="fixed bottom-6 right-6 z-30 w-11 h-11 rounded-full bg-primary text-gold border border-gold/40 shadow-luxury flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 hover:bg-gold hover:text-primary"
+        aria-label="Back to top">
+  <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+</button>
 
 <!-- ============ PAGE-SCOPED STYLES ============ -->
 <style>
@@ -442,9 +499,56 @@
   .field-input.invalid { border-color: #dc2626 !important; }
   .field-input.valid   { border-color: #10b981 !important; }
 
+  /* Reason cards */
+  .reason-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.9rem 0.5rem;
+    background: #fff;
+    border: 1.5px solid rgba(44, 44, 42, 0.1);
+    border-radius: 0.9rem;
+    color: #1a3a2a;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s ease;
+    font-family: inherit;
+    line-height: 1.2;
+  }
+  .reason-card i {
+    font-size: 1.05rem;
+    color: #c9a84c;
+    transition: transform .2s ease;
+  }
+  .reason-card:hover {
+    border-color: #c9a84c;
+    background: #fdfbf6;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -12px rgba(201, 168, 76, 0.5);
+  }
+  .reason-card:hover i { transform: scale(1.15); }
+  .reason-card.is-selected {
+    border-color: #1a3a2a;
+    background: #1a3a2a;
+    color: #c9a84c;
+    box-shadow: 0 8px 20px -10px rgba(26, 58, 42, 0.4);
+  }
+  .reason-card.is-selected i { color: #c9a84c; }
+
+  /* Counter warning state */
+  #msgCounter.is-warn { color: #d97706; font-weight: 700; }
+  #msgCounter.is-danger { color: #dc2626; font-weight: 700; }
+
   @media (prefers-reduced-motion: reduce) {
     .faq-chevron { transition: none; }
     .animate-ping { animation: none; }
+    .reason-card:hover { transform: none; }
   }
 </style>
 {% endblock %}
@@ -452,14 +556,19 @@
 {% block scripts %}
 <script>
 /* ============================================================
-   CONTACT PAGE — page-specific only.
-   Shared globals (CSRF_TOKEN, showToast, etc.) live in base.html.
+   CONTACT PAGE — page-specific.
+   Shared globals (CSRF_TOKEN, showToast, IS_LOGGED_IN, etc.)
+   live in base.html.
    ============================================================ */
 
-/* ---------- Message counter ---------- */
+/* ---------- Message counter with warnings ---------- */
 function updateMsgCounter(el) {
   const counter = document.getElementById('msgCounter');
-  if (counter) counter.textContent = `${el.value.length} / 2000`;
+  if (!counter) return;
+  const len = el.value.length;
+  counter.textContent = `${len} / 2000`;
+  counter.classList.toggle('is-warn', len > 1600 && len <= 1900);
+  counter.classList.toggle('is-danger', len > 1900);
 }
 
 /* ---------- Inline field validation ---------- */
@@ -492,6 +601,50 @@ function validateField(input) {
   return valid;
 }
 
+/* ---------- Progress indicator ---------- */
+function updateProgress() {
+  const form = document.getElementById('contactForm');
+  if (!form) return;
+  const step2Fields = ['contactName', 'contactEmail', 'contactPhone'];
+  const filled = step2Fields.filter(id => {
+    const v = (document.getElementById(id)?.value || '').trim();
+    return v.length > 0;
+  }).length;
+  const step1Done = true; // Reason always has a default
+  const total = step1Done ? 1 + filled : filled;
+  const pct = Math.min(100, Math.round((total / 4) * 100));
+  const bar = document.getElementById('progressBar');
+  const label = document.getElementById('progressLabel');
+  if (bar) bar.style.width = pct + '%';
+  if (label) {
+    if (pct >= 100) label.textContent = 'Ready to send';
+    else if (filled >= 1) label.textContent = 'Step 2 of 2';
+    else label.textContent = 'Step 1 of 2';
+  }
+}
+
+/* ---------- Reason selector ---------- */
+function setupReasonCards() {
+  const cards = document.querySelectorAll('.reason-card');
+  const hiddenInput = document.getElementById('contactReason');
+  const bookingRefWrap = document.getElementById('bookingRefWrap');
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      cards.forEach(c => c.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+      const reason = card.dataset.reason;
+      if (hiddenInput) hiddenInput.value = reason;
+      if (bookingRefWrap) {
+        const isBooking = reason === 'Existing Booking';
+        bookingRefWrap.classList.toggle('hidden', !isBooking);
+        const refInput = document.getElementById('contactBookingRef');
+        if (refInput) refInput.required = isBooking;
+        if (!isBooking && refInput) refInput.value = '';
+      }
+    });
+  });
+}
+
 /* ---------- Pre-select property from URL (?property=...) ---------- */
 function preselectPropertyFromURL() {
   const params = new URLSearchParams(window.location.search);
@@ -511,10 +664,13 @@ async function handleContactSubmit(e) {
   e.preventDefault();
   const form = e.target;
 
-  /* Validate all required fields */
-  const fields = form.querySelectorAll('.field-input');
+  /* Validate all required visible fields */
+  const fields = form.querySelectorAll('.field-input, input[required], select[required], textarea[required]');
   let allValid = true;
-  fields.forEach(f => { if (!validateField(f)) allValid = false; });
+  fields.forEach(f => {
+    if (f.offsetParent === null) return; // skip hidden
+    if (!validateField(f)) allValid = false;
+  });
   if (!allValid) {
     showToast('Please check the highlighted fields.', 'error');
     const firstBad = form.querySelector('.field-input.invalid');
@@ -526,7 +682,6 @@ async function handleContactSubmit(e) {
   /* Honeypot check */
   const honeypot = form.querySelector('input[name="website"]')?.value || '';
   if (honeypot) {
-    /* Silent fail for bots */
     showToast('Thank you!', 'success');
     return;
   }
@@ -541,6 +696,12 @@ async function handleContactSubmit(e) {
   const reason = (fd.get('reason') || 'Bespoke Stay').toString();
   const preferredMethod = (fd.get('preferred_method') || 'WhatsApp').toString();
   const preferredTime = (fd.get('preferred_time') || 'Anytime').toString();
+  const bookingRef = (fd.get('booking_ref') || '').toString().trim();
+
+  let message = (fd.get('message') || '').toString().trim();
+  if (reason === 'Existing Booking' && bookingRef) {
+    message = `[Booking Ref: ${bookingRef}]\n\n${message}`;
+  }
 
   const payload = {
     name: (fd.get('name') || '').toString().trim(),
@@ -550,14 +711,14 @@ async function handleContactSubmit(e) {
     check_in: '',
     check_out: '',
     guests: '—',
-    message: (fd.get('message') || '').toString().trim(),
+    message,
     reason,
     preferred_method: preferredMethod,
     preferred_time: preferredTime
   };
 
   try {
-    const res = await fetch('{{ url_for("public.submit_inquiry") }}', {
+    const res = await fetch('{{ url_for("api.create_inquiry") }}', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -568,9 +729,10 @@ async function handleContactSubmit(e) {
     const data = await res.json();
 
     if (data.success) {
-      /* Show success view */
       document.getElementById('contactFormView').classList.add('hidden');
       document.getElementById('contactSuccessView').classList.remove('hidden');
+      const progress = document.getElementById('formProgress');
+      if (progress) progress.classList.add('hidden');
       showToast('Your message has been sent.', 'success');
       document.getElementById('contactSuccessView').scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
@@ -593,36 +755,75 @@ async function handleContactSubmit(e) {
 function resetContactForm() {
   const form = document.getElementById('contactForm');
   form.reset();
+
+  // Reset reason cards to default
+  document.querySelectorAll('.reason-card').forEach(c => c.classList.remove('is-selected'));
+  const defaultReason = document.querySelector('.reason-card[data-reason="Bespoke Stay"]');
+  if (defaultReason) defaultReason.classList.add('is-selected');
+  const hiddenInput = document.getElementById('contactReason');
+  if (hiddenInput) hiddenInput.value = 'Bespoke Stay';
+
+  // Hide conditional booking ref
+  const bookingRefWrap = document.getElementById('bookingRefWrap');
+  if (bookingRefWrap) bookingRefWrap.classList.add('hidden');
+
+  // Clear validation states
   form.querySelectorAll('.field-input').forEach(f => {
     f.classList.remove('valid', 'invalid');
     const wrap = f.closest('div');
     wrap?.querySelector('.field-error')?.classList.add('hidden');
     wrap?.querySelector('.field-check')?.classList.add('hidden');
   });
+
+  // Reset counter
   updateMsgCounter(document.getElementById('contactMessage'));
+
+  // Toggle views
   document.getElementById('contactSuccessView').classList.add('hidden');
   document.getElementById('contactFormView').classList.remove('hidden');
+  const progress = document.getElementById('formProgress');
+  if (progress) progress.classList.remove('hidden');
+
+  updateProgress();
   document.getElementById('contactFormView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---------- Back-to-top visibility ---------- */
+function setupBackToTop() {
+  const btn = document.getElementById('backToTop');
+  if (!btn) return;
+  const onScroll = () => {
+    const show = window.scrollY > 400;
+    btn.classList.toggle('opacity-0', !show);
+    btn.classList.toggle('pointer-events-none', !show);
+    btn.classList.toggle('opacity-100', show);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 }
 
 /* ---------- Init ---------- */
 document.addEventListener('DOMContentLoaded', () => {
   preselectPropertyFromURL();
+  setupReasonCards();
+  setupBackToTop();
 
   const form = document.getElementById('contactForm');
   if (!form) return;
 
-  /* Attach blur validation */
+  /* Blur + input validation */
   form.querySelectorAll('.field-input').forEach(f => {
-    f.addEventListener('blur', () => validateField(f));
+    f.addEventListener('blur', () => { validateField(f); updateProgress(); });
     f.addEventListener('input', () => {
       if (f.classList.contains('invalid')) validateField(f);
+      updateProgress();
     });
   });
 
-  /* Initialize counter */
+  /* Initialize counter + progress */
   const msg = document.getElementById('contactMessage');
   if (msg) updateMsgCounter(msg);
+  updateProgress();
 });
 </script>
 {% endblock %}

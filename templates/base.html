@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="csrf-token" content="{{ csrf_token() if csrf_token is defined else '' }}">
 <meta name="theme-color" content="#1a3a2a">
-<title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
+<title>{% block title %}{{ SITE_NAME|default('Le Rêve Properties') }}{% endblock %}</title>
 
-<link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.png') }}">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -149,38 +150,41 @@ tailwind.config = {
 </head>
 <body class="bg-ivory text-charcoal font-sans antialiased selection:bg-gold selection:text-primary">
 
-<!-- ============ FLASH MESSAGES ============ -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <div id="flashContainer" class="fixed top-24 right-5 z-[70] flex flex-col gap-3 pointer-events-none max-w-sm" role="status" aria-live="polite">
-      {% for category, message in messages %}
-        <div class="pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-slide-in
-          {% if category == 'error' %}bg-red-600 text-white border-red-400
-          {% elif category == 'info' %}bg-gold text-primary border-primary
-          {% else %}bg-primary text-gold border-gold{% endif %}">
-          <i class="fa-solid {% if category == 'error' %}fa-circle-exclamation{% elif category == 'info' %}fa-circle-info{% else %}fa-circle-check{% endif %} text-lg" aria-hidden="true"></i>
-          <span>{{ message }}</span>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endwith %}
+<!-- Skip to content for keyboard users -->
+<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-gold focus:text-primary focus:rounded-lg focus:font-bold focus:text-sm focus:shadow-lg">
+  Skip to main content
+</a>
 
-<div id="toastContainer" class="fixed top-20 right-5 z-50 flex flex-col gap-3 pointer-events-none max-w-sm" role="status" aria-live="polite"></div>
+<!-- ============ UNIFIED TOAST / FLASH CONTAINER ============ -->
+<div id="toastContainer" class="fixed top-24 right-5 z-[70] flex flex-col gap-3 pointer-events-none max-w-sm" role="status" aria-live="polite"></div>
 
 <!-- ============ HEADER ============ -->
 <header class="fixed top-0 left-0 w-full z-40 glass-nav border-b border-gold/20 shadow-sm">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-    <a href="{{ url_for('public.home') }}" class="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-lg">
-      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Le Rêve Properties" width="200">
+
+    <a href="{{ url_for('auth.index') }}" class="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-lg">
+      <img src="{{ url_for('static', filename='images/logo.png') }}"
+           alt="Le Rêve Properties"
+           width="200"
+           class="h-12 w-auto"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <span class="hidden items-center gap-2" aria-hidden="true">
+        <span class="w-10 h-10 rounded-full bg-gold text-primary flex items-center justify-center font-serif text-xl font-bold">R</span>
+        <span class="font-serif text-xl font-semibold text-primary tracking-wide">LE RÊVE</span>
+      </span>
     </a>
 
-    <nav class="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest font-medium text-charcoal/80">
-      <a href="{{ url_for('public.home') }}"          class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Home</a>
-      <a href="{{ url_for('public.stays') }}"         class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Stays</a>
-      <a href="{{ url_for('public.why_us') }}"        class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Why Us</a>
-      <a href="{{ url_for('public.reviews_page') }}"  class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Reviews</a>
-      <a href="{{ url_for('public.contact') }}"       class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Contact</a>
+    <nav class="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest font-medium text-charcoal/80" aria-label="Main navigation">
+      <a href="{{ url_for('auth.index') }}"
+         class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors {% if request.endpoint == 'auth.index' %}text-gold font-semibold{% endif %}">Home</a>
+      <a href="{{ url_for('auth.stays') }}"
+         class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors {% if request.endpoint == 'auth.stays' %}text-gold font-semibold{% endif %}">Stays</a>
+      <a href="{{ url_for('auth.why_us') }}"
+         class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors {% if request.endpoint == 'auth.why_us' %}text-gold font-semibold{% endif %}">Why Us</a>
+      <a href="{{ url_for('auth.reviews_page') }}"
+         class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors {% if request.endpoint == 'auth.reviews_page' %}text-gold font-semibold{% endif %}">Reviews</a>
+      <a href="{{ url_for('auth.contact') }}"
+         class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors {% if request.endpoint == 'auth.contact' %}text-gold font-semibold{% endif %}">Contact</a>
     </nav>
 
     <div class="hidden md:flex items-center gap-3">
@@ -193,7 +197,7 @@ tailwind.config = {
 
       {% if current_user.is_authenticated %}
         {% if current_user.is_admin %}
-          <a href="{{ url_for('super_admin.dashboard') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs font-bold uppercase tracking-widest">
+          <a href="{{ url_for('admin.dashboard') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs font-bold uppercase tracking-widest">
             <i class="fa-solid fa-shield-halved mr-1" aria-hidden="true"></i> Admin
           </a>
         {% else %}
@@ -208,21 +212,21 @@ tailwind.config = {
       {% endif %}
     </div>
 
-    <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-lg" aria-label="Open menu">
+    <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-lg" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">
       <i class="fa-solid fa-bars text-2xl" aria-hidden="true"></i>
     </button>
   </div>
 
   <div id="mobileDrawer" class="hidden md:hidden bg-primary text-ivory border-b border-gold/30 px-6 py-6 transition-all duration-300">
     <div class="flex flex-col gap-4 text-base tracking-wider uppercase font-medium">
-      <a href="{{ url_for('public.home') }}"         onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Home</a>
-      <a href="{{ url_for('public.stays') }}"        onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Stays</a>
-      <a href="{{ url_for('public.why_us') }}"       onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Why Us</a>
-      <a href="{{ url_for('public.reviews_page') }}" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Reviews</a>
-      <a href="{{ url_for('public.contact') }}"      onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Contact</a>
+      <a href="{{ url_for('auth.index') }}"        onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.index' %}text-gold{% endif %}">Home</a>
+      <a href="{{ url_for('auth.stays') }}"        onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.stays' %}text-gold{% endif %}">Stays</a>
+      <a href="{{ url_for('auth.why_us') }}"       onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.why_us' %}text-gold{% endif %}">Why Us</a>
+      <a href="{{ url_for('auth.reviews_page') }}" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.reviews_page' %}text-gold{% endif %}">Reviews</a>
+      <a href="{{ url_for('auth.contact') }}"      onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.contact' %}text-gold{% endif %}">Contact</a>
       <div class="pt-4 flex flex-col gap-3">
         {% if current_user.is_authenticated %}
-          <a href="{{ url_for('client.dashboard') if not current_user.is_admin else url_for('super_admin.dashboard') }}"
+          <a href="{{ url_for('client.dashboard') if not current_user.is_admin else url_for('admin.dashboard') }}"
              class="w-full text-center bg-gold text-primary py-2.5 rounded-full font-bold uppercase tracking-wider text-xs block">
             <i class="fa-solid fa-user mr-1" aria-hidden="true"></i> {{ 'Admin Console' if current_user.is_admin else 'Client Portal' }}
           </a>
@@ -232,7 +236,7 @@ tailwind.config = {
             <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
           </a>
         {% endif %}
-        <a href="{{ url_for('public.stays') }}"
+        <a href="{{ url_for('auth.stays') }}"
            onclick="toggleMobileMenu()"
            class="w-full text-center border border-ivory/30 text-ivory py-2.5 rounded-full font-medium uppercase tracking-wider text-xs flex items-center justify-center gap-2 hover:text-gold">
           <i class="fa-solid fa-heart text-gold" aria-hidden="true"></i> Saved Favorites (<span id="mobileFavCount">0</span>)
@@ -242,7 +246,7 @@ tailwind.config = {
   </div>
 </header>
 
-<main class="pt-20">
+<main id="main-content" class="pt-20">
   {% block content %}{% endblock %}
 </main>
 
@@ -252,7 +256,15 @@ tailwind.config = {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-gold/10">
       <div class="lg:col-span-2 space-y-4">
         <div class="flex items-center gap-3">
-          <img src="{{ url_for('static', filename='images/logo-light.png') }}" alt="Le Rêve Properties" width="200">
+          <img src="{{ url_for('static', filename='images/logo-light.png') }}"
+               alt="Le Rêve Properties"
+               width="200"
+               class="h-12 w-auto"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <span class="hidden items-center gap-2" aria-hidden="true">
+            <span class="w-10 h-10 rounded-full bg-gold text-primary flex items-center justify-center font-serif text-xl font-bold">R</span>
+            <span class="font-serif text-xl font-semibold text-ivory tracking-wide">LE RÊVE</span>
+          </span>
         </div>
         <p class="text-xs text-ivory/70 leading-relaxed max-w-sm font-light">
           Your dream stay, our passion. Affordable quality hospitality in Accra — and across Africa, soon.
@@ -261,19 +273,19 @@ tailwind.config = {
           Part of the Dave &amp; Co Pan-African Trade Alliance Ltd.
         </p>
         <div class="flex gap-3 text-gold pt-2">
-          <a href="https://instagram.com/lereveafrica" target="_blank" rel="noopener" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
-          <a href="https://wa.me/233547975252" target="_blank" rel="noopener" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></a>
-          <a href="#" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></a>
-          <a href="#" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="Facebook"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>
+          <a href="https://instagram.com/lereveafrica" target="_blank" rel="noopener" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary transition-all text-xs" aria-label="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
+          <a href="https://wa.me/233547975252" target="_blank" rel="noopener" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary transition-all text-xs" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></a>
+          <a href="#" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary transition-all text-xs" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></a>
+          <a href="#" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary transition-all text-xs" aria-label="Facebook"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>
         </div>
       </div>
 
       <div>
         <h4 class="font-serif text-lg font-semibold text-gold mb-4">Explore</h4>
         <ul class="space-y-2 text-xs text-ivory/70 font-light">
-          <li><a href="{{ url_for('public.stays') }}" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Featured Estates</a></li>
-          {% for c in categories %}
-            <li><a href="{{ url_for('public.stays') }}#cat-{{ c.name|urlencode }}" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">{{ c.name|e }}</a></li>
+          <li><a href="{{ url_for('auth.stays') }}" class="hover:text-gold transition-colors">Featured Apartments</a></li>
+          {% for c in categories|default([]) %}
+            <li><a href="{{ url_for('auth.stays') }}#cat-{{ c.name|urlencode }}" class="hover:text-gold transition-colors">{{ c.name|e }}</a></li>
           {% endfor %}
         </ul>
       </div>
@@ -281,21 +293,21 @@ tailwind.config = {
       <div>
         <h4 class="font-serif text-lg font-semibold text-gold mb-4">Company</h4>
         <ul class="space-y-2 text-xs text-ivory/70 font-light">
-          <li><a href="{{ url_for('public.contact') }}"      class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Contact</a></li>
-          <li><a href="{{ url_for('public.why_us') }}"       class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Why Le Rêve</a></li>
-          <li><a href="{{ url_for('public.reviews_page') }}" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Reviews</a></li>
+          <li><a href="{{ url_for('auth.contact') }}"      class="hover:text-gold transition-colors">Contact</a></li>
+          <li><a href="{{ url_for('auth.why_us') }}"       class="hover:text-gold transition-colors">Why Le Rêve</a></li>
+          <li><a href="{{ url_for('auth.reviews_page') }}" class="hover:text-gold transition-colors">Reviews</a></li>
         </ul>
       </div>
 
       <div>
         <h4 class="font-serif text-lg font-semibold text-gold mb-4">Private Journal</h4>
-        <p class="text-xs text-ivory/70 mb-3 font-light">Subscribe for off-market estate listings before public release.</p>
+        <p class="text-xs text-ivory/70 mb-3 font-light">Subscribe for off-market apartment listings before public release.</p>
         <form id="journalForm" onsubmit="handleJournalSubmit(event)" class="space-y-2">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
           <label for="journalEmail" class="sr-only">Email Address</label>
           <input type="email" id="journalEmail" name="email" required placeholder="Enter private email"
                  class="w-full px-3 py-2 text-xs rounded-lg border border-gold/30 bg-primary/60 text-ivory placeholder-ivory/40 focus:outline-none focus:border-gold">
-          <button type="submit" class="w-full bg-gold text-primary py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-all">Subscribe</button>
+          <button type="submit" class="w-full bg-gold text-primary py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-white transition-all">Subscribe</button>
         </form>
       </div>
     </div>
@@ -307,18 +319,18 @@ tailwind.config = {
         <span>Crafted with excellence by <strong class="text-white font-bold tracking-wide">Dave &amp; Co</strong></span>
       </div>
       <div class="flex gap-4">
-        <a href="#" class="hover:text-gold focus:outline-none focus-visible:text-gold">Privacy</a>
+        <a href="#" class="hover:text-gold">Privacy</a>
         <span>·</span>
-        <a href="#" class="hover:text-gold focus:outline-none focus-visible:text-gold">Terms</a>
+        <a href="#" class="hover:text-gold">Terms</a>
       </div>
     </div>
   </div>
 </footer>
 
 <!-- ============ QUICK VIEW MODAL ============ -->
-<div id="quickViewModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md" onclick="if (event.target === this) closeQuickViewModal();">
+<div id="quickViewModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md" onclick="if (event.target === this) closeQuickViewModal();" role="dialog" aria-modal="true" aria-label="Quick view">
   <div class="bg-ivory rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative">
-    <button onclick="closeQuickViewModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all flex items-center justify-center" aria-label="Close Modal">
+    <button onclick="closeQuickViewModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary transition-all flex items-center justify-center" aria-label="Close Modal">
       <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
     </button>
     <div id="quickViewContent"></div>
@@ -326,9 +338,9 @@ tailwind.config = {
 </div>
 
 <!-- ============ BOOKING MODAL ============ -->
-<div id="bookingModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md" onclick="if (event.target === this) closeBookingModal();">
+<div id="bookingModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md" onclick="if (event.target === this) closeBookingModal();" role="dialog" aria-modal="true" aria-label="Booking">
   <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative">
-    <button onclick="closeBookingModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all flex items-center justify-center" aria-label="Close Modal">
+    <button onclick="closeBookingModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold transition-all flex items-center justify-center" aria-label="Close Modal">
       <i class="fa-solid fa-xmark" aria-hidden="true"></i>
     </button>
     <div id="bookingModalContent"></div>
@@ -337,12 +349,8 @@ tailwind.config = {
 
 <!-- ============ GLOBAL PAGE SCRIPT ============ -->
 <script>
-/* ============================================================
-   GLOBAL CONFIG — declared ONCE here, used by every page.
-   Page templates must NOT re-declare these.
-   ============================================================ */
 const CSRF_TOKEN      = document.querySelector('meta[name="csrf-token"]')?.content || '';
-const CURRENCY_SYMBOL = {{ CURRENCY_SYMBOL|tojson }};
+const CURRENCY_SYMBOL = {{ (CURRENCY_SYMBOL|default('₵'))|tojson }};
 const IS_LOGGED_IN    = {{ 'true' if current_user.is_authenticated and not current_user.is_admin else 'false' }};
 const IS_ADMIN        = {{ 'true' if current_user.is_authenticated and current_user.is_admin else 'false' }};
 const CURRENT_USER    = {
@@ -350,7 +358,12 @@ const CURRENT_USER    = {
   email: {{ (current_user.email if current_user.is_authenticated else '')|tojson }}
 };
 
-/* ---------- Shared utilities ---------- */
+const URLS = {
+  apiJournal:  "{{ url_for('api.journal_subscribe') if 'api.journal_subscribe' is defined else '/api/journal' }}",
+  apiWishlist: "{{ url_for('api.wishlist_toggle')   if 'api.wishlist_toggle'   is defined else '/api/wishlist' }}",
+  authStays:   "{{ url_for('auth.stays') }}"
+};
+
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
@@ -359,12 +372,19 @@ function formatGHS(amount) {
   return CURRENCY_SYMBOL + n.toLocaleString('en-GH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 function toggleMobileMenu() {
-  document.getElementById('mobileDrawer')?.classList.toggle('hidden');
+  const drawer = document.getElementById('mobileDrawer');
+  const btn = document.querySelector('[aria-controls="mobileDrawer"]');
+  if (!drawer) return;
+  drawer.classList.toggle('hidden');
+  if (btn) btn.setAttribute('aria-expanded', String(!drawer.classList.contains('hidden')));
 }
 function openModal(el) {
   if (!el) return;
   el.classList.remove('hidden'); el.classList.add('flex');
   document.body.classList.add('modal-open');
+  // focus trap: focus first focusable element
+  const focusable = el.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (focusable) focusable.focus();
 }
 function closeModal(el) {
   if (!el) return;
@@ -374,19 +394,19 @@ function closeModal(el) {
 function closeQuickViewModal() { closeModal(document.getElementById('quickViewModal')); }
 function closeBookingModal()   { closeModal(document.getElementById('bookingModal'));   }
 
-/* ---------- Toast ---------- */
+/* ========== UNIFIED NOTIFICATION SYSTEM ========== */
 function showToast(message, type = 'success') {
   const container = document.getElementById('toastContainer');
   if (!container) return;
   const toast = document.createElement('div');
-  const bgClass = type === 'success' ? 'bg-primary text-gold border-gold'
-                : type === 'error'   ? 'bg-red-600 text-white border-red-400'
-                                     : 'bg-gold text-primary border-primary';
-  const iconClass = type === 'success' ? 'fa-solid fa-circle-check'
-                  : type === 'error'   ? 'fa-solid fa-circle-exclamation'
-                                       : 'fa-solid fa-circle-info';
-  toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-fade-in ${bgClass}`;
-  toast.innerHTML = `<i class="${iconClass} text-lg" aria-hidden="true"></i><span>${escapeHtml(message)}</span>`;
+  const config = {
+    success: { bg: 'bg-primary text-gold border-gold', icon: 'fa-circle-check' },
+    error:   { bg: 'bg-red-600 text-white border-red-400', icon: 'fa-circle-exclamation' },
+    info:    { bg: 'bg-gold text-primary border-primary', icon: 'fa-circle-info' }
+  };
+  const c = config[type] || config.info;
+  toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-fade-in ${c.bg}`;
+  toast.innerHTML = `<i class="fa-solid ${c.icon} text-lg" aria-hidden="true"></i><span>${escapeHtml(message)}</span>`;
   container.appendChild(toast);
   setTimeout(() => {
     toast.classList.add('opacity-0','transition-opacity','duration-300');
@@ -394,27 +414,38 @@ function showToast(message, type = 'success') {
   }, 4000);
 }
 
-/* ---------- Flash auto-dismiss ---------- */
+/* ========== FLASH MESSAGES → TOASTS ========== */
 document.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('flashContainer');
-  if (container) {
-    setTimeout(() => {
-      container.querySelectorAll('div').forEach(el => {
-        el.classList.add('opacity-0','transition-opacity','duration-500');
-        setTimeout(() => el.remove(), 500);
-      });
-    }, 5000);
-  }
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        showToast({{ message|tojson }}, {{ ('error' if category == 'error' else 'info' if category == 'info' else 'success')|tojson }});
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  // Initialize favorites from localStorage
+  try {
+    const stored = localStorage.getItem('leReveFavorites');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) favorites = new Set(parsed.map(String));
+    }
+  } catch(e) {}
+  updateFavoritesBadge();
 });
 
-/* ---------- Journal subscribe (global — used in footer on every page) ---------- */
+/* ========== JOURNAL SUBSCRIPTION ========== */
 async function handleJournalSubmit(e) {
   e.preventDefault();
   const form = e.target;
   const email = form.email.value.trim();
   if (!email) return;
+  const btn = form.querySelector('button[type="submit"]');
+  const originalText = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = 'Subscribing…'; }
   try {
-    const res = await fetch('{{ url_for("public.journal_subscribe") }}', {
+    const res = await fetch(URLS.apiJournal, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
       body: JSON.stringify({ email })
@@ -428,22 +459,23 @@ async function handleJournalSubmit(e) {
     }
   } catch {
     showToast('Network error. Please try again.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
   }
 }
 
-/* ---------- ESC closes modals ---------- */
+/* ========== KEYBOARD HANDLING ========== */
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeQuickViewModal();
     closeBookingModal();
+    // close mobile drawer on escape
+    const drawer = document.getElementById('mobileDrawer');
+    if (drawer && !drawer.classList.contains('hidden')) toggleMobileMenu();
   }
 });
 
-/* ============================================================
-   GLOBAL FAVORITES STATE
-   Pages that render property cards can override renderPropertyListings
-   but the state + badge logic lives here so the header badge always works.
-   ============================================================ */
+/* ========== FAVORITES MANAGEMENT ========== */
 let favorites = new Set();
 let showingFavoritesOnly = false;
 
@@ -463,19 +495,22 @@ function scrollToListingsAndShowFavorites() {
   const btn = document.getElementById('favoritesTriggerBtn');
   if (btn) {
     if (showingFavoritesOnly) { btn.classList.add('bg-gold', 'text-primary'); showToast('Showing your saved favorites only', 'info'); }
-    else { btn.classList.remove('bg-gold', 'text-primary'); }
+    else { btn.classList.remove('bg-gold', 'text-primary'); showToast('Showing all properties', 'info'); }
   }
   const grid = document.getElementById('propertyGrid');
-  if (grid) grid.scrollIntoView({ behavior: 'smooth' });
+  if (!grid) {
+    window.location.href = URLS.authStays + '#listings';
+    return;
+  }
+  grid.scrollIntoView({ behavior: 'smooth' });
   if (typeof renderPropertyListings === 'function') renderPropertyListings();
 }
 
-/* ---------- Favorites toggle (shared by index + stays) ---------- */
 async function toggleFavorite(id) {
   id = String(id);
   if (IS_LOGGED_IN) {
     try {
-      const res = await fetch('{{ url_for("public.wishlist_toggle") }}', {
+      const res = await fetch(URLS.apiWishlist, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
         body: JSON.stringify({ property_id: id })
@@ -494,7 +529,7 @@ async function toggleFavorite(id) {
   if (typeof renderPropertyListings === 'function') renderPropertyListings();
 }
 
-/* ---------- Endless marquee builder (used by index + reviews) ---------- */
+/* ========== MARQUEE BUILDER ========== */
 function buildEndlessMarquee(trackId, sourceId, opts = {}) {
   const track  = document.getElementById(trackId);
   const source = document.getElementById(sourceId);

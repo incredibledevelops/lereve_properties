@@ -1,7 +1,5 @@
 {% extends "client/base.html" %}
-
-{% block title %}My Inquiries — Client Portal{% endblock %}
-
+{% block title %}My Inquiries · Client Portal{% endblock %}
 {% set active_section = 'inquiries' %}
 {% set page_title = 'My Inquiries' %}
 {% set page_subtitle = 'Reservation requests in progress' %}
@@ -9,111 +7,7 @@
 {% block content %}
 
 {% set all_inquiries = inquiries|default([]) %}
-{% set total_new = all_inquiries|selectattr('status', 'equalto', 'new')|list|length %}
-{% set total_contacted = all_inquiries|selectattr('status', 'equalto', 'contacted')|list|length %}
-{% set total_booked = all_inquiries|selectattr('status', 'equalto', 'booked')|list|length %}
-{% set total_archived = all_inquiries|selectattr('status', 'equalto', 'archived')|list|length %}
 
-<!-- ============ SUMMARY CARDS ============ -->
-{% if all_inquiries %}
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-
-    <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Total</span>
-        <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-          <i class="fa-solid fa-inbox text-xs" aria-hidden="true"></i>
-        </div>
-      </div>
-      <p class="font-serif text-2xl font-bold text-primary">{{ all_inquiries|length }}</p>
-      <p class="text-[11px] text-charcoal/50 mt-1">All inquiries</p>
-    </div>
-
-    <div class="bg-white rounded-2xl p-5 border border-amber-200 shadow-sm">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-[10px] uppercase tracking-widest text-amber-700 font-bold">New</span>
-        <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
-          <i class="fa-solid fa-sparkles text-xs" aria-hidden="true"></i>
-        </div>
-      </div>
-      <p class="font-serif text-2xl font-bold text-amber-700">{{ total_new }}</p>
-      <p class="text-[11px] text-charcoal/50 mt-1">Awaiting first contact</p>
-    </div>
-
-    <div class="bg-white rounded-2xl p-5 border border-blue-200 shadow-sm">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-[10px] uppercase tracking-widest text-blue-700 font-bold">Contacted</span>
-        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
-          <i class="fa-solid fa-comments text-xs" aria-hidden="true"></i>
-        </div>
-      </div>
-      <p class="font-serif text-2xl font-bold text-blue-700">{{ total_contacted }}</p>
-      <p class="text-[11px] text-charcoal/50 mt-1">In conversation</p>
-    </div>
-
-    <div class="bg-white rounded-2xl p-5 border border-emerald-200 shadow-sm">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-[10px] uppercase tracking-widest text-emerald-700 font-bold">Booked</span>
-        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
-          <i class="fa-solid fa-circle-check text-xs" aria-hidden="true"></i>
-        </div>
-      </div>
-      <p class="font-serif text-2xl font-bold text-emerald-700">{{ total_booked }}</p>
-      <p class="text-[11px] text-charcoal/50 mt-1">Converted to stays</p>
-    </div>
-  </div>
-
-  <!-- ============ FILTERS + SEARCH ============ -->
-  <div class="flex flex-col sm:flex-row gap-3 mb-4">
-    <div class="flex flex-wrap gap-2">
-      <button type="button"
-              onclick="filterInquiries('all', this)"
-              data-filter="all"
-              class="inquiry-filter-btn active bg-primary text-gold px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
-        All <span class="ml-1 opacity-70">({{ all_inquiries|length }})</span>
-      </button>
-      <button type="button"
-              onclick="filterInquiries('new', this)"
-              data-filter="new"
-              class="inquiry-filter-btn border border-primary/20 bg-white text-primary hover:border-gold px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
-        New <span class="ml-1 opacity-70">({{ total_new }})</span>
-      </button>
-      <button type="button"
-              onclick="filterInquiries('contacted', this)"
-              data-filter="contacted"
-              class="inquiry-filter-btn border border-primary/20 bg-white text-primary hover:border-gold px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
-        Contacted <span class="ml-1 opacity-70">({{ total_contacted }})</span>
-      </button>
-      <button type="button"
-              onclick="filterInquiries('booked', this)"
-              data-filter="booked"
-              class="inquiry-filter-btn border border-primary/20 bg-white text-primary hover:border-gold px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
-        Booked <span class="ml-1 opacity-70">({{ total_booked }})</span>
-      </button>
-      {% if total_archived > 0 %}
-        <button type="button"
-                onclick="filterInquiries('archived', this)"
-                data-filter="archived"
-                class="inquiry-filter-btn border border-primary/20 bg-white text-primary hover:border-gold px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
-          Archived <span class="ml-1 opacity-70">({{ total_archived }})</span>
-        </button>
-      {% endif %}
-    </div>
-
-    <div class="relative flex-1 sm:max-w-xs sm:ml-auto">
-      <label for="inquirySearch" class="sr-only">Search inquiries</label>
-      <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-charcoal/40 text-xs" aria-hidden="true"></i>
-      <input type="text"
-             id="inquirySearch"
-             oninput="filterInquiries()"
-             placeholder="Search property or status…"
-             autocomplete="off"
-             class="w-full pl-8 pr-3 py-2.5 rounded-xl border border-charcoal/15 bg-white focus:ring-2 focus:ring-gold text-xs">
-    </div>
-  </div>
-{% endif %}
-
-<!-- ============ INQUIRIES TABLE ============ -->
 {% if all_inquiries %}
   <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -125,371 +19,50 @@
             <th class="px-5 py-3 font-bold">Guests</th>
             <th class="px-5 py-3 font-bold">Received</th>
             <th class="px-5 py-3 font-bold">Status</th>
-            <th class="px-5 py-3 font-bold text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-charcoal/5" id="inquiriesTableBody">
-
+        <tbody class="divide-y divide-charcoal/5">
           {% for i in all_inquiries %}
             {% set status_val = (i.status or 'new')|lower %}
-
-            <tr class="inquiry-row hover:bg-ivory/50 transition-colors cursor-pointer"
-                data-status="{{ status_val }}"
-                data-search="{{ ((i.property or 'General Inquiry') ~ ' ' ~ status_val)|lower }}"
-                onclick="viewInquiry('{{ i.id }}')">
-
-              <!-- Property -->
+            <tr class="hover:bg-ivory/50 transition-colors">
               <td class="px-5 py-3">
-                <p class="text-sm font-semibold text-primary truncate max-w-[220px]"
-                   title="{{ i.property|e if i.property else 'General Inquiry' }}">
-                  {{ i.property|e if i.property else 'General Inquiry' }}
-                </p>
-                {% if i.message %}
-                  <p class="text-[10px] text-charcoal/40 mt-0.5 flex items-center gap-1">
-                    <i class="fa-regular fa-comment-dots text-[9px]" aria-hidden="true"></i>
-                    Has notes
-                  </p>
-                {% endif %}
+                <p class="text-sm font-semibold text-primary truncate max-w-[220px]">{{ i.property or 'General Inquiry' }}</p>
               </td>
-
-              <!-- Dates -->
               <td class="px-5 py-3 text-xs text-charcoal/60 whitespace-nowrap">
                 {% if i.check_in and i.check_out %}
-                  <div>{{ i.check_in|format_date }}</div>
-                  <div class="text-charcoal/40">→ {{ i.check_out|format_date }}</div>
+                  {{ i.check_in|format_date }} → {{ i.check_out|format_date }}
                 {% else %}
-                  <span class="text-charcoal/40">Flexible dates</span>
+                  <span class="text-charcoal/40">Flexible</span>
                 {% endif %}
               </td>
-
-              <!-- Guests -->
-              <td class="px-5 py-3 text-xs text-charcoal/70">
-                {{ i.guests|e if i.guests else '—' }}
-              </td>
-
-              <!-- Received -->
-              <td class="px-5 py-3 text-xs text-charcoal/60 whitespace-nowrap"
-                  title="{{ i.created_at if i.created_at else '—' }}">
-                {{ i.created_at|relative_time if i.created_at else '—' }}
-              </td>
-
-              <!-- Status -->
+              <td class="px-5 py-3 text-xs text-charcoal/70">{{ i.guests or '—' }}</td>
+              <td class="px-5 py-3 text-xs text-charcoal/60">{{ i.created_at|relative_time }}</td>
               <td class="px-5 py-3">
                 <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full
                   {% if status_val == 'new' %}bg-amber-50 text-amber-600 border border-amber-200
                   {% elif status_val == 'contacted' %}bg-blue-50 text-blue-600 border border-blue-200
                   {% elif status_val == 'booked' %}bg-emerald-50 text-emerald-600 border border-emerald-200
                   {% else %}bg-ivory-dark text-charcoal/60 border border-charcoal/10{% endif %}">
-                  <span class="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true"></span>
-                  {{ status_val|e }}
+                  <span class="w-1.5 h-1.5 rounded-full bg-current"></span>{{ status_val }}
                 </span>
               </td>
-
-              <!-- Actions -->
-              <td class="px-5 py-3 text-right" onclick="event.stopPropagation()">
-                <div class="inline-flex items-center gap-2">
-                  <button type="button"
-                          onclick="viewInquiry('{{ i.id }}')"
-                          class="w-8 h-8 rounded-lg bg-primary text-gold hover:bg-gold hover:text-primary flex items-center justify-center transition-all"
-                          title="View inquiry"
-                          aria-label="View inquiry for {{ i.property|e if i.property else 'estate' }}">
-                    <i class="fa-solid fa-eye text-[10px]" aria-hidden="true"></i>
-                  </button>
-                  <a href="{{ url_for('client.messages') }}"
-                     class="w-8 h-8 rounded-lg bg-ivory hover:bg-gold text-primary flex items-center justify-center transition-all"
-                     title="Message concierge"
-                     aria-label="Message concierge about this inquiry">
-                    <i class="fa-solid fa-comments text-[10px]" aria-hidden="true"></i>
-                  </a>
-                </div>
-              </td>
             </tr>
-
           {% endfor %}
-
-          <!-- Empty state for filter/search -->
-          <tr id="noFilterResults" class="hidden">
-            <td colspan="6" class="px-5 py-12 text-center">
-              <i class="fa-solid fa-filter-circle-xmark text-charcoal/20 text-3xl mb-3" aria-hidden="true"></i>
-              <p class="text-sm text-charcoal/60 font-medium" id="noFilterTitle">No inquiries in this view</p>
-              <p class="text-xs text-charcoal/50 mt-1">Try a different filter or clear your search.</p>
-              <button type="button"
-                      onclick="document.querySelector('.inquiry-filter-btn[data-filter=\\'all\\']')?.click(); document.getElementById('inquirySearch').value='';"
-                      class="mt-3 text-xs text-gold hover:underline font-semibold">
-                Reset filters
-              </button>
-            </td>
-          </tr>
         </tbody>
       </table>
     </div>
   </div>
 {% else %}
-  <!-- No inquiries at all -->
-  <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gold/40" role="status">
+  <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gold/40">
     <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
-      <i class="fa-solid fa-envelope-open-text text-gold text-2xl" aria-hidden="true"></i>
+      <i class="fa-solid fa-envelope-open-text text-gold text-2xl"></i>
     </div>
     <p class="text-sm font-semibold text-primary mb-1">No inquiries yet</p>
-    <p class="text-xs text-charcoal/50 mb-4 max-w-sm mx-auto">
-      When you inquire about an estate, it will appear here so you can track its progress.
-    </p>
-    <a href="{{ url_for('public.home') }}#listings"
-       class="inline-flex items-center gap-2 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
-      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Browse Estates
+    <p class="text-xs text-charcoal/50 mb-4">Your reservation requests will appear here.</p>
+    <a href="{{ PUBLIC_SITE_URL }}" class="inline-flex items-center gap-2 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
+      <i class="fa-solid fa-magnifying-glass"></i> Browse Estates
     </a>
   </div>
 {% endif %}
 
-<!-- ============ DETAIL MODAL ============ -->
-<div id="inquiryDetailModal"
-     class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md"
-     onclick="if (event.target === this) closeInquiryModal();">
-  <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative">
-    <button type="button"
-            onclick="closeInquiryModal()"
-            class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold transition-all flex items-center justify-center"
-            aria-label="Close">
-      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-    </button>
-    <div id="inquiryModalContent" class="p-6 sm:p-8"></div>
-  </div>
-</div>
-
-<!-- Hidden data island for modal -->
-<script id="inquiriesData" type="application/json">
-  {{ all_inquiries|tojson }}
-</script>
-
-{% endblock %}
-
-
-{% block scripts %}
-<script>
-/* ============================================================
-   CLIENT INQUIRIES — interactive helpers
-   ============================================================ */
-
-(function () {
-  'use strict';
-
-  let activeFilter = 'all';
-
-  /* --------------------------------------------------
-     Filter inquiries by status + search
-  -------------------------------------------------- */
-  window.filterInquiries = function (filter, btn) {
-    if (typeof filter === 'string') {
-      activeFilter = filter;
-    }
-
-    // Update pill styling
-    if (btn) {
-      document.querySelectorAll('.inquiry-filter-btn').forEach(b => {
-        const isActive = b.dataset.filter === filter;
-        b.setAttribute('aria-pressed', String(isActive));
-        if (isActive) {
-          b.classList.add('active', 'bg-primary', 'text-gold');
-          b.classList.remove('border', 'border-primary/20', 'bg-white', 'text-primary');
-        } else {
-          b.classList.remove('active', 'bg-primary', 'text-gold');
-          b.classList.add('border', 'border-primary/20', 'bg-white', 'text-primary');
-        }
-      });
-    }
-
-    const q = (document.getElementById('inquirySearch')?.value || '').toLowerCase().trim();
-    const rows = document.querySelectorAll('.inquiry-row');
-    let visible = 0;
-
-    rows.forEach(row => {
-      const matchesFilter = activeFilter === 'all' || row.dataset.status === activeFilter;
-      const matchesSearch = !q || (row.dataset.search || '').includes(q);
-      const matches = matchesFilter && matchesSearch;
-      row.style.display = matches ? '' : 'none';
-      if (matches) visible++;
-    });
-
-    // Show no-results row if nothing visible
-    const noResults = document.getElementById('noFilterResults');
-    if (noResults) {
-      const shouldShow = visible === 0 && rows.length > 0;
-      noResults.classList.toggle('hidden', !shouldShow);
-    }
-  };
-
-  /* --------------------------------------------------
-     Copy helper (used in modal)
-  -------------------------------------------------- */
-  function copyText(text, btn) {
-    if (!text || !navigator.clipboard) return;
-    navigator.clipboard.writeText(text).then(() => {
-      const icon = btn.querySelector('i');
-      if (icon) {
-        const original = icon.className;
-        icon.className = 'fa-solid fa-check text-[10px] text-emerald-600';
-        setTimeout(() => { icon.className = original; }, 1500);
-      }
-      if (window.clientToast) window.clientToast('Copied.', 'success');
-    }).catch(() => {
-      if (window.clientToast) window.clientToast('Could not copy.', 'error');
-    });
-  }
-  window.copyText = copyText;
-
-  /* --------------------------------------------------
-     Detail modal
-  -------------------------------------------------- */
-  let INQUIRIES_CACHE = null;
-
-  function getInquiriesData() {
-    if (INQUIRIES_CACHE) return INQUIRIES_CACHE;
-    try {
-      const el = document.getElementById('inquiriesData');
-      INQUIRIES_CACHE = JSON.parse(el.textContent) || [];
-    } catch (e) {
-      INQUIRIES_CACHE = [];
-    }
-    return INQUIRIES_CACHE;
-  }
-
-  function escapeHtml(str) {
-    return String(str ?? '').replace(/[&<>"']/g, m => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[m]));
-  }
-
-  function formatDate(iso) {
-    if (!iso) return '—';
-    try {
-      const d = new Date(iso);
-      if (isNaN(d)) return iso;
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch (e) {
-      return iso;
-    }
-  }
-
-  window.viewInquiry = function (id) {
-    const list = getInquiriesData();
-    const i = list.find(x => String(x.id) === String(id));
-    if (!i) {
-      if (window.clientToast) window.clientToast('Inquiry not found.', 'error');
-      return;
-    }
-
-    const status = (i.status || 'new').toLowerCase();
-    const statusClass = {
-      'new': 'bg-amber-100 text-amber-700 border-amber-200',
-      'contacted': 'bg-blue-100 text-blue-700 border-blue-200',
-      'booked': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-      'archived': 'bg-ivory-dark text-charcoal/60 border-charcoal/10'
-    }[status] || 'bg-ivory-dark text-charcoal/60 border-charcoal/10';
-
-    const statusLabel = status.replace('-', ' ');
-
-    const modal = document.getElementById('inquiryDetailModal');
-    const content = document.getElementById('inquiryModalContent');
-
-    content.innerHTML = `
-      <div class="mb-6">
-        <span class="text-[10px] uppercase tracking-widest text-gold font-bold">Inquiry Details</span>
-        <h3 class="font-serif text-2xl font-semibold text-primary leading-tight mt-1">
-          ${escapeHtml(i.property || 'General Inquiry')}
-        </h3>
-        <p class="text-xs text-charcoal/60 mt-1">
-          <i class="fa-regular fa-clock mr-1" aria-hidden="true"></i>
-          Submitted ${escapeHtml(i.created_at || '—')}
-        </p>
-      </div>
-
-      <div class="flex items-center gap-2 mb-6">
-        <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${statusClass}">
-          <span class="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true"></span>
-          ${escapeHtml(statusLabel)}
-        </span>
-      </div>
-
-      <div class="rounded-2xl border border-charcoal/10 overflow-hidden mb-6">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-charcoal/5">
-          <span class="text-xs text-charcoal/60">Check-In</span>
-          <span class="text-sm font-semibold text-primary">${escapeHtml(formatDate(i.check_in))}</span>
-        </div>
-        <div class="flex items-center justify-between px-4 py-3 border-b border-charcoal/5">
-          <span class="text-xs text-charcoal/60">Check-Out</span>
-          <span class="text-sm font-semibold text-primary">${escapeHtml(formatDate(i.check_out))}</span>
-        </div>
-        <div class="flex items-center justify-between px-4 py-3 border-b border-charcoal/5">
-          <span class="text-xs text-charcoal/60">Guests</span>
-          <span class="text-sm font-semibold text-primary">${escapeHtml(i.guests || '—')}</span>
-        </div>
-        <div class="flex items-center justify-between px-4 py-3 bg-ivory/40">
-          <span class="text-xs text-charcoal/60">Reference ID</span>
-          <button type="button"
-                  onclick="copyText('${escapeHtml(i.id || '')}', this)"
-                  class="inline-flex items-center gap-2 font-mono text-xs font-semibold text-primary hover:text-gold transition-colors"
-                  aria-label="Copy reference ID">
-            <span>${escapeHtml((i.id || '').slice(-12))}</span>
-            <i class="fa-solid fa-copy text-[10px] opacity-50" aria-hidden="true"></i>
-          </button>
-        </div>
-      </div>
-
-      ${i.message ? `
-        <div class="p-4 rounded-2xl bg-primary/5 border border-primary/10 mb-6">
-          <p class="text-[10px] uppercase text-primary/60 font-bold mb-2">
-            <i class="fa-regular fa-comment-dots mr-1" aria-hidden="true"></i>
-            Your Notes
-          </p>
-          <p class="text-sm text-charcoal/80 leading-relaxed whitespace-pre-wrap">${escapeHtml(i.message)}</p>
-        </div>
-      ` : ''}
-
-      <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-charcoal/10">
-        <a href="{{ url_for('client.messages') }}"
-           class="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-gold hover:bg-gold hover:text-primary px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
-          <i class="fa-solid fa-comments" aria-hidden="true"></i>
-          Message Concierge
-        </a>
-        <button type="button"
-                onclick="closeInquiryModal()"
-                class="flex-1 border border-charcoal/15 hover:bg-ivory px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
-          Close
-        </button>
-      </div>
-    `;
-
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    document.body.classList.add('modal-open');
-  };
-
-  window.closeInquiryModal = function () {
-    const modal = document.getElementById('inquiryDetailModal');
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    document.body.classList.remove('modal-open');
-  };
-
-  /* --------------------------------------------------
-     Keyboard: Escape closes modal
-  -------------------------------------------------- */
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      window.closeInquiryModal();
-    }
-  });
-
-  /* --------------------------------------------------
-     Initialize filter state on load
-  -------------------------------------------------- */
-  document.addEventListener('DOMContentLoaded', () => {
-    const initialBtn = document.querySelector('.inquiry-filter-btn[data-filter="all"]');
-    if (initialBtn) {
-      filterInquiries('all', initialBtn);
-    }
-  });
-})();
-</script>
 {% endblock %}

@@ -1,0 +1,114 @@
+{% extends "client/base.html" %}
+{% block title %}{{ booking.property }} · Booking{% endblock %}
+{% set active_section = 'bookings' %}
+{% set page_title = booking.property %}
+{% set page_subtitle = 'Booking details' %}
+
+{% block content %}
+
+{% set status_val = (booking.status or 'pending')|lower %}
+{% set payment_status = (booking.payment_status or 'pending')|lower %}
+
+{% if status_val == 'confirmed' %}{% set status_class = 'bg-emerald-100 text-emerald-700 border-emerald-200' %}
+{% elif status_val == 'completed' %}{% set status_class = 'bg-blue-100 text-blue-700 border-blue-200' %}
+{% elif status_val == 'pending' %}{% set status_class = 'bg-amber-100 text-amber-700 border-amber-200' %}
+{% elif status_val == 'cancelled' %}{% set status_class = 'bg-red-100 text-red-700 border-red-200' %}
+{% else %}{% set status_class = 'bg-ivory-dark text-charcoal/70 border-charcoal/10' %}{% endif %}
+
+{% if payment_status == 'paid' %}{% set payment_class = 'bg-emerald-100 text-emerald-700' %}
+{% elif payment_status == 'failed' %}{% set payment_class = 'bg-red-100 text-red-700' %}
+{% elif payment_status == 'refunded' %}{% set payment_class = 'bg-purple-100 text-purple-700' %}
+{% else %}{% set payment_class = 'bg-amber-100 text-amber-700' %}{% endif %}
+
+<nav class="flex items-center gap-2 text-xs text-charcoal/60 mb-5 max-w-3xl mx-auto">
+  <a href="{{ url_for('client.dashboard') }}" class="hover:text-gold">Dashboard</a>
+  <i class="fa-solid fa-chevron-right text-[9px]"></i>
+  <a href="{{ url_for('client.bookings') }}" class="hover:text-gold">My Bookings</a>
+  <i class="fa-solid fa-chevron-right text-[9px]"></i>
+  <span class="text-primary font-semibold truncate">{{ booking.property }}</span>
+</nav>
+
+<div class="max-w-3xl mx-auto bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
+  <div class="relative aspect-[16/9] bg-primary-dark overflow-hidden">
+    {% if booking.image %}
+      <img src="{{ booking.image }}" alt="{{ booking.property }}" class="w-full h-full object-cover">
+    {% else %}
+      <div class="w-full h-full flex items-center justify-center">
+        <i class="fa-solid fa-house-chimney text-gold text-5xl opacity-40"></i>
+      </div>
+    {% endif %}
+    <div class="absolute inset-0 bg-gradient-to-t from-primary/70 via-transparent to-transparent"></div>
+    <span class="absolute top-4 left-4 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border {{ status_class }}">
+      <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+      {{ status_val|replace('-', ' ') }}
+    </span>
+  </div>
+
+  <div class="p-6 sm:p-8">
+    <h3 class="font-serif text-3xl font-semibold text-primary leading-tight mb-1">{{ booking.property }}</h3>
+    <p class="text-sm text-charcoal/60 mb-6"><i class="fa-solid fa-location-dot text-gold mr-1"></i>{{ booking.location }}</p>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-ivory border border-gold/20 mb-6">
+      <div><p class="text-[10px] uppercase text-charcoal/50 font-semibold mb-0.5">Check-in</p><p class="text-sm font-bold text-primary">{{ booking.check_in|format_date }}</p></div>
+      <div><p class="text-[10px] uppercase text-charcoal/50 font-semibold mb-0.5">Check-out</p><p class="text-sm font-bold text-primary">{{ booking.check_out|format_date }}</p></div>
+      <div><p class="text-[10px] uppercase text-charcoal/50 font-semibold mb-0.5">Nights</p><p class="text-sm font-bold text-primary">{{ booking.nights or 1 }}</p></div>
+      <div><p class="text-[10px] uppercase text-charcoal/50 font-semibold mb-0.5">Guests</p><p class="text-sm font-bold text-primary">{{ booking.guests }}</p></div>
+    </div>
+
+    <div class="rounded-2xl border border-charcoal/10 overflow-hidden mb-6">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-charcoal/5 bg-ivory/40">
+        <span class="text-xs text-charcoal/60 font-semibold uppercase tracking-wider">Confirmation</span>
+        <button type="button" onclick="copyText('{{ booking.confirmation_id }}', this)"
+                class="flex items-center gap-2 font-mono font-semibold text-primary text-xs hover:text-gold transition-colors">
+          <span>{{ booking.confirmation_id or '—' }}</span>
+          <i class="fa-solid fa-copy text-[10px] opacity-50"></i>
+        </button>
+      </div>
+      <div class="flex items-center justify-between px-4 py-4 bg-primary text-ivory">
+        <span class="text-xs uppercase tracking-widest text-ivory/80 font-semibold">Total</span>
+        <span class="font-serif text-2xl font-bold text-gold">{{ booking.total|format_currency }}</span>
+      </div>
+      <div class="flex items-center justify-between px-4 py-3 border-t border-charcoal/5 bg-ivory/40">
+        <span class="text-xs text-charcoal/60 font-semibold uppercase tracking-wider">Payment</span>
+        <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full {{ payment_class }}">
+          <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+          {{ payment_status }}
+        </span>
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3">
+      <a href="{{ url_for('client.messages') }}" class="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-gold hover:bg-gold hover:text-primary px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
+        <i class="fa-solid fa-comments"></i> Message Concierge
+      </a>
+      <a href="{{ url_for('client.bookings') }}" class="flex-1 inline-flex items-center justify-center gap-2 border border-charcoal/15 text-primary hover:bg-ivory px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
+        <i class="fa-solid fa-arrow-left"></i> Back to Bookings
+      </a>
+      {% if status_val in ('confirmed', 'pending') %}
+        <form method="POST" action="{{ url_for('client.cancel_booking', bid=booking.id) }}" onsubmit="return confirm('Request cancellation?')" class="flex-1">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="w-full inline-flex items-center justify-center gap-2 border border-red-200 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
+            <i class="fa-solid fa-ban"></i> Request Cancellation
+          </button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyText(text, btn) {
+  if (!text || !navigator.clipboard) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const i = btn.querySelector('i');
+    const orig = i.className;
+    i.className = 'fa-solid fa-check text-[10px] text-emerald-600';
+    setTimeout(() => i.className = orig, 1500);
+    LeReve.toast('Copied.', 'success');
+  });
+}
+</script>
+{% endblock %}

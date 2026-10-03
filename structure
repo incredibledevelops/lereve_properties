@@ -1,0 +1,124 @@
+lereve-properties/
+│
+├── app.py                          # App factory + WSGI entrypoint (port 5007)
+├── config.py                       # Environment-driven config + validation
+├── extensions.py                   # Flask extensions (db, csrf, login, limiter, mail)
+├── bootstrap.py                    # DB indexes + admin/client seed (no circular imports)
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── README.md
+├── wsgi.py                         # Production WSGI entry (gunicorn)
+│
+├── models/
+│   ├── __init__.py                 # Export all models
+│   ├── base.py                     # Shared helpers: utcnow, safe_oid, oid_to_str
+│   ├── user.py                     # User + UserRole
+│   ├── category.py                 # Category
+│   ├── property.py                 # Property
+│   ├── booking.py                  # Booking
+│   ├── inquiry.py                  # Inquiry
+│   ├── review.py                   # Review
+│   ├── journal.py                  # JournalSubscriber
+│   ├── message.py                  # Message (client ↔ concierge, threaded)
+│   ├── wishlist.py                 # Wishlist
+│   ├── analytics.py                # AnalyticsEvent (page views, searches, etc.)
+│   └── settings.py                 # Settings singleton
+│
+├── services/
+│   ├── __init__.py
+│   ├── mailer.py                   # Async SMTP (thread pool)
+│   ├── paystack.py                 # Paystack API wrapper
+│   ├── availability.py             # Date-overlap logic
+│   ├── analytics.py                # Event tracking helpers
+│   └── slug.py                     # Slugification
+│
+├── routes/
+│   ├── __init__.py                 # Blueprint registry
+│   ├── auth.py                     # login / register / logout / password reset
+│   ├── client.py                   # Client portal
+│   ├── admin.py                    # Admin panel
+│   ├── paystack.py                 # Payment routes + webhook
+│   └── api.py                      # JSON API (listings, wishlist toggle, chat poll)
+│
+├── forms/
+│   ├── __init__.py
+│   ├── auth_forms.py
+│   ├── client_forms.py
+│   └── admin_forms.py
+│
+├── utils/
+│   ├── __init__.py
+│   ├── decorators.py               # @admin_required, @client_required
+│   ├── security.py                 # Safe redirect, rate-limit keys
+│   ├── pagination.py               # Mongo-native pagination
+│   └── formatting.py               # Currency, date, relative time
+│
+├── static/
+│   ├── css/
+│   │   └── app.css                 # Design system + components
+│   ├── js/
+│   │   ├── shared.js               # escapeHtml, toast, modal, csrf helpers
+│   │   ├── listings.js             # Property cards + filters (client portal)
+│   │   ├── chat.js                 # Client + admin chat (polling)
+│   │   ├── analytics.js            # Admin analytics (Chart.js)
+│   │   └── admin.js                # Admin-only UI (tables, filters)
+│   └── img/
+│       ├── favicon.png
+│       ├── logo.png
+│       └── logo-light.png
+│
+├── templates/
+│   ├── base.html                   # Public+auth shell (meta, OG, JSON-LD)
+│   ├── errors/
+│   │   ├── 400.html
+│   │   ├── 403.html
+│   │   ├── 404.html
+│   │   ├── 429.html
+│   │   └── 500.html
+│   ├── auth/
+│   │   ├── login.html
+│   │   ├── register.html
+│   │   ├── forgot.html
+│   │   └── reset.html
+│   ├── client/
+│   │   ├── base.html
+│   │   ├── dashboard.html
+│   │   ├── bookings.html
+│   │   ├── booking_detail.html
+│   │   ├── wishlist.html
+│   │   ├── inquiries.html
+│   │   ├── messages.html
+│   │   ├── profile.html
+│   │   └── preferences.html
+│   ├── admin/
+│   │   ├── base.html
+│   │   ├── dashboard.html
+│   │   ├── analytics.html          # NEW
+│   │   ├── users.html              # NEW
+│   │   ├── user_detail.html        # NEW
+│   │   ├── properties.html
+│   │   ├── property_form.html
+│   │   ├── categories.html
+│   │   ├── category_form.html
+│   │   ├── bookings.html
+│   │   ├── booking_detail.html
+│   │   ├── inquiries.html
+│   │   ├── reviews.html
+│   │   ├── review_form.html
+│   │   ├── messages.html           # NEW (admin inbox)
+│   │   ├── message_thread.html     # NEW
+│   │   ├── journal.html
+│   │   └── settings.html
+│   ├── robots.txt
+│   └── sitemap.xml
+│
+├── tests/
+│   ├── conftest.py
+│   ├── test_auth.py
+│   ├── test_client.py
+│   ├── test_admin.py
+│   └── test_paystack.py
+│
+└── logs/
+    └── .gitkeep

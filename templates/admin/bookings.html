@@ -1,0 +1,533 @@
+{% extends "admin/base.html" %}
+{% block title %}Bookings · Admin Console{% endblock %}
+{% set active_section = 'bookings' %}
+{% block page_title %}Bookings{% endblock %}
+{% block page_subtitle %}All reservations across the portfolio{% endblock %}
+
+{% block content %}
+
+{# ============================================================
+   Flash messages
+   ============================================================ #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mb-5 space-y-2" aria-live="polite">
+      {% for cat, msg in messages %}
+        {% set is_error = cat in ('error', 'danger') %}
+        <div role="alert"
+             class="flex items-start gap-2 p-3 rounded-xl border text-xs
+                    {% if is_error %}
+                      border-red-200 bg-red-50 text-red-700
+                    {% else %}
+                      border-emerald-200 bg-emerald-50 text-emerald-700
+                    {% endif %}">
+          <i class="fa-solid {% if is_error %}fa-circle-exclamation{% else %}fa-circle-check{% endif %} mt-0.5"
+             aria-hidden="true"></i>
+          <span>{{ msg }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{# ============================================================
+   KPI row
+   ============================================================ #}
+{% set show_count = pagination.total if status_filter else pagination.total %}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      {% if status_filter %}{{ status_filter | replace('-', ' ') | title }}{% else %}Total{% endif %} Bookings
+    </span>
+    <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
+      {{ "{:,}".format(pagination.total or 0) }}
+    </p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      Paid Revenue (all time)
+    </span>
+    <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
+      {{ total_revenue|format_currency }}
+    </p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      Pending Payment
+    </span>
+    <p class="font-serif text-3xl font-bold text-amber-600 mt-2 tabular-nums">
+      {{ "{:,}".format(pending_count|default(0)) }}
+    </p>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
+    <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      Actions
+    </span>
+    <div class="flex gap-2 mt-3">
+      <a href="{{ url_for('admin.bookings', status=status_filter, format='csv') if status_filter else url_for('admin.bookings', format='csv') }}"
+         class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
+                bg-primary text-gold hover:bg-gold hover:text-primary
+                text-[10px] font-bold uppercase tracking-wider transition-all"
+         title="Export current view as CSV">
+        <i class="fa-solid fa-file-csv" aria-hidden="true"></i>
+        <span>Export</span>
+      </a>
+      <button type="button"
+              id="refreshBtn"
+              class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
+                     border border-charcoal/15 hover:border-gold hover:text-gold
+                     text-[10px] font-bold uppercase tracking-wider text-charcoal/70 transition-all"
+              title="Refresh">
+        <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+{# ============================================================
+   Toolbar — status pills + search + date range
+   ============================================================ #}
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm p-4 mb-4">
+
+  {# Status pills #}
+  <div class="flex flex-wrap gap-2 mb-3" role="tablist" aria-label="Filter by status">
+    {% set status_options = [
+      ('',                     'All',                   'fa-list',                0),
+      ('pending',              'Pending',               'fa-hourglass-half',      0),
+      ('confirmed',            'Confirmed',             'fa-circle-check',        0),
+      ('completed',            'Completed',             'fa-flag-checkered',      0),
+      ('cancellation-requested','Cancellation',         'fa-clock-rotate-left',   0),
+      ('cancelled',            'Cancelled',             'fa-ban',                 0),
+    ] %}
+    {% for v, l, i, _ in status_options %}
+      {% set is_active = (status_filter == v) or (not status_filter and v == '') %}
+      <a href="{{ url_for('admin.bookings', status=v) if v else url_for('admin.bookings') }}"
+         role="tab"
+         aria-selected="{{ 'true' if is_active else 'false' }}"
+         class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full
+                text-xs font-bold uppercase tracking-wider transition-all
+                {% if is_active %}
+                  bg-primary text-gold shadow-sm
+                {% else %}
+                  border border-primary/20 bg-white text-primary hover:border-gold hover:text-gold
+                {% endif %}">
+        <i class="fa-solid {{ i }} text-[10px]" aria-hidden="true"></i>
+        <span>{{ l }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  {# Search + date range + clear #}
+  <form method="GET"
+        action="{{ url_for('admin.bookings') }}"
+        role="search"
+        class="flex flex-wrap items-center gap-2">
+
+    {% if status_filter %}
+      <input type="hidden" name="status" value="{{ status_filter }}">
+    {% endif %}
+
+    {# Search #}
+    <div class="relative flex-1 min-w-[180px]">
+      <label for="bookingsSearch" class="sr-only">Search bookings</label>
+      <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2
+                text-charcoal/30 text-xs pointer-events-none" aria-hidden="true"></i>
+      <input id="bookingsSearch"
+             name="q"
+             type="search"
+             value="{{ q|default('') }}"
+             placeholder="Search by guest, email, or property…"
+             autocomplete="off"
+             class="w-full pl-8 pr-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
+                    focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+    </div>
+
+    {# Date from #}
+    <div class="flex items-center gap-1.5">
+      <label for="bookingsFrom" class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+        From
+      </label>
+      <input id="bookingsFrom"
+             name="from"
+             type="date"
+             value="{{ from_date|default('') }}"
+             class="px-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
+                    focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+    </div>
+
+    {# Date to #}
+    <div class="flex items-center gap-1.5">
+      <label for="bookingsTo" class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+        To
+      </label>
+      <input id="bookingsTo"
+             name="to"
+             type="date"
+             value="{{ to_date|default('') }}"
+             class="px-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
+                    focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+    </div>
+
+    <button type="submit"
+            class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
+                   bg-primary text-gold hover:bg-gold hover:text-primary
+                   text-[10px] font-bold uppercase tracking-wider transition-all">
+      <i class="fa-solid fa-filter" aria-hidden="true"></i>
+      <span>Apply</span>
+    </button>
+
+    {% if q or from_date or to_date or status_filter %}
+      <a href="{{ url_for('admin.bookings') }}"
+         class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
+                border border-charcoal/15 hover:border-red-300 hover:text-red-600
+                text-[10px] font-bold uppercase tracking-wider text-charcoal/60 transition-all">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        <span>Clear</span>
+      </a>
+    {% endif %}
+  </form>
+</div>
+
+{# ============================================================
+   Table
+   ============================================================ #}
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <caption class="sr-only">
+        Bookings list{% if status_filter %} filtered by {{ status_filter }}{% endif %}
+      </caption>
+
+      <thead class="bg-ivory-dark/60 text-primary">
+        <tr class="text-left text-[11px] uppercase tracking-wider">
+          <th scope="col" class="px-4 py-3 font-bold">Guest</th>
+          <th scope="col" class="px-4 py-3 font-bold hidden md:table-cell">Property</th>
+          <th scope="col" class="px-4 py-3 font-bold hidden sm:table-cell">Dates</th>
+          <th scope="col" class="px-4 py-3 font-bold">Total</th>
+          <th scope="col" class="px-4 py-3 font-bold hidden lg:table-cell">Payment</th>
+          <th scope="col" class="px-4 py-3 font-bold">Status</th>
+          <th scope="col" class="px-4 py-3 font-bold text-right">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-charcoal/5">
+        {% for b in bookings %}
+          {% set status = b.status or 'pending' %}
+          {% set pay    = b.payment_status or 'pending' %}
+          <tr class="hover:bg-ivory/50 transition-colors align-middle">
+
+            {# --- Guest --- #}
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-primary/10 text-primary
+                            flex items-center justify-center shrink-0 text-xs font-bold"
+                     aria-hidden="true">
+                  {{ (b.user_name or 'G')[0] | upper }}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-semibold text-primary text-sm truncate">
+                    {{ b.user_name or 'Guest' }}
+                  </p>
+                  <p class="text-[11px] text-charcoal/50 truncate">
+                    {{ b.user_email or '—' }}
+                  </p>
+                  {# Mobile-only: show property under guest #}
+                  <p class="md:hidden text-[10px] text-charcoal/50 truncate mt-0.5">
+                    {{ b.property or '—' }}
+                  </p>
+                </div>
+              </div>
+            </td>
+
+            {# --- Property --- #}
+            <td class="px-4 py-3 hidden md:table-cell">
+              <div class="flex items-center gap-2">
+                {% if b.image %}
+                  <img src="{{ b.image }}"
+                       alt=""
+                       class="w-9 h-9 rounded-lg object-cover border border-gold/20 shrink-0"
+                       loading="lazy">
+                {% endif %}
+                <div class="min-w-0">
+                  <p class="text-xs text-primary font-medium truncate max-w-[180px]">
+                    {{ b.property or '—' }}
+                  </p>
+                  <p class="text-[10px] text-charcoal/50 truncate">
+                    {{ b.location or '—' }}
+                  </p>
+                </div>
+              </div>
+            </td>
+
+            {# --- Dates --- #}
+            <td class="px-4 py-3 hidden sm:table-cell">
+              <p class="text-xs text-primary whitespace-nowrap">
+                {{ b.check_in | format_date if b.check_in else '—' }}
+                <span class="text-charcoal/30 mx-1">→</span>
+                {{ b.check_out | format_date if b.check_out else '—' }}
+              </p>
+              <p class="text-[10px] text-charcoal/50">
+                {% if b.nights is defined and b.nights is not none %}
+                  {{ b.nights }} night{% if b.nights != 1 %}s{% endif %}
+                {% else %}
+                  —
+                {% endif %}
+                · {{ b.guests or '—' }} guest{% if b.guests and b.guests != 1 %}s{% endif %}
+              </p>
+            </td>
+
+            {# --- Total --- #}
+            <td class="px-4 py-3">
+              <p class="font-serif text-base font-bold text-primary tabular-nums">
+                {{ b.total|format_currency }}
+              </p>
+            </td>
+
+            {# --- Payment --- #}
+            <td class="px-4 py-3 hidden lg:table-cell">
+              <span class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase
+                           px-2.5 py-1 rounded-full
+                           {% if pay == 'paid' %}text-emerald-700 bg-emerald-100
+                           {% elif pay == 'failed' %}text-red-700 bg-red-100
+                           {% elif pay == 'refunded' %}text-purple-700 bg-purple-100
+                           {% elif pay == 'refund-pending' %}text-blue-700 bg-blue-100
+                           {% else %}text-amber-700 bg-amber-100{% endif %}">
+                <span class="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true"></span>
+                {{ pay }}
+              </span>
+            </td>
+
+            {# --- Status (inline form) --- #}
+            <td class="px-4 py-3">
+              <form method="POST"
+                    action="{{ url_for('admin.booking_status', bid=b.id) }}"
+                    class="inline-flex"
+                    data-booking-ref="{{ b.confirmation_id or b.id }}"
+                    data-booking-current="{{ status }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="status-{{ b.id }}" class="sr-only">
+                  Change status for {{ b.user_name or 'booking' }}
+                </label>
+                <select id="status-{{ b.id }}"
+                        name="status"
+                        data-status-select
+                        class="text-[11px] font-bold uppercase px-3 py-1.5 rounded-full
+                               border-0 cursor-pointer focus:ring-2 focus:ring-gold
+                               appearance-none pr-7 bg-no-repeat bg-right
+                               {% if status == 'confirmed' %}bg-emerald-100 text-emerald-700
+                               {% elif status == 'completed' %}bg-blue-100 text-blue-700
+                               {% elif status == 'pending' %}bg-amber-100 text-amber-700
+                               {% elif status == 'cancelled' %}bg-red-100 text-red-700
+                               {% elif status == 'cancellation-requested' %}bg-amber-100 text-amber-800
+                               {% else %}bg-ivory-dark text-charcoal/70{% endif %}"
+                        style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22currentColor%22><path d=%22M5.25 7.5l4.5 4.5 4.5-4.5z%22/></svg>');">
+                  {% for s in ['pending', 'confirmed', 'completed', 'cancellation-requested', 'cancelled'] %}
+                    <option value="{{ s }}" {% if status == s %}selected{% endif %}>
+                      {{ s | replace('-', ' ') }}
+                    </option>
+                  {% endfor %}
+                </select>
+
+                {# Explicit apply button — hidden by default, appears when the select changes #}
+                <button type="submit"
+                        data-status-apply
+                        class="hidden ml-1 w-7 h-7 rounded-full bg-primary text-gold
+                               hover:bg-gold hover:text-primary
+                               items-center justify-center transition-all"
+                        title="Apply status change">
+                  <i class="fa-solid fa-check text-[10px]" aria-hidden="true"></i>
+                </button>
+              </form>
+            </td>
+
+            {# --- Actions --- #}
+            <td class="px-4 py-3">
+              <div class="flex items-center justify-end gap-1.5">
+                <a href="{{ url_for('admin.booking_detail', bid=b.id) }}"
+                   class="w-9 h-9 rounded-lg bg-primary text-gold hover:bg-gold hover:text-primary
+                          flex items-center justify-center transition-all"
+                   title="View booking"
+                   aria-label="View booking for {{ b.user_name or 'guest' }}">
+                  <i class="fa-solid fa-eye text-[11px]" aria-hidden="true"></i>
+                </a>
+                {% if b.user_email %}
+                  <a href="mailto:{{ b.user_email }}?subject=Your booking {{ b.confirmation_id or b.id }}"
+                     class="w-9 h-9 rounded-lg bg-ivory hover:bg-gold text-primary
+                            flex items-center justify-center transition-all"
+                     title="Email guest"
+                     aria-label="Email {{ b.user_name or 'guest' }}">
+                    <i class="fa-solid fa-envelope text-[11px]" aria-hidden="true"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="7" class="px-5 py-16 text-center">
+              <div class="flex flex-col items-center">
+                <i class="fa-regular fa-calendar-xmark text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
+                <p class="text-sm font-semibold text-primary mb-1">
+                  {% if q or from_date or to_date or status_filter %}
+                    No bookings match your filters.
+                  {% else %}
+                    No bookings yet.
+                  {% endif %}
+                </p>
+                <p class="text-xs text-charcoal/50 mb-4">
+                  {% if q or from_date or to_date or status_filter %}
+                    Try widening the date range or clearing the search.
+                  {% else %}
+                    Bookings will appear here once guests start reserving.
+                  {% endif %}
+                </p>
+                {% if q or from_date or to_date or status_filter %}
+                  <a href="{{ url_for('admin.bookings') }}"
+                     class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl
+                            bg-primary text-gold hover:bg-gold hover:text-primary
+                            text-[10px] font-bold uppercase tracking-wider transition-all">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    Clear filters
+                  </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ============================================================
+   Pagination
+   ============================================================ #}
+{% if pagination.pages > 1 %}
+  <div class="flex flex-wrap items-center justify-between gap-3 mt-5">
+    <p class="text-xs text-charcoal/60">
+      Showing <b>{{ pagination.items|length }}</b>
+      of <b>{{ pagination.total }}</b>
+      {% if status_filter %}
+        <span class="text-charcoal/40">·</span>
+        <span class="capitalize">{{ status_filter | replace('-', ' ') }}</span>
+      {% endif %}
+    </p>
+
+    <div class="flex items-center gap-2">
+      <a href="{{ url_for('admin.bookings',
+                          page=pagination.page - 1,
+                          status=status_filter,
+                          q=q, from=from_date, to=to_date) }}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white
+                text-xs font-bold uppercase text-primary
+                hover:border-gold hover:text-gold transition-all
+                {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}"
+         aria-label="Previous page">
+        <i class="fa-solid fa-chevron-left text-[10px]" aria-hidden="true"></i>
+        <span class="ml-1">Prev</span>
+      </a>
+
+      <span class="px-3 py-2 text-xs text-charcoal/60 tabular-nums">
+        Page {{ pagination.page }} / {{ pagination.pages }}
+      </span>
+
+      <a href="{{ url_for('admin.bookings',
+                          page=pagination.page + 1,
+                          status=status_filter,
+                          q=q, from=from_date, to=to_date) }}"
+         class="px-4 py-2 rounded-lg border border-primary/20 bg-white
+                text-xs font-bold uppercase text-primary
+                hover:border-gold hover:text-gold transition-all
+                {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}"
+         aria-label="Next page">
+        <span class="mr-1">Next</span>
+        <i class="fa-solid fa-chevron-right text-[10px]" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  function ready(fn) {
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  ready(function () {
+
+    // ============================================================
+    // Status change: reveal Apply button on change, confirm destructive
+    // ============================================================
+    document.querySelectorAll('form[data-booking-ref]').forEach(function (form) {
+      var select = form.querySelector('[data-status-select]');
+      var apply  = form.querySelector('[data-status-apply]');
+      var ref    = form.dataset.bookingRef || '';
+      var original = select ? select.value : '';
+
+      if (!select || !apply) return;
+
+      select.addEventListener('change', function () {
+        if (select.value === original) {
+          apply.classList.add('hidden');
+          apply.classList.remove('inline-flex');
+        } else {
+          apply.classList.remove('hidden');
+          apply.classList.add('inline-flex');
+        }
+      });
+
+      form.addEventListener('submit', function (e) {
+        var next = select.value;
+        var destructive = next === 'cancelled';
+        var needsConfirm = next === 'cancellation-requested' || destructive;
+
+        if (needsConfirm) {
+          var msg;
+          if (destructive) {
+            msg = 'Cancel booking ' + ref + '?\n\nThis cannot be undone from this page.';
+          } else {
+            msg = 'Mark booking ' + ref + ' as "cancellation requested"?';
+          }
+          if (!window.confirm(msg)) {
+            e.preventDefault();
+            // Restore select to the original value
+            select.value = original;
+            apply.classList.add('hidden');
+            apply.classList.remove('inline-flex');
+            return;
+          }
+        }
+
+        apply.disabled = true;
+        apply.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-[10px]" aria-hidden="true"></i>';
+      });
+    });
+
+    // ============================================================
+    // Refresh button
+    // ============================================================
+    var refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function () {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Refreshing…</span>';
+        window.location.reload();
+      });
+    }
+  });
+})();
+</script>
+{% endblock %}

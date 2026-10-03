@@ -1,370 +1,91 @@
 {% extends "client/base.html" %}
-
-{% block title %}Preferences — Client Portal{% endblock %}
-
+{% block title %}Preferences · Client Portal{% endblock %}
 {% set active_section = 'preferences' %}
 {% set page_title = 'Preferences' %}
 {% set page_subtitle = 'Tailor your luxury experience' %}
 
 {% block content %}
 
-<!-- ============ BREADCRUMB ============ -->
-<nav class="flex items-center gap-2 text-xs text-charcoal/60 mb-5" aria-label="Breadcrumb">
-  <a href="{{ url_for('client.dashboard') }}" class="hover:text-gold transition-colors">Dashboard</a>
-  <i class="fa-solid fa-chevron-right text-[9px] text-charcoal/30" aria-hidden="true"></i>
-  <span class="text-primary font-semibold">Preferences</span>
-</nav>
-
-<!-- ============ CSRF & general error banners ============ -->
-{% if form.csrf_token and form.csrf_token.errors %}
-  <div class="mb-5 p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-xs flex items-start gap-2" role="alert">
-    <i class="fa-solid fa-triangle-exclamation mt-0.5" aria-hidden="true"></i>
-    <div>
-      <p class="font-bold">Session expired</p>
-      <p class="mt-0.5">Please reload the page and try again.</p>
-    </div>
-  </div>
-{% endif %}
-
-{% if form.errors and not (form.csrf_token and form.csrf_token.errors) %}
-  <div class="mb-5 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs flex items-start gap-2" role="alert">
-    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
-    <div>
-      <p class="font-bold">Please fix the errors below</p>
-      <ul class="mt-1 list-disc list-inside space-y-0.5">
-        {% for field, errs in form.errors.items() %}
-          {% for err in errs %}
-            <li>{{ err|e }}</li>
-          {% endfor %}
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
-{% endif %}
-
-<!-- ============ SINGLE UNIFIED FORM ============ -->
-<form method="POST"
-      id="preferencesForm"
-      class="grid grid-cols-1 lg:grid-cols-2 gap-6"
-      novalidate>
+<form method="POST" class="grid grid-cols-1 lg:grid-cols-2 gap-6" novalidate>
   {{ form.hidden_tag() }}
 
-  <!-- ============================================
-       Stay Preferences
-  ============================================ -->
   <fieldset class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
-    <legend class="sr-only">Stay preferences</legend>
-
     <div class="flex items-center gap-3 mb-5">
-      <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-        <i class="fa-solid fa-house-chimney" aria-hidden="true"></i>
+      <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+        <i class="fa-solid fa-house-chimney"></i>
       </div>
       <div>
         <h3 class="font-serif text-xl font-semibold text-primary leading-tight">Stay Preferences</h3>
-        <p class="text-[11px] text-charcoal/50 mt-0.5">Helps us curate better recommendations</p>
+        <p class="text-[11px] text-charcoal/50 mt-0.5">Curated recommendations</p>
       </div>
     </div>
 
-    <!-- Preferred Estate Type -->
     <div class="mb-4">
-      <label for="{{ form.type.id }}"
-             class="block text-xs font-bold uppercase tracking-wider mb-1.5
-               {% if form.type.errors %}text-red-600{% else %}text-primary/80{% endif %}">
-        Preferred Estate Type
-      </label>
-      {{ form.type(
-          id=form.type.id,
-          class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm transition-all
-            " + ("border-red-300 bg-red-50" if form.type.errors else "border-charcoal/15")
-      ) }}
-      {% if form.type.errors %}
-        <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
-          {% for err in form.type.errors %}
-            <li class="flex items-center gap-1">
-              <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
-            </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
+      <label for="{{ form.type.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Preferred Estate Type</label>
+      {{ form.type(id=form.type.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
     </div>
 
-    <!-- Dietary Requirements -->
     <div class="mb-4">
-      <label for="{{ form.diet.id }}"
-             class="block text-xs font-bold uppercase tracking-wider mb-1.5
-               {% if form.diet.errors %}text-red-600{% else %}text-primary/80{% endif %}">
-        Dietary Requirements
-      </label>
-      {{ form.diet(
-          id=form.diet.id,
-          maxlength="300",
-          autocomplete="off",
-          class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm transition-all
-            " + ("border-red-300 bg-red-50" if form.diet.errors else "border-charcoal/15"),
-          placeholder="e.g. Pescatarian, no shellfish"
-      ) }}
-      <p class="mt-1 text-[10px] text-charcoal/50">
-        <i class="fa-solid fa-info-circle text-gold mr-1" aria-hidden="true"></i>
-        Your chef will be briefed on any requirements.
-      </p>
-      {% if form.diet.errors %}
-        <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
-          {% for err in form.diet.errors %}
-            <li class="flex items-center gap-1">
-              <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
-            </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
+      <label for="{{ form.diet.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Dietary Requirements</label>
+      {{ form.diet(id=form.diet.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm", placeholder="e.g. Pescatarian, no shellfish") }}
+      <p class="mt-1 text-[10px] text-charcoal/50"><i class="fa-solid fa-info-circle text-gold mr-1"></i>Your chef will be briefed.</p>
     </div>
 
-    <!-- Preferred Amenities -->
     <div>
-      <label for="{{ form.amenities.id }}"
-             class="block text-xs font-bold uppercase tracking-wider mb-1.5
-               {% if form.amenities.errors %}text-red-600{% else %}text-primary/80{% endif %}">
-        Preferred Amenities
-        <span class="text-charcoal/40 font-normal normal-case">(comma-separated)</span>
-      </label>
-      {{ form.amenities(
-          id=form.amenities.id,
-          maxlength="500",
-          autocomplete="off",
-          class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white text-sm transition-all
-            " + ("border-red-300 bg-red-50" if form.amenities.errors else "border-charcoal/15"),
-          placeholder="Infinity Pool, Private Chef, Spa"
-      ) }}
-
-      <!-- Quick-add chips -->
+      <label for="{{ form.amenities.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Preferred Amenities</label>
+      {{ form.amenities(id=form.amenities.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm", placeholder="Infinity Pool, Private Chef, Spa") }}
       <div class="mt-2 flex flex-wrap gap-1.5" id="amenityChips">
-        {% set suggested = ['Infinity Pool', 'Private Chef', 'Ocean View', 'Helipad', 'Private Beach', 'Yacht Dock', 'Spa', 'Private Gym'] %}
-        {% for s in suggested %}
-          <button type="button"
-                  onclick="addAmenity('{{ s|e }}')"
-                  class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-primary/5 text-primary border border-primary/10 hover:bg-gold hover:text-primary hover:border-gold transition-all"
-                  data-amenity="{{ s|e }}">
-            + {{ s|e }}
-          </button>
+        {% for s in ['Infinity Pool','Private Chef','Ocean View','Helipad','Private Beach','Yacht Dock','Spa','Private Gym'] %}
+          <button type="button" onclick="addAmenity('{{ s }}')" class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-primary/5 text-primary border border-primary/10 hover:bg-gold hover:text-primary hover:border-gold transition-all">+ {{ s }}</button>
         {% endfor %}
       </div>
-
-      {% if form.amenities.errors %}
-        <ul class="mt-1 text-[11px] text-red-600 space-y-0.5" role="alert">
-          {% for err in form.amenities.errors %}
-            <li class="flex items-center gap-1">
-              <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>{{ err|e }}
-            </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
     </div>
   </fieldset>
 
-  <!-- ============================================
-       Communication Preferences
-  ============================================ -->
   <fieldset class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
-    <legend class="sr-only">Communication preferences</legend>
-
     <div class="flex items-center gap-3 mb-5">
-      <div class="w-10 h-10 rounded-xl bg-gold/20 text-gold-dark flex items-center justify-center flex-shrink-0">
-        <i class="fa-solid fa-bell" aria-hidden="true"></i>
+      <div class="w-10 h-10 rounded-xl bg-gold/20 text-gold-dark flex items-center justify-center">
+        <i class="fa-solid fa-bell"></i>
       </div>
       <div>
         <h3 class="font-serif text-xl font-semibold text-primary leading-tight">Communication</h3>
-        <p class="text-[11px] text-charcoal/50 mt-0.5">Choose how we stay in touch</p>
+        <p class="text-[11px] text-charcoal/50 mt-0.5">How we stay in touch</p>
       </div>
     </div>
 
     <div class="space-y-3">
-
-      <!-- Newsletter -->
-      <label for="{{ form.newsletter.id }}"
-             class="flex items-start gap-3 p-3 rounded-xl border border-charcoal/10 hover:border-gold hover:bg-gold/5 cursor-pointer transition-all
-               focus-within:ring-2 focus-within:ring-gold focus-within:ring-offset-1">
-        {{ form.newsletter(
-            id=form.newsletter.id,
-            class="accent-gold mt-0.5 flex-shrink-0"
-        ) }}
-        <div class="min-w-0">
-          <p class="text-sm font-semibold text-primary">Private Journal Newsletter</p>
-          <p class="text-xs text-charcoal/60 mt-0.5">Off-market listings and member-only offers.</p>
-        </div>
+      <label class="flex items-start gap-3 p-3 rounded-xl border border-charcoal/10 hover:border-gold hover:bg-gold/5 cursor-pointer transition-all">
+        {{ form.newsletter(class="accent-gold mt-0.5") }}
+        <div><p class="text-sm font-semibold text-primary">Newsletter</p><p class="text-xs text-charcoal/60 mt-0.5">Off-market listings and member-only offers.</p></div>
       </label>
-
-      <!-- SMS Alerts -->
-      <label for="{{ form.sms.id }}"
-             class="flex items-start gap-3 p-3 rounded-xl border border-charcoal/10 hover:border-gold hover:bg-gold/5 cursor-pointer transition-all
-               focus-within:ring-2 focus-within:ring-gold focus-within:ring-offset-1">
-        {{ form.sms(
-            id=form.sms.id,
-            class="accent-gold mt-0.5 flex-shrink-0"
-        ) }}
-        <div class="min-w-0">
-          <p class="text-sm font-semibold text-primary">SMS Alerts</p>
-          <p class="text-xs text-charcoal/60 mt-0.5">Instant notifications for booking confirmations.</p>
-        </div>
+      <label class="flex items-start gap-3 p-3 rounded-xl border border-charcoal/10 hover:border-gold hover:bg-gold/5 cursor-pointer transition-all">
+        {{ form.sms(class="accent-gold mt-0.5") }}
+        <div><p class="text-sm font-semibold text-primary">SMS Alerts</p><p class="text-xs text-charcoal/60 mt-0.5">Instant notifications for booking confirmations.</p></div>
       </label>
-
-      <!-- Seasonal Promotions -->
-      <label for="{{ form.promo.id }}"
-             class="flex items-start gap-3 p-3 rounded-xl border border-charcoal/10 hover:border-gold hover:bg-gold/5 cursor-pointer transition-all
-               focus-within:ring-2 focus-within:ring-gold focus-within:ring-offset-1">
-        {{ form.promo(
-            id=form.promo.id,
-            class="accent-gold mt-0.5 flex-shrink-0"
-        ) }}
-        <div class="min-w-0">
-          <p class="text-sm font-semibold text-primary">Seasonal Promotions</p>
-          <p class="text-xs text-charcoal/60 mt-0.5">Curated offers during peak and off-seasons.</p>
-        </div>
+      <label class="flex items-start gap-3 p-3 rounded-xl border border-charcoal/10 hover:border-gold hover:bg-gold/5 cursor-pointer transition-all">
+        {{ form.promo(class="accent-gold mt-0.5") }}
+        <div><p class="text-sm font-semibold text-primary">Seasonal Promotions</p><p class="text-xs text-charcoal/60 mt-0.5">Curated offers during peak seasons.</p></div>
       </label>
-    </div>
-
-    <!-- Info banner -->
-    <div class="mt-5 p-3 rounded-xl bg-ivory/60 border border-charcoal/5 text-[11px] text-charcoal/60 flex items-start gap-2">
-      <i class="fa-solid fa-shield-halved text-gold mt-0.5 flex-shrink-0" aria-hidden="true"></i>
-      <p>
-        We never share your contact information with third parties.
-        You can unsubscribe at any time from any email we send.
-      </p>
     </div>
   </fieldset>
 
-  <!-- ============================================
-       Actions (full width)
-  ============================================ -->
-  <div class="lg:col-span-2 flex flex-col sm:flex-row gap-3 sm:justify-end pt-4 border-t border-charcoal/10">
-    <button type="button"
-            onclick="resetPreferences()"
-            class="px-5 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold hover:bg-ivory transition-all">
-      <i class="fa-solid fa-rotate-left mr-1" aria-hidden="true"></i> Reset
-    </button>
-
-    <button type="submit"
-            id="preferencesSubmitBtn"
-            class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2">
-      <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
-      <span>Save Preferences</span>
+  <div class="lg:col-span-2 flex justify-end gap-3 pt-4 border-t border-charcoal/10">
+    <button type="submit" class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-md flex items-center gap-2">
+      <i class="fa-solid fa-floppy-disk"></i> Save Preferences
     </button>
   </div>
 </form>
 
 {% endblock %}
 
-
 {% block scripts %}
 <script>
-/* ============================================================
-   CLIENT PREFERENCES — interactive helpers
-   ============================================================ */
-
-(function () {
-  'use strict';
-
-  const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
-
-  // Field IDs
-  const IDS = {
-    amenities: '{{ form.amenities.id }}',
-  };
-
-  let isDirty = false;
-  let isSubmitting = false;
-
-  /* --------------------------------------------------
-     Amenity quick-add
-  -------------------------------------------------- */
-  window.addAmenity = function (amenity) {
-    const input = document.getElementById(IDS.amenities);
-    if (!input) return;
-
-    const current = (input.value || '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-
-    if (current.some(a => a.toLowerCase() === amenity.toLowerCase())) {
-      if (window.clientToast) window.clientToast('Already added.', 'info');
-      return;
-    }
-
-    current.push(amenity);
-    input.value = current.join(', ');
-    input.focus();
-    isDirty = true;
-  };
-
-  /* --------------------------------------------------
-     Reset preferences to last saved values
-  -------------------------------------------------- */
-  window.resetPreferences = function () {
-    if (!isDirty) {
-      if (window.clientToast) window.clientToast('Nothing to reset.', 'info');
-      return;
-    }
-    if (!confirm('Discard unsaved changes and reload the saved preferences?')) return;
-    isSubmitting = false;
-    window.location.reload();
-  };
-
-  /* --------------------------------------------------
-     Submit guard
-  -------------------------------------------------- */
-  function handleSubmit(e) {
-    if (isSubmitting) {
-      e.preventDefault();
-      return false;
-    }
-    isSubmitting = true;
-    isDirty = false;
-
-    const btn = document.getElementById('preferencesSubmitBtn');
-    if (btn) {
-      btn.disabled = true;
-      btn.classList.add('opacity-70', 'cursor-wait');
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Saving…</span>';
-    }
-    return true;
-  }
-
-  /* --------------------------------------------------
-     Mark dirty on input
-  -------------------------------------------------- */
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('preferencesForm');
-    if (!form) return;
-
-    form.addEventListener('input', () => { isDirty = true; });
-    form.addEventListener('change', () => { isDirty = true; });
-    form.addEventListener('submit', handleSubmit);
-  });
-
-  /* --------------------------------------------------
-     Unsaved changes guard
-  -------------------------------------------------- */
-  window.addEventListener('beforeunload', (e) => {
-    if (isDirty && !isSubmitting) {
-      e.preventDefault();
-      e.returnValue = '';
-      return '';
-    }
-  });
-
-  /* --------------------------------------------------
-     Reset state on bfcache restore
-  -------------------------------------------------- */
-  window.addEventListener('pageshow', () => {
-    isSubmitting = false;
-    isDirty = false;
-
-    const btn = document.getElementById('preferencesSubmitBtn');
-    if (btn) {
-      btn.disabled = false;
-      btn.classList.remove('opacity-70', 'cursor-wait');
-      btn.innerHTML = '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Save Preferences</span>';
-    }
-  });
-})();
+function addAmenity(a) {
+  const input = document.getElementById('{{ form.amenities.id }}');
+  const current = (input.value || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (current.some(x => x.toLowerCase() === a.toLowerCase())) return;
+  current.push(a);
+  input.value = current.join(', ');
+}
 </script>
 {% endblock %}
