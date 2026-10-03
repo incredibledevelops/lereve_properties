@@ -3,28 +3,537 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="theme-color" content="#1a3a2a">
 <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
+
+<link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
-  theme: { extend: { colors: {
-    primary:'#1a3a2a','primary-dark':'#122b1e','primary-light':'#28543e',
-    ivory:'#f7f3ed','ivory-dark':'#ebe3d5',
-    gold:'#c9a84c','gold-dark':'#a88938','gold-light':'#e5cb7a',
-    charcoal:'#2c2c2a'
-  }, fontFamily:{ serif:['Cormorant Garamond','serif'], sans:['Inter','sans-serif'] } } }
+  theme: { extend: {
+    colors: {
+      primary:'#1a3a2a','primary-dark':'#122b1e','primary-light':'#28543e',
+      ivory:'#f7f3ed','ivory-dark':'#ebe3d5',
+      gold:'#c9a84c','gold-dark':'#a88938','gold-light':'#e5cb7a',
+      charcoal:'#2c2c2a','soft-white':'#ffffff','forest':'#1a3a2a'
+    },
+    fontFamily:{ serif:['Cormorant Garamond','Georgia','serif'], sans:['Inter','sans-serif'] },
+    boxShadow:{
+      'luxury':'0 20px 40px -15px rgba(26,58,42,0.12)',
+      'gold-glow':'0 10px 25px -5px rgba(201,168,76,0.3)'
+    },
+    keyframes: {
+      fadeIn:  { '0%': { opacity: '0', transform: 'translateY(12px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+      slideIn: { '0%': { opacity: '0', transform: 'translateX(20px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } }
+    },
+    animation: {
+      'fade-in':  'fadeIn .4s ease-out forwards',
+      'slide-in': 'slideIn .3s ease-out forwards'
+    }
+  }}
 }
 </script>
+
 <style>
-  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-  .animate-fade-in{animation:fadeIn .3s ease-out forwards;}
+  body { background:#f7f3ed; color:#2c2c2a; font-family:'Inter',sans-serif; overflow-x:hidden; }
+  ::-webkit-scrollbar { width:8px; }
+  ::-webkit-scrollbar-track { background:#f7f3ed; }
+  ::-webkit-scrollbar-thumb { background:#1a3a2a; border-radius:4px; }
+  ::-webkit-scrollbar-thumb:hover { background:#c9a84c; }
+
+  .glass-nav  { background: rgba(247,243,237,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .glass-dark { background: rgba(26,58,42,0.92);    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+  .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(8px);  -webkit-backdrop-filter: blur(8px); }
+
+  html { scroll-padding-top: 90px; }
+  input[type=range] { accent-color:#c9a84c; }
+  body.modal-open { overflow:hidden; }
+  .line-clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+  @keyframes leReveMarquee {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+  }
+
+  .trust-bar {
+    overflow: hidden; width: 100%;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+            mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
+  .trust-bar-track {
+    display: flex; flex-wrap: nowrap; width: max-content;
+    will-change: transform;
+    animation: leReveMarquee var(--marquee-duration, 40s) linear infinite;
+  }
+  .trust-bar:hover .trust-bar-track,
+  .trust-bar:focus-within .trust-bar-track { animation-play-state: paused; }
+  .trust-item {
+    white-space: nowrap; display: flex; align-items: center; gap: 0.5rem;
+    flex-shrink: 0; padding-right: 3rem;
+    color: rgba(247, 243, 237, 0.7); font-size: 0.8rem;
+  }
+  .trust-item .check { color: #c9a84c; }
+
+  .carousel-wrap { overflow: hidden; width: 100%; }
+  .carousel-track {
+    display: flex; flex-wrap: nowrap; gap: 1.5rem; width: max-content;
+    will-change: transform;
+    animation: leReveMarquee var(--carousel-duration, 45s) linear infinite;
+  }
+  .carousel-wrap:hover .carousel-track,
+  .carousel-wrap:focus-within .carousel-track { animation-play-state: paused; }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .kente-pattern {
+    background:
+      repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(201,168,76,.04) 18px, rgba(201,168,76,.04) 20px),
+      repeating-linear-gradient(0deg,  transparent, transparent 18px, rgba(201,168,76,.04) 18px, rgba(201,168,76,.04) 20px);
+  }
+  .grid-pattern {
+    background:
+      repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(201,168,76,.05) 24px, rgba(201,168,76,.05) 26px),
+      repeating-linear-gradient(0deg,  transparent, transparent 24px, rgba(201,168,76,.05) 24px, rgba(201,168,76,.05) 26px);
+  }
+
+  .why-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(201, 168, 76, 0.18);
+    border-radius: 1rem;
+    padding: 1.75rem;
+    transition: border-color .25s ease, background .25s ease, transform .25s ease;
+  }
+  .why-card:hover {
+    border-color: rgba(201, 168, 76, 0.55);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+  }
+  .why-num {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.75rem; font-weight: 300; line-height: 1;
+    color: rgba(201, 168, 76, 0.45); margin-bottom: 1rem; letter-spacing: 0.02em;
+  }
+  .why-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.35rem; font-weight: 600; color: #f7f3ed;
+    margin-bottom: 0.75rem; line-height: 1.3;
+  }
+  .why-body  { font-size: 0.85rem; line-height: 1.75; color: rgba(247, 243, 237, 0.7); }
+  .why-quote {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.2rem; font-style: italic; color: #e5cb7a; line-height: 1.6;
+    border-left: 2px solid #c9a84c; padding-left: 1.25rem;
+  }
+  .why-eyebrow {
+    font-size: 0.75rem; font-weight: 500; letter-spacing: 0.15em;
+    text-transform: uppercase; color: #c9a84c;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, .carousel-track, .trust-bar-track {
+      animation: none !important;
+      transition: none !important;
+    }
+    .trust-bar-track, .carousel-track { transform: none !important; }
+    .why-card:hover { transform: none; }
+  }
 </style>
 </head>
-<body class="{% block body_class %}bg-ivory{% endblock %} font-sans antialiased">
+<body class="bg-ivory text-charcoal font-sans antialiased selection:bg-gold selection:text-primary">
+
+<!-- ============ FLASH MESSAGES ============ -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div id="flashContainer" class="fixed top-24 right-5 z-[70] flex flex-col gap-3 pointer-events-none max-w-sm" role="status" aria-live="polite">
+      {% for category, message in messages %}
+        <div class="pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-slide-in
+          {% if category == 'error' %}bg-red-600 text-white border-red-400
+          {% elif category == 'info' %}bg-gold text-primary border-primary
+          {% else %}bg-primary text-gold border-gold{% endif %}">
+          <i class="fa-solid {% if category == 'error' %}fa-circle-exclamation{% elif category == 'info' %}fa-circle-info{% else %}fa-circle-check{% endif %} text-lg" aria-hidden="true"></i>
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div id="toastContainer" class="fixed top-20 right-5 z-50 flex flex-col gap-3 pointer-events-none max-w-sm" role="status" aria-live="polite"></div>
+
+<!-- ============ HEADER ============ -->
+<header class="fixed top-0 left-0 w-full z-40 glass-nav border-b border-gold/20 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    <a href="{{ url_for('public.home') }}" class="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-lg">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Le Rêve Properties" width="200">
+    </a>
+
+    <nav class="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest font-medium text-charcoal/80">
+      <a href="{{ url_for('public.home') }}"          class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Home</a>
+      <a href="{{ url_for('public.stays') }}"         class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Stays</a>
+      <a href="{{ url_for('public.why_us') }}"        class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Why Us</a>
+      <a href="{{ url_for('public.reviews_page') }}"  class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Reviews</a>
+      <a href="{{ url_for('public.contact') }}"       class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Contact</a>
+    </nav>
+
+    <div class="hidden md:flex items-center gap-3">
+      <button id="favoritesTriggerBtn" onclick="scrollToListingsAndShowFavorites()"
+              class="relative p-2.5 rounded-full border border-primary/10 text-primary hover:border-gold hover:bg-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all flex items-center justify-center"
+              title="View Saved Favorites" aria-label="View saved favorites">
+        <i class="fa-regular fa-heart text-lg" aria-hidden="true"></i>
+        <span id="favoritesBadge" class="absolute -top-1 -right-1 bg-gold text-primary font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-ivory hidden">0</span>
+      </button>
+
+      {% if current_user.is_authenticated %}
+        {% if current_user.is_admin %}
+          <a href="{{ url_for('super_admin.dashboard') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs font-bold uppercase tracking-widest">
+            <i class="fa-solid fa-shield-halved mr-1" aria-hidden="true"></i> Admin
+          </a>
+        {% else %}
+          <a href="{{ url_for('client.dashboard') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs font-bold uppercase tracking-widest">
+            <i class="fa-solid fa-user mr-1" aria-hidden="true"></i> Portal
+          </a>
+        {% endif %}
+      {% else %}
+        <a href="{{ url_for('auth.login') }}" class="px-4 py-2 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs font-bold uppercase tracking-widest">
+          <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
+        </a>
+      {% endif %}
+    </div>
+
+    <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-lg" aria-label="Open menu">
+      <i class="fa-solid fa-bars text-2xl" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div id="mobileDrawer" class="hidden md:hidden bg-primary text-ivory border-b border-gold/30 px-6 py-6 transition-all duration-300">
+    <div class="flex flex-col gap-4 text-base tracking-wider uppercase font-medium">
+      <a href="{{ url_for('public.home') }}"         onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Home</a>
+      <a href="{{ url_for('public.stays') }}"        onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Stays</a>
+      <a href="{{ url_for('public.why_us') }}"       onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Why Us</a>
+      <a href="{{ url_for('public.reviews_page') }}" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Reviews</a>
+      <a href="{{ url_for('public.contact') }}"      onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold">Contact</a>
+      <div class="pt-4 flex flex-col gap-3">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('client.dashboard') if not current_user.is_admin else url_for('super_admin.dashboard') }}"
+             class="w-full text-center bg-gold text-primary py-2.5 rounded-full font-bold uppercase tracking-wider text-xs block">
+            <i class="fa-solid fa-user mr-1" aria-hidden="true"></i> {{ 'Admin Console' if current_user.is_admin else 'Client Portal' }}
+          </a>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}"
+             class="w-full text-center bg-gold text-primary py-2.5 rounded-full font-bold uppercase tracking-wider text-xs block">
+            <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
+          </a>
+        {% endif %}
+        <a href="{{ url_for('public.stays') }}"
+           onclick="toggleMobileMenu()"
+           class="w-full text-center border border-ivory/30 text-ivory py-2.5 rounded-full font-medium uppercase tracking-wider text-xs flex items-center justify-center gap-2 hover:text-gold">
+          <i class="fa-solid fa-heart text-gold" aria-hidden="true"></i> Saved Favorites (<span id="mobileFavCount">0</span>)
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="pt-20">
   {% block content %}{% endblock %}
-  {% block scripts %}{% endblock %}
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="bg-primary-dark text-ivory border-t border-gold/20 pt-16 pb-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-gold/10">
+      <div class="lg:col-span-2 space-y-4">
+        <div class="flex items-center gap-3">
+          <img src="{{ url_for('static', filename='images/logo-light.png') }}" alt="Le Rêve Properties" width="200">
+        </div>
+        <p class="text-xs text-ivory/70 leading-relaxed max-w-sm font-light">
+          Your dream stay, our passion. Affordable quality hospitality in Accra — and across Africa, soon.
+        </p>
+        <p class="text-xs text-ivory/50 leading-relaxed max-w-sm font-light">
+          Part of the Dave &amp; Co Pan-African Trade Alliance Ltd.
+        </p>
+        <div class="flex gap-3 text-gold pt-2">
+          <a href="https://instagram.com/lereveafrica" target="_blank" rel="noopener" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
+          <a href="https://wa.me/233547975252" target="_blank" rel="noopener" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></a>
+          <a href="#" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></a>
+          <a href="#" class="w-9 h-9 rounded-full bg-primary border border-gold/30 flex items-center justify-center hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all text-xs" aria-label="Facebook"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-serif text-lg font-semibold text-gold mb-4">Explore</h4>
+        <ul class="space-y-2 text-xs text-ivory/70 font-light">
+          <li><a href="{{ url_for('public.stays') }}" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Featured Estates</a></li>
+          {% for c in categories %}
+            <li><a href="{{ url_for('public.stays') }}#cat-{{ c.name|urlencode }}" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">{{ c.name|e }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-serif text-lg font-semibold text-gold mb-4">Company</h4>
+        <ul class="space-y-2 text-xs text-ivory/70 font-light">
+          <li><a href="{{ url_for('public.contact') }}"      class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Contact</a></li>
+          <li><a href="{{ url_for('public.why_us') }}"       class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Why Le Rêve</a></li>
+          <li><a href="{{ url_for('public.reviews_page') }}" class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors">Reviews</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-serif text-lg font-semibold text-gold mb-4">Private Journal</h4>
+        <p class="text-xs text-ivory/70 mb-3 font-light">Subscribe for off-market estate listings before public release.</p>
+        <form id="journalForm" onsubmit="handleJournalSubmit(event)" class="space-y-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label for="journalEmail" class="sr-only">Email Address</label>
+          <input type="email" id="journalEmail" name="email" required placeholder="Enter private email"
+                 class="w-full px-3 py-2 text-xs rounded-lg border border-gold/30 bg-primary/60 text-ivory placeholder-ivory/40 focus:outline-none focus:border-gold">
+          <button type="submit" class="w-full bg-gold text-primary py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-all">Subscribe</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-ivory/50 gap-4">
+      <p>© 2026 Le Rêve Properties · Dave &amp; Co Pan-African Trade Alliance Ltd · Accra, Ghana</p>
+      <div class="flex items-center gap-2 bg-primary px-4 py-2 rounded-full border border-gold/30 text-gold font-medium">
+        <i class="fa-solid fa-crown text-[10px]" aria-hidden="true"></i>
+        <span>Crafted with excellence by <strong class="text-white font-bold tracking-wide">Dave &amp; Co</strong></span>
+      </div>
+      <div class="flex gap-4">
+        <a href="#" class="hover:text-gold focus:outline-none focus-visible:text-gold">Privacy</a>
+        <span>·</span>
+        <a href="#" class="hover:text-gold focus:outline-none focus-visible:text-gold">Terms</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ QUICK VIEW MODAL ============ -->
+<div id="quickViewModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md" onclick="if (event.target === this) closeQuickViewModal();">
+  <div class="bg-ivory rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative">
+    <button onclick="closeQuickViewModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all flex items-center justify-center" aria-label="Close Modal">
+      <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
+    </button>
+    <div id="quickViewContent"></div>
+  </div>
+</div>
+
+<!-- ============ BOOKING MODAL ============ -->
+<div id="bookingModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-primary/80 backdrop-blur-md" onclick="if (event.target === this) closeBookingModal();">
+  <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gold/40 relative">
+    <button onclick="closeBookingModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-ivory text-primary hover:bg-primary hover:text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all flex items-center justify-center" aria-label="Close Modal">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+    <div id="bookingModalContent"></div>
+  </div>
+</div>
+
+<!-- ============ GLOBAL PAGE SCRIPT ============ -->
+<script>
+/* ============================================================
+   GLOBAL CONFIG — declared ONCE here, used by every page.
+   Page templates must NOT re-declare these.
+   ============================================================ */
+const CSRF_TOKEN      = document.querySelector('meta[name="csrf-token"]')?.content || '';
+const CURRENCY_SYMBOL = {{ CURRENCY_SYMBOL|tojson }};
+const IS_LOGGED_IN    = {{ 'true' if current_user.is_authenticated and not current_user.is_admin else 'false' }};
+const IS_ADMIN        = {{ 'true' if current_user.is_authenticated and current_user.is_admin else 'false' }};
+const CURRENT_USER    = {
+  name:  {{ (current_user.name  if current_user.is_authenticated else '')|tojson }},
+  email: {{ (current_user.email if current_user.is_authenticated else '')|tojson }}
+};
+
+/* ---------- Shared utilities ---------- */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function formatGHS(amount) {
+  const n = Number(amount) || 0;
+  return CURRENCY_SYMBOL + n.toLocaleString('en-GH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function toggleMobileMenu() {
+  document.getElementById('mobileDrawer')?.classList.toggle('hidden');
+}
+function openModal(el) {
+  if (!el) return;
+  el.classList.remove('hidden'); el.classList.add('flex');
+  document.body.classList.add('modal-open');
+}
+function closeModal(el) {
+  if (!el) return;
+  el.classList.add('hidden'); el.classList.remove('flex');
+  document.body.classList.remove('modal-open');
+}
+function closeQuickViewModal() { closeModal(document.getElementById('quickViewModal')); }
+function closeBookingModal()   { closeModal(document.getElementById('bookingModal'));   }
+
+/* ---------- Toast ---------- */
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+  const toast = document.createElement('div');
+  const bgClass = type === 'success' ? 'bg-primary text-gold border-gold'
+                : type === 'error'   ? 'bg-red-600 text-white border-red-400'
+                                     : 'bg-gold text-primary border-primary';
+  const iconClass = type === 'success' ? 'fa-solid fa-circle-check'
+                  : type === 'error'   ? 'fa-solid fa-circle-exclamation'
+                                       : 'fa-solid fa-circle-info';
+  toast.className = `pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl text-xs font-semibold animate-fade-in ${bgClass}`;
+  toast.innerHTML = `<i class="${iconClass} text-lg" aria-hidden="true"></i><span>${escapeHtml(message)}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('opacity-0','transition-opacity','duration-300');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+/* ---------- Flash auto-dismiss ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('flashContainer');
+  if (container) {
+    setTimeout(() => {
+      container.querySelectorAll('div').forEach(el => {
+        el.classList.add('opacity-0','transition-opacity','duration-500');
+        setTimeout(() => el.remove(), 500);
+      });
+    }, 5000);
+  }
+});
+
+/* ---------- Journal subscribe (global — used in footer on every page) ---------- */
+async function handleJournalSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const email = form.email.value.trim();
+  if (!email) return;
+  try {
+    const res = await fetch('{{ url_for("public.journal_subscribe") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || 'Subscribed to the private journal.', 'success');
+      form.reset();
+    } else {
+      showToast(data.error || 'Subscription failed.', 'error');
+    }
+  } catch {
+    showToast('Network error. Please try again.', 'error');
+  }
+}
+
+/* ---------- ESC closes modals ---------- */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeQuickViewModal();
+    closeBookingModal();
+  }
+});
+
+/* ============================================================
+   GLOBAL FAVORITES STATE
+   Pages that render property cards can override renderPropertyListings
+   but the state + badge logic lives here so the header badge always works.
+   ============================================================ */
+let favorites = new Set();
+let showingFavoritesOnly = false;
+
+function updateFavoritesBadge() {
+  const count = favorites.size;
+  const badge = document.getElementById('favoritesBadge');
+  const mobileCount = document.getElementById('mobileFavCount');
+  if (mobileCount) mobileCount.textContent = count;
+  if (badge) {
+    if (count > 0) { badge.textContent = count; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+  }
+}
+
+function scrollToListingsAndShowFavorites() {
+  showingFavoritesOnly = !showingFavoritesOnly;
+  const btn = document.getElementById('favoritesTriggerBtn');
+  if (btn) {
+    if (showingFavoritesOnly) { btn.classList.add('bg-gold', 'text-primary'); showToast('Showing your saved favorites only', 'info'); }
+    else { btn.classList.remove('bg-gold', 'text-primary'); }
+  }
+  const grid = document.getElementById('propertyGrid');
+  if (grid) grid.scrollIntoView({ behavior: 'smooth' });
+  if (typeof renderPropertyListings === 'function') renderPropertyListings();
+}
+
+/* ---------- Favorites toggle (shared by index + stays) ---------- */
+async function toggleFavorite(id) {
+  id = String(id);
+  if (IS_LOGGED_IN) {
+    try {
+      const res = await fetch('{{ url_for("public.wishlist_toggle") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+        body: JSON.stringify({ property_id: id })
+      });
+      const data = await res.json();
+      if (!data.success) { showToast(data.error || 'Could not update wishlist.', 'info'); return; }
+      if (data.added) { favorites.add(id); showToast('Saved to your wishlist', 'success'); }
+      else { favorites.delete(id); showToast('Removed from wishlist', 'info'); }
+    } catch (e) { showToast('Network error. Please try again.', 'error'); return; }
+  } else {
+    if (favorites.has(id)) { favorites.delete(id); showToast('Removed from saved', 'info'); }
+    else { favorites.add(id); showToast('Saved locally — sign in to sync', 'info'); }
+    try { localStorage.setItem('leReveFavorites', JSON.stringify([...favorites])); } catch(e){}
+  }
+  updateFavoritesBadge();
+  if (typeof renderPropertyListings === 'function') renderPropertyListings();
+}
+
+/* ---------- Endless marquee builder (used by index + reviews) ---------- */
+function buildEndlessMarquee(trackId, sourceId, opts = {}) {
+  const track  = document.getElementById(trackId);
+  const source = document.getElementById(sourceId);
+  if (!track || !source) return;
+  const speed     = opts.speed     || 80;
+  const minPasses = opts.minPasses || 2;
+
+  track.innerHTML = '';
+  track.appendChild(source);
+  source.style.flexShrink = '0';
+
+  requestAnimationFrame(() => {
+    const containerWidth = track.parentElement ? track.parentElement.offsetWidth : window.innerWidth;
+    const sourceWidth    = source.getBoundingClientRect().width;
+    if (sourceWidth < 1 || containerWidth < 1) return;
+
+    const halfNeeded    = Math.max(containerWidth, sourceWidth);
+    const copiesPerHalf = Math.max(minPasses, Math.ceil(halfNeeded / sourceWidth));
+
+    track.innerHTML = '';
+    const appendCopy = (isFirstHalf) => {
+      for (let i = 0; i < copiesPerHalf; i++) {
+        const clone = source.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.style.flexShrink = '0';
+        if (!isFirstHalf) clone.setAttribute('aria-hidden', 'true');
+        track.appendChild(clone);
+      }
+    };
+    appendCopy(true); appendCopy(false);
+
+    const halfWidth = copiesPerHalf * sourceWidth;
+    const duration  = halfWidth / speed;
+    track.style.setProperty('--marquee-duration', duration.toFixed(2) + 's');
+    track.style.animation = `leReveMarquee ${duration.toFixed(2)}s linear infinite`;
+  });
+}
+</script>
+
+{% block scripts %}{% endblock %}
 </body>
 </html>

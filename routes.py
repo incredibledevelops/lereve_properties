@@ -9,7 +9,7 @@ import logging
 
 from flask import (
     Blueprint, render_template, request, jsonify, flash,
-    redirect, url_for, make_response, current_app,
+    redirect, url_for, make_response,
 )
 from flask_login import current_user
 
@@ -28,8 +28,8 @@ public_bp = Blueprint('public', __name__)
 # ============================================================
 # CONSTANTS
 # ============================================================
-MAX_TEXT_LENGTH = 2000
-MAX_NAME_LENGTH = 120
+MAX_TEXT_LENGTH  = 2000
+MAX_NAME_LENGTH  = 120
 MAX_EMAIL_LENGTH = 200
 MAX_PHONE_LENGTH = 40
 
@@ -64,35 +64,75 @@ def _clean(value, max_len=MAX_TEXT_LENGTH):
     return str(value).strip()[:max_len]
 
 
+def _public_context():
+    """
+    Shared context for every public page.
+    Returns dict with properties, reviews, categories, settings, wishlist_ids.
+    Never raises — always returns a usable dict so templates don't 500.
+    """
+    properties, reviews, categories, settings = [], [], [], {}
+    try:
+        properties = Property.all(sort=[('created_at', -1)])
+        reviews    = Review.all({'status': 'published'})
+        categories = Category.all()
+        settings   = Settings.get()
+    except Exception:
+        log.exception('Error loading public page data')
+
+    wishlist_ids = []
+    if current_user.is_authenticated and not current_user.is_admin:
+        try:
+            wishlist_ids = Wishlist.get(current_user.id) or []
+        except Exception:
+            wishlist_ids = []
+
+    return dict(
+        properties=properties,
+        reviews=reviews,
+        categories=categories,
+        settings=settings,
+        wishlist_ids=wishlist_ids,
+    )
+
+
 # ============================================================
 # HOME
 # ============================================================
 @public_bp.route('/')
 def home():
-    try:
-        properties = Property.all(sort=[('created_at', -1)])
-        reviews = Review.all({'status': 'published'})  # ← ALL published reviews
-        settings = Settings.get()
-        categories = Category.all()
-    except Exception:
-        log.exception('Error loading home data')
-        properties, reviews, settings, categories = [], [], {}, []
+    return render_template('index.html', **_public_context())
 
-    wishlist_ids = []
-    if current_user.is_authenticated and not current_user.is_admin:
-        try:
-            wishlist_ids = Wishlist.get(current_user.id)
-        except Exception:
-            wishlist_ids = []
 
-    return render_template(
-        'index.html',
-        properties=properties,
-        reviews=reviews,
-        settings=settings,
-        categories=categories,
-        wishlist_ids=wishlist_ids,
-    )
+# ============================================================
+# STAYS  (full listing page)
+# ============================================================
+@public_bp.route('/stays')
+def stays():
+    return render_template('stays.html', **_public_context())
+
+
+# ============================================================
+# WHY US
+# ============================================================
+@public_bp.route('/why-us')
+def why_us():
+    return render_template('why_us.html', **_public_context())
+
+
+# ============================================================
+# REVIEWS
+# ============================================================
+@public_bp.route('/reviews')
+def reviews_page():
+    return render_template('reviews.html', **_public_context())
+
+
+# ============================================================
+# CONTACT
+# ============================================================
+@public_bp.route('/contact')
+def contact():
+    return render_template('contact.html', **_public_context())
 
 
 # ============================================================
@@ -100,9 +140,9 @@ def home():
 # ============================================================
 @public_bp.route('/api/properties')
 def api_properties():
-    category = _clean(request.args.get('category') or 'all', 100)
+    category  = _clean(request.args.get('category') or 'all', 100)
     max_price = request.args.get('max_price', type=float)
-    location = _clean(request.args.get('location') or '', 200)
+    location  = _clean(request.args.get('location') or '', 200)
 
     filters = {}
     if category and category != 'all':
@@ -113,7 +153,7 @@ def api_properties():
         safe_loc = re.escape(location)
         filters['$or'] = [
             {'location': {'$regex': safe_loc, '$options': 'i'}},
-            {'title': {'$regex': safe_loc, '$options': 'i'}},
+            {'title':    {'$regex': safe_loc, '$options': 'i'}},
         ]
 
     try:
@@ -155,14 +195,14 @@ def submit_inquiry():
             return jsonify({'success': False, 'error': 'Invalid email address.'}), 400
 
         payload = {
-            'name': _clean(data['name'], MAX_NAME_LENGTH),
-            'email': _clean(data['email'], MAX_EMAIL_LENGTH).lower(),
-            'phone': _clean(data.get('phone'), MAX_PHONE_LENGTH),
-            'property': _clean(data.get('property') or 'General Inquiry', 200),
-            'check_in': _clean(data.get('check_in'), 20),
+            'name':      _clean(data['name'], MAX_NAME_LENGTH),
+            'email':     _clean(data['email'], MAX_EMAIL_LENGTH).lower(),
+            'phone':     _clean(data.get('phone'), MAX_PHONE_LENGTH),
+            'property':  _clean(data.get('property') or 'General Inquiry', 200),
+            'check_in':  _clean(data.get('check_in'), 20),
             'check_out': _clean(data.get('check_out'), 20),
-            'guests': _clean(data.get('guests') or '1-2 Guests', 50),
-            'message': _clean(data.get('message')),
+            'guests':    _clean(data.get('guests') or '1-2 Guests', 50),
+            'message':   _clean(data.get('message')),
         }
         try:
             Inquiry.create(payload)
@@ -177,17 +217,18 @@ def submit_inquiry():
 
         return jsonify({'success': True, 'message': 'Inquiry submitted successfully.'})
 
+    # Form-encoded fallback
     form = InquiryForm()
     if form.validate_on_submit():
         payload = {
-            'name': _clean(form.name.data, MAX_NAME_LENGTH),
-            'email': _clean(form.email.data, MAX_EMAIL_LENGTH).lower(),
-            'phone': _clean(form.phone.data, MAX_PHONE_LENGTH),
-            'property': _clean(form.property.data or 'General Inquiry', 200),
-            'check_in': form.check_in.data.isoformat() if form.check_in.data else '',
+            'name':      _clean(form.name.data, MAX_NAME_LENGTH),
+            'email':     _clean(form.email.data, MAX_EMAIL_LENGTH).lower(),
+            'phone':     _clean(form.phone.data, MAX_PHONE_LENGTH),
+            'property':  _clean(form.property.data or 'General Inquiry', 200),
+            'check_in':  form.check_in.data.isoformat()  if form.check_in.data  else '',
             'check_out': form.check_out.data.isoformat() if form.check_out.data else '',
-            'guests': form.guests.data,
-            'message': _clean(form.message.data),
+            'guests':    form.guests.data,
+            'message':   _clean(form.message.data),
         }
         try:
             Inquiry.create(payload)
@@ -196,11 +237,11 @@ def submit_inquiry():
             log.warning(f'Inquiry processing failed: {e}')
 
         flash('Your confidential inquiry has been dispatched to our concierge desk.', 'success')
-        return redirect(url_for('public.home') + '#contact')
+        return redirect(url_for('public.contact') + '#contact')
 
     for err in _flatten_errors(form.errors):
         flash(err, 'error')
-    return redirect(url_for('public.home') + '#contact')
+    return redirect(url_for('public.contact') + '#contact')
 
 
 # ============================================================
@@ -209,7 +250,7 @@ def submit_inquiry():
 @public_bp.route('/journal/subscribe', methods=['POST'])
 def journal_subscribe():
     if request.is_json:
-        data = request.get_json(silent=True) or {}
+        data  = request.get_json(silent=True) or {}
         email = _clean(data.get('email'), MAX_EMAIL_LENGTH).lower()
         if not _is_email_valid(email):
             return jsonify({'success': False, 'error': 'Valid email required.'}), 400
@@ -243,7 +284,9 @@ def journal_subscribe():
     else:
         for err in _flatten_errors(form.errors):
             flash(err, 'error')
-    return redirect(url_for('public.home') + '#footer')
+
+    referrer = request.referrer or url_for('public.home')
+    return redirect(referrer)
 
 
 # ============================================================
@@ -286,19 +329,19 @@ def wishlist_toggle():
 def submit_review():
     form = ReviewForm()
     if form.validate_on_submit():
-        name = _clean(form.name.data, MAX_NAME_LENGTH) or 'Anonymous Guest'
+        name   = _clean(form.name.data, MAX_NAME_LENGTH) or 'Anonymous Guest'
         avatar = _clean(form.avatar.data, 500) or (
             f"https://ui-avatars.com/api/?name={name.replace(' ', '+')}"
             "&background=c9a84c&color=1a3a2a"
         )
         try:
             Review.create({
-                'name': name,
+                'name':     name,
                 'property': _clean(form.property.data, 200),
-                'rating': int(form.rating.data or 5),
-                'text': _clean(form.text.data),
-                'avatar': avatar,
-                'status': 'pending',
+                'rating':   int(form.rating.data or 5),
+                'text':     _clean(form.text.data),
+                'avatar':   avatar,
+                'status':   'pending',
             })
             flash('Thank you! Your review is pending moderation.', 'success')
         except Exception:
@@ -307,7 +350,9 @@ def submit_review():
     else:
         for err in _flatten_errors(form.errors):
             flash(err, 'error')
-    return redirect(url_for('public.home') + '#reviews')
+
+    referrer = request.referrer or url_for('public.reviews_page')
+    return redirect(referrer)
 
 
 # ============================================================

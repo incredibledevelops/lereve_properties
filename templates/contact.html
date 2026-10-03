@@ -1,0 +1,628 @@
+{% extends "base.html" %}
+{% block title %}Contact & Concierge · Le Rêve Properties{% endblock %}
+
+{% block content %}
+
+<!-- ============ HERO ============ -->
+<section class="relative pt-16 pb-16 bg-ivory overflow-hidden">
+  <div class="kente-pattern absolute inset-0 opacity-30 pointer-events-none"></div>
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">Concierge Desk</span>
+    <h1 class="font-serif text-4xl sm:text-6xl font-light text-primary tracking-wide leading-tight max-w-4xl mx-auto mb-6">
+      Initiate Your <span class="italic text-gold font-normal">Reservation</span>
+    </h1>
+    <div class="w-20 h-[2px] bg-gold mx-auto"></div>
+    <p class="text-charcoal/70 text-base sm:text-lg font-light max-w-2xl mx-auto mt-6 leading-relaxed">
+      Our private advisors are available 24/7 to assist with availability, custom itineraries, or estate onboarding.
+    </p>
+
+    <!-- Live availability indicator -->
+    <div class="inline-flex items-center gap-2.5 mt-6 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+      <span class="relative flex h-2.5 w-2.5">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+      </span>
+      Concierge online · Replies within 2 hours
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT GRID ============ -->
+<section class="py-16 bg-ivory">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-10">
+
+      <!-- ============ LEFT: Channels ============ -->
+      <aside class="lg:col-span-2 space-y-4 lg:sticky lg:top-24 lg:self-start">
+
+        <h2 class="font-serif text-2xl font-semibold text-primary mb-1">Direct Channels</h2>
+        <p class="text-xs text-charcoal/60 mb-4">Pick the one that suits you best.</p>
+
+        <!-- WhatsApp -->
+        <a href="https://wa.me/233547975252?text=Hi%20Le%20R%C3%AAve%2C%20I%27d%20like%20to%20inquire%20about%20a%20stay."
+           target="_blank" rel="noopener"
+           class="group flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-emerald-500 hover:bg-emerald-50/40 hover:shadow-luxury transition-all">
+          <div class="w-14 h-14 rounded-xl bg-emerald-600/15 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform flex-shrink-0">
+            <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <span class="text-xs uppercase tracking-wider text-gold font-semibold block">Instant Concierge</span>
+            <span class="text-sm font-medium text-charcoal block">WhatsApp +233 54 797 5252</span>
+            <span class="text-[11px] text-emerald-700 font-medium mt-0.5 inline-flex items-center gap-1">
+              <i class="fa-solid fa-bolt text-[9px]" aria-hidden="true"></i> Fastest response
+            </span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform flex-shrink-0" aria-hidden="true"></i>
+        </a>
+
+        <!-- Phone -->
+        <a href="tel:+233547975252"
+           class="group flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 hover:shadow-luxury transition-all">
+          <div class="w-14 h-14 rounded-xl bg-gold/20 text-gold flex items-center justify-center text-xl group-hover:scale-110 transition-transform flex-shrink-0">
+            <i class="fa-solid fa-phone" aria-hidden="true"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <span class="text-xs uppercase tracking-wider text-gold font-semibold block">24/7 Global Desk</span>
+            <span class="text-sm font-medium text-charcoal block">+233 54 797 5252</span>
+            <span class="text-[11px] text-charcoal/50 mt-0.5">Available day &amp; night</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform flex-shrink-0" aria-hidden="true"></i>
+        </a>
+
+        <!-- Email -->
+        <a href="mailto:concierge@lereveproperties.com?subject=Stay%20Inquiry"
+           class="group flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-gold hover:bg-gold/5 hover:shadow-luxury transition-all">
+          <div class="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xl group-hover:scale-110 transition-transform flex-shrink-0">
+            <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <span class="text-xs uppercase tracking-wider text-gold font-semibold block">Email Concierge</span>
+            <span class="text-sm font-medium text-charcoal block truncate">concierge@lereveproperties.com</span>
+            <span class="text-[11px] text-charcoal/50 mt-0.5">For detailed itineraries</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform flex-shrink-0" aria-hidden="true"></i>
+        </a>
+
+        <!-- Instagram -->
+        <a href="https://instagram.com/lereveafrica" target="_blank" rel="noopener"
+           class="group flex items-center gap-4 p-5 rounded-2xl bg-white border border-gold/30 hover:border-pink-500 hover:bg-pink-500/5 hover:shadow-luxury transition-all">
+          <div class="w-14 h-14 rounded-xl bg-pink-500/15 text-pink-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform flex-shrink-0">
+            <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <span class="text-xs uppercase tracking-wider text-gold font-semibold block">Follow Portfolio</span>
+            <span class="text-sm font-medium text-charcoal block">@lereveproperties</span>
+            <span class="text-[11px] text-charcoal/50 mt-0.5">New estates posted weekly</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-gold text-xs group-hover:translate-x-1 transition-transform flex-shrink-0" aria-hidden="true"></i>
+        </a>
+
+        <!-- Location card -->
+        <div class="p-5 rounded-2xl bg-primary text-ivory">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-gold/15 text-gold flex items-center justify-center flex-shrink-0">
+              <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-xs uppercase tracking-wider text-gold font-semibold mb-1">Location</div>
+              <div class="text-sm font-medium">Accra, Ghana</div>
+              <div class="text-xs text-ivory/70 mt-0.5">15 minutes from Kotoka International Airport</div>
+              <a href="https://www.google.com/maps/search/?api=1&query=Accra+Ghana"
+                 target="_blank" rel="noopener"
+                 class="mt-3 inline-flex items-center gap-1.5 text-[11px] text-gold hover:text-white font-semibold uppercase tracking-wider transition-colors">
+                Get Directions <i class="fa-solid fa-arrow-up-right-from-square text-[9px]" aria-hidden="true"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Office hours -->
+        <div class="p-5 rounded-2xl bg-white border border-gold/20">
+          <div class="text-xs uppercase tracking-wider text-gold font-semibold mb-3 flex items-center gap-2">
+            <i class="fa-regular fa-clock" aria-hidden="true"></i> Office Hours
+          </div>
+          <dl class="space-y-1.5 text-xs text-charcoal/80">
+            <div class="flex justify-between"><dt>Mon – Fri</dt><dd class="font-semibold text-primary">08:00 – 22:00</dd></div>
+            <div class="flex justify-between"><dt>Saturday</dt><dd class="font-semibold text-primary">09:00 – 20:00</dd></div>
+            <div class="flex justify-between"><dt>Sunday</dt><dd class="font-semibold text-primary">10:00 – 18:00</dd></div>
+            <div class="flex justify-between pt-2 border-t border-charcoal/10 mt-1"><dt>Concierge line</dt><dd class="font-semibold text-emerald-700">24 / 7</dd></div>
+          </dl>
+        </div>
+      </aside>
+
+      <!-- ============ RIGHT: Form ============ -->
+      <div class="lg:col-span-3">
+        <div class="bg-white border border-gold/30 rounded-3xl p-6 sm:p-8 shadow-luxury">
+
+          <!-- FORM VIEW -->
+          <div id="contactFormView">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="font-serif text-2xl font-semibold text-primary">Send Private Inquiry</h2>
+              <span class="hidden sm:inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                <i class="fa-solid fa-lock text-[9px]" aria-hidden="true"></i> Confidential
+              </span>
+            </div>
+            <p class="text-xs text-charcoal/60 mb-6">An assigned concierge will respond within 2 hours.</p>
+
+            <div id="contactFormFeedback" class="hidden mb-5 p-3 rounded-xl text-xs font-medium border" role="status" aria-live="polite"></div>
+
+            <form id="contactForm" onsubmit="handleContactSubmit(event)" novalidate class="space-y-5">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="check_in" value="">
+              <input type="hidden" name="check_out" value="">
+
+              <!-- Honeypot (hidden from real users) -->
+              <div style="position:absolute;left:-9999px;" aria-hidden="true">
+                <label for="hpField">Leave blank</label>
+                <input type="text" id="hpField" name="website" tabindex="-1" autocomplete="off">
+              </div>
+
+              <!-- Reason for contact -->
+              <div>
+                <label for="contactReason" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+                  Reason for Contact
+                </label>
+                <select id="contactReason" name="reason"
+                        class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+                  <option value="Bespoke Stay">Bespoke Stay Inquiry</option>
+                  <option value="Existing Booking">Existing Booking</option>
+                  <option value="Partnership">Partnership / Estate Onboarding</option>
+                  <option value="Press">Press &amp; Media</option>
+                  <option value="Support">Support &amp; Feedback</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <!-- Name + Email -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="contactName" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+                    Full Name <span class="text-gold">*</span>
+                  </label>
+                  <input type="text" id="contactName" name="name" required maxlength="120"
+                         value="{{ current_user.name if current_user.is_authenticated and current_user.name else '' }}"
+                         placeholder="Your name" autocomplete="name"
+                         class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm transition-colors">
+                  <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
+                </div>
+                <div>
+                  <label for="contactEmail" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+                    Email <span class="text-gold">*</span>
+                  </label>
+                  <input type="email" id="contactEmail" name="email" required maxlength="200"
+                         value="{{ current_user.email if current_user.is_authenticated and current_user.email else '' }}"
+                         placeholder="vip@domain.com" autocomplete="email"
+                         class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm transition-colors">
+                  <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
+                </div>
+              </div>
+
+              <!-- Phone -->
+              <div>
+                <label for="contactPhone" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+                  Phone <span class="text-gold">*</span>
+                </label>
+                <div class="relative">
+                  <input type="tel" id="contactPhone" name="phone" required maxlength="40"
+                         placeholder="+233 XX XXX XXXX" autocomplete="tel"
+                         class="field-input w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm transition-colors">
+                  <span class="field-check hidden absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500">
+                    <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <p class="field-error hidden mt-1 text-[11px] text-red-600 font-medium"></p>
+              </div>
+
+              <!-- Estate of interest -->
+              <div>
+                <label for="contactProperty" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+                  Estate of Interest
+                </label>
+                <select name="property" id="contactProperty"
+                        class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
+                  <option value="General Inquiry">General Bespoke Inquiry</option>
+                  {% for p in properties %}<option value="{{ p.title }}" data-loc="{{ p.location }}">{{ p.title }} — {{ p.location }}</option>{% endfor %}
+                </select>
+              </div>
+
+              <!-- Preferred contact method -->
+              <div>
+                <span class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-2">
+                  Preferred Contact Method
+                </span>
+                <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Preferred contact method">
+                  <label class="cursor-pointer">
+                    <input type="radio" name="preferred_method" value="WhatsApp" class="peer sr-only" checked>
+                    <span class="peer-checked:bg-primary peer-checked:text-gold peer-checked:border-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                      <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp
+                    </span>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="preferred_method" value="Email" class="peer sr-only">
+                    <span class="peer-checked:bg-primary peer-checked:text-gold peer-checked:border-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                      <i class="fa-solid fa-envelope" aria-hidden="true"></i> Email
+                    </span>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="preferred_method" value="Phone" class="peer sr-only">
+                    <span class="peer-checked:bg-primary peer-checked:text-gold peer-checked:border-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                      <i class="fa-solid fa-phone" aria-hidden="true"></i> Phone
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Preferred time -->
+              <div>
+                <span class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-2">
+                  Preferred Contact Time
+                </span>
+                <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Preferred contact time">
+                  <label class="cursor-pointer">
+                    <input type="radio" name="preferred_time" value="Anytime" class="peer sr-only" checked>
+                    <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                      Anytime
+                    </span>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="preferred_time" value="Morning" class="peer sr-only">
+                    <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                      <i class="fa-solid fa-sun" aria-hidden="true"></i> Morning
+                    </span>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="preferred_time" value="Afternoon" class="peer sr-only">
+                    <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                      <i class="fa-solid fa-cloud-sun" aria-hidden="true"></i> Afternoon
+                    </span>
+                  </label>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="preferred_time" value="Evening" class="peer sr-only">
+                    <span class="peer-checked:bg-gold peer-checked:text-primary peer-checked:border-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-charcoal/15 bg-white text-primary text-xs font-semibold uppercase tracking-wider transition-all hover:border-gold">
+                      <i class="fa-solid fa-moon" aria-hidden="true"></i> Evening
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Message -->
+              <div>
+                <div class="flex items-end justify-between mb-1.5">
+                  <label for="contactMessage" class="block text-xs font-bold uppercase tracking-wider text-primary/80">
+                    Message
+                  </label>
+                  <span id="msgCounter" class="text-[10px] text-charcoal/50 font-medium">0 / 2000</span>
+                </div>
+                <textarea id="contactMessage" name="message" rows="5" maxlength="2000"
+                          oninput="updateMsgCounter(this)"
+                          placeholder="Tell us about your stay, special requests, or partnership interest..."
+                          class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea>
+              </div>
+
+              <!-- Submit -->
+              <button type="submit" id="contactSubmitBtn"
+                      class="w-full bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-luxury flex items-center justify-center gap-2">
+                <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                <span>Submit Confidential Inquiry</span>
+              </button>
+
+              <p class="text-[10px] text-center text-charcoal/50 flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-shield-halved text-gold" aria-hidden="true"></i>
+                Your information stays private. No spam, ever.
+              </p>
+            </form>
+          </div>
+
+          <!-- SUCCESS VIEW (hidden until submit) -->
+          <div id="contactSuccessView" class="hidden text-center py-10">
+            <div class="w-20 h-20 mx-auto rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center mb-5">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-3xl" aria-hidden="true"></i>
+            </div>
+            <h3 class="font-serif text-3xl font-semibold text-primary mb-2">Message Received</h3>
+            <p class="text-sm text-charcoal/70 max-w-sm mx-auto mb-6 leading-relaxed">
+              Thank you. Your inquiry has been securely routed to our concierge desk. A private advisor will reach out within <strong>2 hours</strong>.
+            </p>
+
+            <div class="max-w-sm mx-auto p-4 rounded-2xl bg-ivory border border-gold/20 text-left mb-6">
+              <div class="text-[10px] uppercase tracking-widest text-gold font-bold mb-2">What happens next</div>
+              <ol class="text-xs text-charcoal/80 space-y-2">
+                <li class="flex gap-2"><span class="text-gold font-bold">1.</span> A concierge reviews your request.</li>
+                <li class="flex gap-2"><span class="text-gold font-bold">2.</span> You receive a personal reply via your preferred channel.</li>
+                <li class="flex gap-2"><span class="text-gold font-bold">3.</span> We tailor availability and any extras to your stay.</li>
+              </ol>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+              <a href="{{ url_for('public.stays') }}"
+                 class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
+                <i class="fa-solid fa-house-chimney mr-1.5" aria-hidden="true"></i> Browse Stays
+              </a>
+              <button onclick="resetContactForm()"
+                      class="border border-primary text-primary hover:bg-primary hover:text-gold px-6 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
+                <i class="fa-solid fa-pen mr-1.5" aria-hidden="true"></i> Send Another
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ FAQ (below form) ============ -->
+        <div class="mt-10">
+          <div class="text-center mb-6">
+            <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-2">Quick Answers</span>
+            <h3 class="font-serif text-2xl font-light text-primary">Before you <span class="italic text-gold">write</span></h3>
+          </div>
+
+          <div class="space-y-2">
+            <details class="faq-item">
+              <summary class="faq-summary">
+                <span>How quickly will I hear back?</span>
+                <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
+              </summary>
+              <div class="faq-body">
+                Most inquiries receive a reply within <strong>2 hours</strong> during office hours. Overnight messages are answered the following morning by 9 AM GMT.
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-summary">
+                <span>Can I book immediately?</span>
+                <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
+              </summary>
+              <div class="faq-body">
+                Yes — for direct bookings, head to our <a href="{{ url_for('public.stays') }}" class="text-gold hover:underline font-semibold">Stays collection</a>. Submit the form here for bespoke requests, special rates, or stays that aren't publicly listed.
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-summary">
+                <span>Do you handle corporate or long-stay bookings?</span>
+                <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
+              </summary>
+              <div class="faq-body">
+                Absolutely. We host business travelers and long-stay guests regularly, and offer preferential rates for extended stays. Select <em>Partnership</em> as your reason, and a specialist will follow up.
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-summary">
+                <span>Is my information private?</span>
+                <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
+              </summary>
+              <div class="faq-body">
+                Yes. All inquiries are confidential and stored securely. We never share your details with third parties, and you can request deletion at any time.
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PAGE-SCOPED STYLES ============ -->
+<style>
+  .faq-item {
+    background: #fff;
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: border-color .25s ease, box-shadow .25s ease;
+  }
+  .faq-item[open] {
+    border-color: rgba(201, 168, 76, 0.6);
+    box-shadow: 0 12px 30px -18px rgba(26, 58, 42, 0.25);
+  }
+  .faq-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 1.1rem 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-weight: 600;
+    color: #1a3a2a;
+    font-size: 0.95rem;
+    user-select: none;
+  }
+  .faq-summary::-webkit-details-marker { display: none; }
+  .faq-chevron {
+    color: #c9a84c;
+    transition: transform .25s ease;
+    flex-shrink: 0;
+  }
+  .faq-item[open] .faq-chevron { transform: rotate(180deg); }
+  .faq-body {
+    padding: 0 1.4rem 1.25rem;
+    color: rgba(44, 44, 42, 0.78);
+    font-size: 0.875rem;
+    line-height: 1.75;
+    font-weight: 300;
+  }
+  .field-input.invalid { border-color: #dc2626 !important; }
+  .field-input.valid   { border-color: #10b981 !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faq-chevron { transition: none; }
+    .animate-ping { animation: none; }
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ============================================================
+   CONTACT PAGE — page-specific only.
+   Shared globals (CSRF_TOKEN, showToast, etc.) live in base.html.
+   ============================================================ */
+
+/* ---------- Message counter ---------- */
+function updateMsgCounter(el) {
+  const counter = document.getElementById('msgCounter');
+  if (counter) counter.textContent = `${el.value.length} / 2000`;
+}
+
+/* ---------- Inline field validation ---------- */
+function validateField(input) {
+  const wrap = input.closest('div');
+  const errEl = wrap?.querySelector('.field-error');
+  const checkEl = wrap?.querySelector('.field-check');
+  const value = (input.value || '').trim();
+  let valid = true;
+  let message = '';
+
+  if (input.hasAttribute('required') && !value) {
+    valid = false;
+    message = 'This field is required.';
+  } else if (input.type === 'email' && value) {
+    valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    if (!valid) message = 'Please enter a valid email address.';
+  } else if (input.type === 'tel' && value) {
+    valid = value.replace(/\D/g, '').length >= 7;
+    if (!valid) message = 'Please enter a valid phone number.';
+  }
+
+  input.classList.toggle('invalid', !valid && value !== '');
+  input.classList.toggle('valid', valid && value !== '');
+  if (checkEl) checkEl.classList.toggle('hidden', !(valid && value !== '' && input.type === 'tel'));
+  if (errEl) {
+    errEl.textContent = message;
+    errEl.classList.toggle('hidden', valid || value === '');
+  }
+  return valid;
+}
+
+/* ---------- Pre-select property from URL (?property=...) ---------- */
+function preselectPropertyFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const prop = params.get('property');
+  if (!prop) return;
+  const select = document.getElementById('contactProperty');
+  if (!select) return;
+  const option = Array.from(select.options).find(o =>
+    o.value.toLowerCase() === prop.toLowerCase() ||
+    o.text.toLowerCase().startsWith(prop.toLowerCase() + ' —')
+  );
+  if (option) select.value = option.value;
+}
+
+/* ---------- Submit ---------- */
+async function handleContactSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+
+  /* Validate all required fields */
+  const fields = form.querySelectorAll('.field-input');
+  let allValid = true;
+  fields.forEach(f => { if (!validateField(f)) allValid = false; });
+  if (!allValid) {
+    showToast('Please check the highlighted fields.', 'error');
+    const firstBad = form.querySelector('.field-input.invalid');
+    firstBad?.focus();
+    firstBad?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  /* Honeypot check */
+  const honeypot = form.querySelector('input[name="website"]')?.value || '';
+  if (honeypot) {
+    /* Silent fail for bots */
+    showToast('Thank you!', 'success');
+    return;
+  }
+
+  const btn = document.getElementById('contactSubmitBtn');
+  const feedback = document.getElementById('contactFormFeedback');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Sending…</span>';
+
+  const fd = new FormData(form);
+  const reason = (fd.get('reason') || 'Bespoke Stay').toString();
+  const preferredMethod = (fd.get('preferred_method') || 'WhatsApp').toString();
+  const preferredTime = (fd.get('preferred_time') || 'Anytime').toString();
+
+  const payload = {
+    name: (fd.get('name') || '').toString().trim(),
+    email: (fd.get('email') || '').toString().trim(),
+    phone: (fd.get('phone') || '').toString().trim(),
+    property: (fd.get('property') || 'General Inquiry').toString(),
+    check_in: '',
+    check_out: '',
+    guests: '—',
+    message: (fd.get('message') || '').toString().trim(),
+    reason,
+    preferred_method: preferredMethod,
+    preferred_time: preferredTime
+  };
+
+  try {
+    const res = await fetch('{{ url_for("public.submit_inquiry") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': CSRF_TOKEN
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      /* Show success view */
+      document.getElementById('contactFormView').classList.add('hidden');
+      document.getElementById('contactSuccessView').classList.remove('hidden');
+      showToast('Your message has been sent.', 'success');
+      document.getElementById('contactSuccessView').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      if (feedback) {
+        feedback.textContent = '⚠ ' + (data.error || 'Submission failed. Please try again.');
+        feedback.className = 'mb-5 p-3 rounded-xl text-xs font-medium border bg-red-50 text-red-700 border-red-200';
+        feedback.classList.remove('hidden');
+      }
+      showToast(data.error || 'Submission failed. Please try again.', 'error');
+    }
+  } catch (err) {
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
+/* ---------- Reset to form view ---------- */
+function resetContactForm() {
+  const form = document.getElementById('contactForm');
+  form.reset();
+  form.querySelectorAll('.field-input').forEach(f => {
+    f.classList.remove('valid', 'invalid');
+    const wrap = f.closest('div');
+    wrap?.querySelector('.field-error')?.classList.add('hidden');
+    wrap?.querySelector('.field-check')?.classList.add('hidden');
+  });
+  updateMsgCounter(document.getElementById('contactMessage'));
+  document.getElementById('contactSuccessView').classList.add('hidden');
+  document.getElementById('contactFormView').classList.remove('hidden');
+  document.getElementById('contactFormView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---------- Init ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  preselectPropertyFromURL();
+
+  const form = document.getElementById('contactForm');
+  if (!form) return;
+
+  /* Attach blur validation */
+  form.querySelectorAll('.field-input').forEach(f => {
+    f.addEventListener('blur', () => validateField(f));
+    f.addEventListener('input', () => {
+      if (f.classList.contains('invalid')) validateField(f);
+    });
+  });
+
+  /* Initialize counter */
+  const msg = document.getElementById('contactMessage');
+  if (msg) updateMsgCounter(msg);
+});
+</script>
+{% endblock %}

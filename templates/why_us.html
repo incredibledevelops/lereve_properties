@@ -1,0 +1,453 @@
+{% extends "base.html" %}
+{% block title %}Why Le Rêve · Le Rêve Properties{% endblock %}
+
+{% block content %}
+
+<!-- ============ HERO ============ -->
+<section class="relative pt-20 pb-24 bg-primary text-soft-white overflow-hidden">
+  <div class="absolute inset-0 opacity-20 bg-cover bg-center"
+       style="background-image:url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=2000&q=80');"></div>
+  <div class="absolute inset-0 bg-gradient-to-b from-primary/85 via-primary/95 to-primary"></div>
+  <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <p class="why-eyebrow mb-4">Why Le Rêve</p>
+    <h1 class="font-serif text-4xl sm:text-6xl font-light text-ivory tracking-wide leading-tight max-w-4xl mx-auto mb-6">
+      Five things guests <span class="italic text-gold font-normal">come back for</span>
+    </h1>
+    <p class="text-ivory/80 text-base sm:text-lg font-light max-w-2xl mx-auto leading-relaxed mb-10">
+      We didn't build a rental business. We built a hospitality experience — and there's a difference.
+    </p>
+
+    <!-- Hero CTAs -->
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="{{ url_for('public.stays') }}"
+         class="bg-gold text-primary hover:bg-white px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+        <i class="fa-solid fa-house-chimney mr-2" aria-hidden="true"></i> Browse Stays
+      </a>
+      <a href="{{ url_for('public.contact') }}"
+         class="border border-ivory/40 text-ivory hover:bg-ivory hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
+        <i class="fa-solid fa-paper-plane mr-2" aria-hidden="true"></i> Talk to Concierge
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATS STRIP ============ -->
+<section class="py-12 bg-primary-dark text-ivory border-y border-gold/20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+    <div>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">500+</span>
+      <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Guest Nights Hosted</span>
+    </div>
+    <div>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">4.98 ★</span>
+      <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Average Rating</span>
+    </div>
+    <div>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">15 min</span>
+      <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">From Kotoka Airport</span>
+    </div>
+    <div>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block">24 / 7</span>
+      <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Concierge Support</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHY CARDS ============ -->
+<section class="bg-primary relative overflow-hidden py-20 md:py-28">
+  <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
+  <div class="relative max-w-7xl mx-auto px-6 md:px-16">
+
+    <div class="text-center mb-14 max-w-2xl mx-auto">
+      <p class="why-eyebrow mb-4">The Le Rêve Difference</p>
+      <h2 class="font-serif text-3xl sm:text-4xl font-light text-ivory leading-tight">
+        Every detail, <span class="italic text-gold font-normal">considered.</span>
+      </h2>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="whyGrid">
+      <div class="why-card reveal" data-delay="0">
+        <div class="why-icon"><i class="fa-solid fa-compass" aria-hidden="true"></i></div>
+        <div class="why-num">01</div>
+        <h3 class="why-title">Genuine local knowledge</h3>
+        <p class="why-body">We know Accra the way only someone who lives here can. Best routes, local food, what to avoid — we share it all.</p>
+      </div>
+
+      <div class="why-card reveal" data-delay="80">
+        <div class="why-icon"><i class="fa-solid fa-gem" aria-hidden="true"></i></div>
+        <div class="why-num">02</div>
+        <h3 class="why-title">Affordable without compromise</h3>
+        <p class="why-body">Significantly below hotel pricing without sacrificing the things that matter: cleanliness, comfort, and reliable communication.</p>
+      </div>
+
+      <div class="why-card reveal" data-delay="160">
+        <div class="why-icon"><i class="fa-solid fa-plane-arrival" aria-hidden="true"></i></div>
+        <div class="why-num">03</div>
+        <h3 class="why-title">City access, airport proximity</h3>
+        <p class="why-body">15 minutes from Kotoka International Airport and well-connected to business districts, embassies, and key city areas.</p>
+      </div>
+
+      <div class="why-card reveal" data-delay="0">
+        <div class="why-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></div>
+        <div class="why-num">04</div>
+        <h3 class="why-title">Responsive, real support</h3>
+        <p class="why-body">Not a faceless corporation — you're in direct contact with us throughout your stay. Fast answers, real help, no automated runaround.</p>
+      </div>
+
+      <div class="why-card reveal" data-delay="80">
+        <div class="why-icon"><i class="fa-solid fa-couch" aria-hidden="true"></i></div>
+        <div class="why-num">05</div>
+        <h3 class="why-title">A sense of home</h3>
+        <p class="why-body">Whether you're here for a night or a month, you'll have a real space that feels lived in — not staged. That's what a home should feel like.</p>
+      </div>
+
+      <div class="why-card why-card-quote reveal flex items-center" data-delay="160">
+        <blockquote class="why-quote">Le Rêve means "the dream." And the dream is that every traveler to Africa can find a home worth coming back to.</blockquote>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPARISON TABLE ============ -->
+<section class="py-20 md:py-28 bg-ivory relative overflow-hidden">
+  <div class="kente-pattern absolute inset-0 opacity-30 pointer-events-none"></div>
+  <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="text-center mb-12 max-w-2xl mx-auto">
+      <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">Compare</span>
+      <h2 class="font-serif text-3xl sm:text-4xl font-light text-primary">
+        Le Rêve vs. <span class="italic text-gold">the alternatives</span>
+      </h2>
+      <p class="text-charcoal/70 text-sm sm:text-base font-light mt-4 leading-relaxed">
+        See why guests choose us over hotels and typical short-term rentals.
+      </p>
+    </div>
+
+    <div class="overflow-x-auto rounded-3xl border border-gold/30 shadow-luxury bg-white">
+      <table class="w-full text-left text-sm min-w-[640px]">
+        <thead>
+          <tr class="bg-primary text-ivory">
+            <th class="p-5 font-serif text-base font-semibold w-2/5">Feature</th>
+            <th class="p-5 text-center text-xs font-bold uppercase tracking-widest text-gold border-l border-gold/20">
+              <i class="fa-solid fa-crown mr-1" aria-hidden="true"></i> Le Rêve
+            </th>
+            <th class="p-5 text-center text-xs font-bold uppercase tracking-widest text-ivory/70 border-l border-gold/20">Hotels</th>
+            <th class="p-5 text-center text-xs font-bold uppercase tracking-widest text-ivory/70 border-l border-gold/20">Rentals</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-charcoal/10">
+          <tr class="hover:bg-gold/5 transition-colors">
+            <td class="p-5 font-medium text-charcoal">Local concierge, 24/7</td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+          </tr>
+          <tr class="hover:bg-gold/5 transition-colors">
+            <td class="p-5 font-medium text-charcoal">Genuine Accra insights</td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+          </tr>
+          <tr class="hover:bg-gold/5 transition-colors">
+            <td class="p-5 font-medium text-charcoal">Whole-home privacy</td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
+          </tr>
+          <tr class="hover:bg-gold/5 transition-colors">
+            <td class="p-5 font-medium text-charcoal">Chef &amp; airport transfers</td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-half-stroke text-gold/60 text-lg" aria-label="Sometimes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+          </tr>
+          <tr class="hover:bg-gold/5 transition-colors">
+            <td class="p-5 font-medium text-charcoal">Below hotel pricing</td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
+          </tr>
+          <tr class="hover:bg-gold/5 transition-colors">
+            <td class="p-5 font-medium text-charcoal">Handpicked &amp; vetted estates</td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-check text-gold text-lg" aria-label="Yes"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+            <td class="p-5 text-center border-l border-charcoal/10"><i class="fa-solid fa-circle-xmark text-charcoal/30 text-lg" aria-label="No"></i></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TESTIMONIALS ============ -->
+{% if reviews %}
+<section class="py-20 md:py-28 bg-ivory-dark/40 relative overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12">
+    <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">In Their Own Words</span>
+    <h2 class="font-serif text-3xl sm:text-4xl font-light text-primary">Guests who <span class="italic text-gold">came back</span></h2>
+  </div>
+
+  <div class="relative">
+    <div class="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-ivory-dark/40 to-transparent z-10" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-ivory-dark/40 to-transparent z-10" aria-hidden="true"></div>
+
+    <div class="carousel-wrap px-4" id="whyReviewsWrap">
+      <div class="carousel-track" id="whyReviewsTrack">
+        <div class="flex gap-6 shrink-0" id="whyReviewsSource">
+          {% for r in reviews %}
+            {% set rating = (r.rating or 0)|int %}
+            {% set avatar_url = r.avatar or ('https://ui-avatars.com/api/?name=' ~ ((r.name or 'Guest')|urlencode) ~ '&background=c9a84c&color=1a3a2a') %}
+            <article class="w-[320px] sm:w-[380px] flex-shrink-0 bg-white rounded-3xl p-7 border border-gold/20 shadow-luxury flex flex-col justify-between relative">
+              <i class="fa-solid fa-quote-left text-4xl text-gold/20 absolute top-5 right-5" aria-hidden="true"></i>
+              <div>
+                <div class="flex items-center gap-1 text-gold text-xs mb-4">
+                  {% for i in range(5) %}<i class="fa-solid fa-star {% if i < rating %}text-gold{% else %}text-charcoal/20{% endif %}" aria-hidden="true"></i>{% endfor %}
+                  <span class="text-charcoal/60 text-[11px] ml-2 font-medium">Verified</span>
+                </div>
+                <p class="text-charcoal/80 text-sm leading-relaxed italic mb-6 line-clamp-2">"{{ r.text|e }}"</p>
+              </div>
+              <div class="flex items-center gap-4 pt-4 border-t border-charcoal/5">
+                <img src="{{ avatar_url|e }}" alt="{{ r.name or 'Guest' }}" class="w-12 h-12 rounded-full object-cover border-2 border-gold" loading="lazy"
+                     onerror="this.src='https://ui-avatars.com/api/?name={{ (r.name or 'Guest')|urlencode }}&amp;background=c9a84c&amp;color=1a3a2a';">
+                <div class="min-w-0">
+                  <h4 class="font-serif text-base font-semibold text-primary truncate">{{ r.name|e or 'Anonymous' }}</h4>
+                  <p class="text-xs text-gold truncate">{{ r.property|e or '—' }}</p>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ============ FAQ ============ -->
+<section class="py-20 md:py-28 bg-ivory">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">Good to Know</span>
+      <h2 class="font-serif text-3xl sm:text-4xl font-light text-primary">Frequently <span class="italic text-gold">asked</span></h2>
+    </div>
+
+    <div class="space-y-3" id="faqList">
+      <details class="faq-item group">
+        <summary class="faq-summary">
+          <span>How do I book an estate?</span>
+          <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="faq-body">
+          Browse our <a href="{{ url_for('public.stays') }}" class="text-gold hover:underline font-semibold">Stays collection</a>, pick your estate, and click "Book". You'll get a confirmation from our concierge within 2 hours. You can also submit a bespoke inquiry for stays not listed publicly.
+        </div>
+      </details>
+
+      <details class="faq-item group">
+        <summary class="faq-summary">
+          <span>What's included in the nightly rate?</span>
+          <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="faq-body">
+          Every stay includes the full private residence, high-speed Wi-Fi, premium linens, and 24/7 concierge support. Optional extras (private chef, airport transfer, driver) can be arranged on request.
+        </div>
+      </details>
+
+      <details class="faq-item group">
+        <summary class="faq-summary">
+          <span>Is the location really 15 minutes from the airport?</span>
+          <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="faq-body">
+          Yes — most of our estates are a 15-minute drive from Kotoka International Airport, depending on traffic. Airport pickup can be arranged for an additional fee.
+        </div>
+      </details>
+
+      <details class="faq-item group">
+        <summary class="faq-summary">
+          <span>Can I book for a business trip or longer stay?</span>
+          <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="faq-body">
+          Absolutely. We host business travelers and long-stay guests regularly. Extended stays (7+ nights) qualify for preferential rates — contact our concierge for a custom quote.
+        </div>
+      </details>
+
+      <details class="faq-item group">
+        <summary class="faq-summary">
+          <span>What if I need to cancel?</span>
+          <i class="fa-solid fa-chevron-down faq-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="faq-body">
+          Cancel free up to 7 days before check-in. Cancellations within 7 days are subject to a 50% fee. Full policy is shared with your booking confirmation.
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section class="py-20 md:py-24 bg-primary relative overflow-hidden">
+  <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
+  <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">Ready When You Are</span>
+    <h2 class="font-serif text-3xl sm:text-5xl font-light text-ivory mb-6">
+      Come as a guest. <span class="italic text-gold">Return as family.</span>
+    </h2>
+    <p class="text-ivory/70 text-base font-light max-w-2xl mx-auto mb-10 leading-relaxed">
+      Reserve your sanctuary, or speak with a private advisor to design your perfect Accra stay.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="{{ url_for('public.stays') }}"
+         class="bg-gold text-primary hover:bg-white px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+        <i class="fa-solid fa-house-chimney mr-2" aria-hidden="true"></i> Browse Stays
+      </a>
+      <a href="{{ url_for('public.contact') }}"
+         class="border border-ivory/40 text-ivory hover:bg-ivory hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all">
+        <i class="fa-solid fa-paper-plane mr-2" aria-hidden="true"></i> Talk to Concierge
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PAGE-SCOPED STYLES ============ -->
+<style>
+  /* Why card enhancements */
+  .why-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .why-card .why-icon {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(201, 168, 76, 0.12);
+    color: #c9a84c;
+    font-size: 1rem;
+    transition: transform .3s ease, background .3s ease;
+  }
+  .why-card:hover .why-icon {
+    background: rgba(201, 168, 76, 0.25);
+    transform: scale(1.08) rotate(-4deg);
+  }
+  .why-card-quote .why-icon { display: none; }
+
+  /* Scroll-reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* FAQ */
+  .faq-item {
+    background: #fff;
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: border-color .25s ease, box-shadow .25s ease;
+  }
+  .faq-item[open] {
+    border-color: rgba(201, 168, 76, 0.6);
+    box-shadow: 0 12px 30px -18px rgba(26, 58, 42, 0.25);
+  }
+  .faq-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 1.1rem 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-weight: 600;
+    color: #1a3a2a;
+    font-size: 0.95rem;
+    user-select: none;
+  }
+  .faq-summary::-webkit-details-marker { display: none; }
+  .faq-chevron {
+    color: #c9a84c;
+    transition: transform .25s ease;
+    flex-shrink: 0;
+  }
+  .faq-item[open] .faq-chevron { transform: rotate(180deg); }
+  .faq-body {
+    padding: 0 1.4rem 1.25rem;
+    color: rgba(44, 44, 42, 0.78);
+    font-size: 0.875rem;
+    line-height: 1.75;
+    font-weight: 300;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .why-card:hover .why-icon { transform: none; }
+    .faq-chevron { transition: none; }
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ============================================================
+   WHY US PAGE — page-specific only.
+   Shared globals (buildEndlessMarquee, etc.) live in base.html.
+   ============================================================ */
+
+/* ---- Scroll-reveal for why cards ---- */
+function initScrollReveal() {
+  const els = document.querySelectorAll('.reveal');
+  if (!els.length || !('IntersectionObserver' in window)) {
+    els.forEach(el => el.classList.add('is-visible'));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const delay = parseInt(entry.target.dataset.delay || '0', 10);
+        setTimeout(() => entry.target.classList.add('is-visible'), delay);
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+  els.forEach(el => io.observe(el));
+}
+
+/* ---- Reviews marquee ---- */
+function initReviewsMarquee() {
+  const track  = document.getElementById('whyReviewsTrack');
+  const source = document.getElementById('whyReviewsSource');
+  if (!track || !source || source.children.length === 0) return;
+  if (typeof buildEndlessMarquee === 'function') {
+    buildEndlessMarquee('whyReviewsTrack', 'whyReviewsSource', { speed: 65 });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initScrollReveal();
+
+  /* Rebuild marquee a few times to handle fonts / images / layout shifts */
+  initReviewsMarquee();
+  setTimeout(initReviewsMarquee, 400);
+  setTimeout(initReviewsMarquee, 1200);
+
+  /* Rebuild on resize */
+  let rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(rt);
+    rt = setTimeout(initReviewsMarquee, 250);
+  });
+  if (document.fonts?.ready) document.fonts.ready.then(() => setTimeout(initReviewsMarquee, 300));
+});
+</script>
+{% endblock %}
