@@ -6,6 +6,8 @@
 
 {% block content %}
 
+{% set has_filters = (q or from_date or to_date or status_filter) %}
+
 {# ============================================================
    Flash messages
    ============================================================ #}
@@ -31,18 +33,22 @@
 {% endwith %}
 
 {# ============================================================
-   KPI row
+   KPI row — Total (global) + Revenue + Pending + Actions
    ============================================================ #}
-{% set show_count = pagination.total if status_filter else pagination.total %}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
   <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
     <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
-      {% if status_filter %}{{ status_filter | replace('-', ' ') | title }}{% else %}Total{% endif %} Bookings
+      Total Bookings
     </span>
     <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
-      {{ "{:,}".format(pagination.total or 0) }}
+      {{ "{:,}".format((global_total | default(pagination.total)) or 0) }}
     </p>
+    {% if has_filters %}
+      <p class="text-[10px] text-charcoal/40 mt-1 tabular-nums">
+        {{ "{:,}".format(pagination.total or 0) }} matching current filters
+      </p>
+    {% endif %}
   </div>
 
   <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
@@ -50,7 +56,7 @@
       Paid Revenue (all time)
     </span>
     <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
-      {{ total_revenue|format_currency }}
+      {{ (total_revenue or 0) | format_currency }}
     </p>
   </div>
 
@@ -59,7 +65,7 @@
       Pending Payment
     </span>
     <p class="font-serif text-3xl font-bold text-amber-600 mt-2 tabular-nums">
-      {{ "{:,}".format(pending_count|default(0)) }}
+      {{ "{:,}".format(pending_count or 0) }}
     </p>
   </div>
 
@@ -67,12 +73,12 @@
     <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
       Actions
     </span>
-    <div class="flex gap-2 mt-3">
-      <a href="{{ url_for('admin.bookings', status=status_filter, format='csv') if status_filter else url_for('admin.bookings', format='csv') }}"
+    <div class="flex flex-col sm:flex-row gap-2 mt-3">
+      <a href="{{ url_for('admin.bookings', status=status_filter, q=q, from=from_date, to=to_date, format='csv') }}"
          class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
                 bg-primary text-gold hover:bg-gold hover:text-primary
                 text-[10px] font-bold uppercase tracking-wider transition-all"
-         title="Export current view as CSV">
+         title="Export the current filtered view as CSV">
         <i class="fa-solid fa-file-csv" aria-hidden="true"></i>
         <span>Export</span>
       </a>
@@ -80,8 +86,9 @@
               id="refreshBtn"
               class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
                      border border-charcoal/15 hover:border-gold hover:text-gold
-                     text-[10px] font-bold uppercase tracking-wider text-charcoal/70 transition-all"
-              title="Refresh">
+                     text-[10px] font-bold uppercase tracking-wider text-charcoal/70 transition-all
+                     disabled:opacity-60 disabled:cursor-wait"
+              title="Reload the list with fresh data">
         <i class="fa-solid fa-rotate" aria-hidden="true"></i>
         <span>Refresh</span>
       </button>
@@ -94,23 +101,23 @@
    ============================================================ #}
 <div class="bg-white rounded-2xl border border-gold/20 shadow-sm p-4 mb-4">
 
-  {# Status pills #}
-  <div class="flex flex-wrap gap-2 mb-3" role="tablist" aria-label="Filter by status">
+  {# Status pills — navigation, not tabs #}
+  <nav class="flex flex-wrap gap-2 mb-3" aria-label="Filter by status">
     {% set status_options = [
-      ('',                     'All',                   'fa-list',                0),
-      ('pending',              'Pending',               'fa-hourglass-half',      0),
-      ('confirmed',            'Confirmed',             'fa-circle-check',        0),
-      ('completed',            'Completed',             'fa-flag-checkered',      0),
-      ('cancellation-requested','Cancellation',         'fa-clock-rotate-left',   0),
-      ('cancelled',            'Cancelled',             'fa-ban',                 0),
+      ('',                       'All',           'fa-list',               0),
+      ('pending',                'Pending',       'fa-hourglass-half',     0),
+      ('confirmed',              'Confirmed',     'fa-circle-check',       0),
+      ('completed',              'Completed',     'fa-flag-checkered',     0),
+      ('cancellation-requested', 'Cancellation',  'fa-clock-rotate-left',  0),
+      ('cancelled',              'Cancelled',     'fa-ban',                0),
     ] %}
     {% for v, l, i, _ in status_options %}
       {% set is_active = (status_filter == v) or (not status_filter and v == '') %}
-      <a href="{{ url_for('admin.bookings', status=v) if v else url_for('admin.bookings') }}"
-         role="tab"
-         aria-selected="{{ 'true' if is_active else 'false' }}"
+      <a href="{{ url_for('admin.bookings', status=v, q=q, from=from_date, to=to_date) if v else url_for('admin.bookings', q=q, from=from_date, to=to_date) }}"
+         {% if is_active %}aria-current="page"{% endif %}
          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full
                 text-xs font-bold uppercase tracking-wider transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
                 {% if is_active %}
                   bg-primary text-gold shadow-sm
                 {% else %}
@@ -120,34 +127,36 @@
         <span>{{ l }}</span>
       </a>
     {% endfor %}
-  </div>
+  </nav>
 
   {# Search + date range + clear #}
   <form method="GET"
         action="{{ url_for('admin.bookings') }}"
         role="search"
+        id="bookingsFilterForm"
         class="flex flex-wrap items-center gap-2">
 
     {% if status_filter %}
       <input type="hidden" name="status" value="{{ status_filter }}">
     {% endif %}
 
-    {# Search #}
-    <div class="relative flex-1 min-w-[180px]">
+    {# Search — full width on mobile #}
+    <div class="relative flex-1 w-full sm:w-auto sm:min-w-[180px]">
       <label for="bookingsSearch" class="sr-only">Search bookings</label>
       <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2
                 text-charcoal/30 text-xs pointer-events-none" aria-hidden="true"></i>
       <input id="bookingsSearch"
              name="q"
              type="search"
-             value="{{ q|default('') }}"
+             enterkeyhint="search"
+             value="{{ q|default('', true) }}"
              placeholder="Search by guest, email, or property…"
              autocomplete="off"
              class="w-full pl-8 pr-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
                     focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
     </div>
 
-    {# Date from #}
+    {# Date range #}
     <div class="flex items-center gap-1.5">
       <label for="bookingsFrom" class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
         From
@@ -155,12 +164,11 @@
       <input id="bookingsFrom"
              name="from"
              type="date"
-             value="{{ from_date|default('') }}"
+             value="{{ from_date|default('', true) }}"
              class="px-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
                     focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
     </div>
 
-    {# Date to #}
     <div class="flex items-center gap-1.5">
       <label for="bookingsTo" class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
         To
@@ -168,24 +176,28 @@
       <input id="bookingsTo"
              name="to"
              type="date"
-             value="{{ to_date|default('') }}"
+             value="{{ to_date|default('', true) }}"
              class="px-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
                     focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
     </div>
 
     <button type="submit"
+            id="bookingsFilterApply"
             class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
                    bg-primary text-gold hover:bg-gold hover:text-primary
-                   text-[10px] font-bold uppercase tracking-wider transition-all">
+                   text-[10px] font-bold uppercase tracking-wider transition-all
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                   disabled:opacity-60 disabled:cursor-wait">
       <i class="fa-solid fa-filter" aria-hidden="true"></i>
       <span>Apply</span>
     </button>
 
-    {% if q or from_date or to_date or status_filter %}
+    {% if has_filters %}
       <a href="{{ url_for('admin.bookings') }}"
          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
                 border border-charcoal/15 hover:border-red-300 hover:text-red-600
-                text-[10px] font-bold uppercase tracking-wider text-charcoal/60 transition-all">
+                text-[10px] font-bold uppercase tracking-wider text-charcoal/60 transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400">
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         <span>Clear</span>
       </a>
@@ -200,8 +212,19 @@
   <div class="overflow-x-auto">
     <table class="w-full text-sm">
       <caption class="sr-only">
-        Bookings list{% if status_filter %} filtered by {{ status_filter }}{% endif %}
+        Bookings list{% if status_filter %} filtered by {{ status_filter | replace('-', ' ') }}{% endif %}
       </caption>
+
+      {# Fixed column widths prevent layout shift between pages #}
+      <colgroup>
+        <col style="width: 24%;">
+        <col class="hidden md:table-column" style="width: 22%;">
+        <col class="hidden sm:table-column" style="width: 16%;">
+        <col style="width: 12%;">
+        <col class="hidden lg:table-column" style="width: 10%;">
+        <col style="width: 10%;">
+        <col style="width: 6%;">
+      </colgroup>
 
       <thead class="bg-ivory-dark/60 text-primary">
         <tr class="text-left text-[11px] uppercase tracking-wider">
@@ -217,8 +240,12 @@
 
       <tbody class="divide-y divide-charcoal/5">
         {% for b in bookings %}
-          {% set status = b.status or 'pending' %}
-          {% set pay    = b.payment_status or 'pending' %}
+          {% set status_val = b.status or 'pending' %}
+          {% set pay_val    = b.payment_status or 'pending' %}
+          {% set booking_ref = b.confirmation_id or b.id or '' %}
+          {% set guest_name  = b.user_name or 'Guest' %}
+          {% set guest_init  = (guest_name | trim)[0] | upper if (guest_name | trim) else '?' %}
+
           <tr class="hover:bg-ivory/50 transition-colors align-middle">
 
             {# --- Guest --- #}
@@ -227,11 +254,11 @@
                 <div class="w-9 h-9 rounded-full bg-primary/10 text-primary
                             flex items-center justify-center shrink-0 text-xs font-bold"
                      aria-hidden="true">
-                  {{ (b.user_name or 'G')[0] | upper }}
+                  {{ guest_init }}
                 </div>
                 <div class="min-w-0">
                   <p class="font-semibold text-primary text-sm truncate">
-                    {{ b.user_name or 'Guest' }}
+                    {{ guest_name }}
                   </p>
                   <p class="text-[11px] text-charcoal/50 truncate">
                     {{ b.user_email or '—' }}
@@ -284,7 +311,7 @@
             {# --- Total --- #}
             <td class="px-4 py-3">
               <p class="font-serif text-base font-bold text-primary tabular-nums">
-                {{ b.total|format_currency }}
+                {{ (b.total or 0) | format_currency }}
               </p>
             </td>
 
@@ -292,13 +319,13 @@
             <td class="px-4 py-3 hidden lg:table-cell">
               <span class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase
                            px-2.5 py-1 rounded-full
-                           {% if pay == 'paid' %}text-emerald-700 bg-emerald-100
-                           {% elif pay == 'failed' %}text-red-700 bg-red-100
-                           {% elif pay == 'refunded' %}text-purple-700 bg-purple-100
-                           {% elif pay == 'refund-pending' %}text-blue-700 bg-blue-100
+                           {% if pay_val == 'paid' %}text-emerald-700 bg-emerald-100
+                           {% elif pay_val == 'failed' %}text-red-700 bg-red-100
+                           {% elif pay_val == 'refunded' %}text-purple-700 bg-purple-100
+                           {% elif pay_val == 'refund-pending' %}text-blue-700 bg-blue-100
                            {% else %}text-amber-700 bg-amber-100{% endif %}">
                 <span class="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true"></span>
-                {{ pay }}
+                {{ pay_val }}
               </span>
             </td>
 
@@ -306,40 +333,42 @@
             <td class="px-4 py-3">
               <form method="POST"
                     action="{{ url_for('admin.booking_status', bid=b.id) }}"
-                    class="inline-flex"
-                    data-booking-ref="{{ b.confirmation_id or b.id }}"
-                    data-booking-current="{{ status }}">
+                    class="inline-flex items-center"
+                    data-booking-ref="{{ booking_ref }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <label for="status-{{ b.id }}" class="sr-only">
-                  Change status for {{ b.user_name or 'booking' }}
+                  Change status for {{ guest_name }}
                 </label>
                 <select id="status-{{ b.id }}"
                         name="status"
                         data-status-select
+                        data-current="{{ status_val }}"
                         class="text-[11px] font-bold uppercase px-3 py-1.5 rounded-full
                                border-0 cursor-pointer focus:ring-2 focus:ring-gold
                                appearance-none pr-7 bg-no-repeat bg-right
-                               {% if status == 'confirmed' %}bg-emerald-100 text-emerald-700
-                               {% elif status == 'completed' %}bg-blue-100 text-blue-700
-                               {% elif status == 'pending' %}bg-amber-100 text-amber-700
-                               {% elif status == 'cancelled' %}bg-red-100 text-red-700
-                               {% elif status == 'cancellation-requested' %}bg-amber-100 text-amber-800
+                               {% if status_val == 'confirmed' %}bg-emerald-100 text-emerald-700
+                               {% elif status_val == 'completed' %}bg-blue-100 text-blue-700
+                               {% elif status_val == 'pending' %}bg-amber-100 text-amber-700
+                               {% elif status_val == 'cancelled' %}bg-red-100 text-red-700
+                               {% elif status_val == 'cancellation-requested' %}bg-amber-100 text-amber-800
                                {% else %}bg-ivory-dark text-charcoal/70{% endif %}"
                         style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22currentColor%22><path d=%22M5.25 7.5l4.5 4.5 4.5-4.5z%22/></svg>');">
                   {% for s in ['pending', 'confirmed', 'completed', 'cancellation-requested', 'cancelled'] %}
-                    <option value="{{ s }}" {% if status == s %}selected{% endif %}>
+                    <option value="{{ s }}" {% if status_val == s %}selected{% endif %}>
                       {{ s | replace('-', ' ') }}
                     </option>
                   {% endfor %}
                 </select>
 
-                {# Explicit apply button — hidden by default, appears when the select changes #}
+                {# Explicit apply — hidden until the select changes #}
                 <button type="submit"
                         data-status-apply
                         class="hidden ml-1 w-7 h-7 rounded-full bg-primary text-gold
                                hover:bg-gold hover:text-primary
-                               items-center justify-center transition-all"
-                        title="Apply status change">
+                               items-center justify-center transition-all
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                        title="Apply status change"
+                        aria-label="Apply status change">
                   <i class="fa-solid fa-check text-[10px]" aria-hidden="true"></i>
                 </button>
               </form>
@@ -350,17 +379,19 @@
               <div class="flex items-center justify-end gap-1.5">
                 <a href="{{ url_for('admin.booking_detail', bid=b.id) }}"
                    class="w-9 h-9 rounded-lg bg-primary text-gold hover:bg-gold hover:text-primary
-                          flex items-center justify-center transition-all"
+                          flex items-center justify-center transition-all
+                          focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
                    title="View booking"
-                   aria-label="View booking for {{ b.user_name or 'guest' }}">
+                   aria-label="View booking for {{ guest_name }}">
                   <i class="fa-solid fa-eye text-[11px]" aria-hidden="true"></i>
                 </a>
                 {% if b.user_email %}
-                  <a href="mailto:{{ b.user_email }}?subject=Your booking {{ b.confirmation_id or b.id }}"
+                  <a href="mailto:{{ b.user_email }}?subject=Your booking {{ booking_ref }}"
                      class="w-9 h-9 rounded-lg bg-ivory hover:bg-gold text-primary
-                            flex items-center justify-center transition-all"
+                            flex items-center justify-center transition-all
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
                      title="Email guest"
-                     aria-label="Email {{ b.user_name or 'guest' }}">
+                     aria-label="Email {{ guest_name }}">
                     <i class="fa-solid fa-envelope text-[11px]" aria-hidden="true"></i>
                   </a>
                 {% endif %}
@@ -373,24 +404,29 @@
               <div class="flex flex-col items-center">
                 <i class="fa-regular fa-calendar-xmark text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
                 <p class="text-sm font-semibold text-primary mb-1">
-                  {% if q or from_date or to_date or status_filter %}
+                  {% if has_filters %}
                     No bookings match your filters.
                   {% else %}
                     No bookings yet.
                   {% endif %}
                 </p>
-                <p class="text-xs text-charcoal/50 mb-4">
-                  {% if q or from_date or to_date or status_filter %}
-                    Try widening the date range or clearing the search.
+                <p class="text-xs text-charcoal/50 mb-4 max-w-md">
+                  {% if has_filters %}
+                    {% if from_date and to_date and from_date > to_date %}
+                      Your "From" date is after your "To" date. Try swapping them.
+                    {% else %}
+                      Try widening the date range or clearing the search.
+                    {% endif %}
                   {% else %}
                     Bookings will appear here once guests start reserving.
                   {% endif %}
                 </p>
-                {% if q or from_date or to_date or status_filter %}
+                {% if has_filters %}
                   <a href="{{ url_for('admin.bookings') }}"
                      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl
                             bg-primary text-gold hover:bg-gold hover:text-primary
-                            text-[10px] font-bold uppercase tracking-wider transition-all">
+                            text-[10px] font-bold uppercase tracking-wider transition-all
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                     Clear filters
                   </a>
@@ -410,8 +446,9 @@
 {% if pagination.pages > 1 %}
   <div class="flex flex-wrap items-center justify-between gap-3 mt-5">
     <p class="text-xs text-charcoal/60">
-      Showing <b>{{ pagination.items|length }}</b>
-      of <b>{{ pagination.total }}</b>
+      Showing <b>{{ pagination.items | length }}</b>
+      of <b>{{ "{:,}".format(pagination.total or 0) }}</b>
+      {% if has_filters %}matching{% endif %}
       {% if status_filter %}
         <span class="text-charcoal/40">·</span>
         <span class="capitalize">{{ status_filter | replace('-', ' ') }}</span>
@@ -426,6 +463,7 @@
          class="px-4 py-2 rounded-lg border border-primary/20 bg-white
                 text-xs font-bold uppercase text-primary
                 hover:border-gold hover:text-gold transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
                 {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}"
          aria-label="Previous page">
         <i class="fa-solid fa-chevron-left text-[10px]" aria-hidden="true"></i>
@@ -443,6 +481,7 @@
          class="px-4 py-2 rounded-lg border border-primary/20 bg-white
                 text-xs font-bold uppercase text-primary
                 hover:border-gold hover:text-gold transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
                 {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}"
          aria-label="Next page">
         <span class="mr-1">Next</span>
@@ -468,63 +507,133 @@
   ready(function () {
 
     // ============================================================
-    // Status change: reveal Apply button on change, confirm destructive
+    // Status change: reveal Apply on change, confirm destructive,
+    // sync button color with target, restore state on bfcache.
     // ============================================================
     document.querySelectorAll('form[data-booking-ref]').forEach(function (form) {
-      var select = form.querySelector('[data-status-select]');
-      var apply  = form.querySelector('[data-status-apply]');
-      var ref    = form.dataset.bookingRef || '';
-      var original = select ? select.value : '';
-
+      var select   = form.querySelector('[data-status-select]');
+      var apply    = form.querySelector('[data-status-apply]');
+      var ref      = form.dataset.bookingRef || '';
       if (!select || !apply) return;
 
-      select.addEventListener('change', function () {
-        if (select.value === original) {
+      var original = select.dataset.current || select.value;
+      var submitting = false;
+
+      function syncButton() {
+        var changed = select.value !== original;
+
+        if (!changed) {
           apply.classList.add('hidden');
           apply.classList.remove('inline-flex');
-        } else {
-          apply.classList.remove('hidden');
-          apply.classList.add('inline-flex');
+          apply.classList.remove('bg-red-500', 'text-white');
+          apply.classList.add('bg-primary', 'text-gold');
+          return;
         }
-      });
+
+        apply.classList.remove('hidden');
+        apply.classList.add('inline-flex');
+
+        if (select.value === 'cancelled') {
+          apply.classList.remove('bg-primary', 'text-gold');
+          apply.classList.add('bg-red-500', 'text-white');
+          apply.title = 'Cancel this booking';
+          apply.setAttribute('aria-label', 'Cancel this booking');
+        } else {
+          apply.classList.add('bg-primary', 'text-gold');
+          apply.classList.remove('bg-red-500', 'text-white');
+          apply.title = 'Apply status change';
+          apply.setAttribute('aria-label', 'Apply status change');
+        }
+      }
+
+      select.addEventListener('change', syncButton);
+      syncButton();
 
       form.addEventListener('submit', function (e) {
         var next = select.value;
-        var destructive = next === 'cancelled';
-        var needsConfirm = next === 'cancellation-requested' || destructive;
+        var needsConfirm = (next === 'cancellation-requested' || next === 'cancelled');
 
         if (needsConfirm) {
-          var msg;
-          if (destructive) {
-            msg = 'Cancel booking ' + ref + '?\n\nThis cannot be undone from this page.';
-          } else {
-            msg = 'Mark booking ' + ref + ' as "cancellation requested"?';
-          }
+          var msg = next === 'cancelled'
+            ? 'Cancel booking ' + ref + '?\n\nThis cannot be undone from this page.'
+            : 'Mark booking ' + ref + ' as "cancellation requested"?';
           if (!window.confirm(msg)) {
             e.preventDefault();
-            // Restore select to the original value
             select.value = original;
-            apply.classList.add('hidden');
-            apply.classList.remove('inline-flex');
+            syncButton();
             return;
           }
         }
 
+        submitting = true;
         apply.disabled = true;
-        apply.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-[10px]" aria-hidden="true"></i>';
+        apply.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin text-[10px]" aria-hidden="true"></i>';
+      });
+
+      // If the page is restored via bfcache, the select keeps the user's
+      // changed value but the apply button is disabled / spinner. Reset.
+      window.addEventListener('pageshow', function (e) {
+        if (e.persisted || submitting) {
+          submitting = false;
+          apply.disabled = false;
+          apply.innerHTML =
+            '<i class="fa-solid fa-check text-[10px]" aria-hidden="true"></i>';
+          // Leave the select as the user left it; syncButton will show
+          // the correct apply state.
+          syncButton();
+        }
       });
     });
 
     // ============================================================
-    // Refresh button
+    // Refresh button — spinner + bfcache restore
     // ============================================================
     var refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) {
+      var refreshOriginal = refreshBtn.innerHTML;
       refreshBtn.addEventListener('click', function () {
+        if (refreshBtn.disabled) return;
         refreshBtn.disabled = true;
         refreshBtn.innerHTML =
           '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Refreshing…</span>';
         window.location.reload();
+      });
+      window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+          refreshBtn.disabled = false;
+          refreshBtn.innerHTML = refreshOriginal;
+        }
+      });
+    }
+
+    // ============================================================
+    // Filter form — disable Apply on submit to prevent double-clicks
+    // ============================================================
+    var filterForm  = document.getElementById('bookingsFilterForm');
+    var filterApply = document.getElementById('bookingsFilterApply');
+    if (filterForm && filterApply) {
+      filterForm.addEventListener('submit', function () {
+        if (!filterForm.checkValidity()) return;
+        if (!filterApply.disabled) {
+          filterApply.disabled = true;
+          filterApply.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>' +
+            '<span>Applying…</span>';
+        }
+      });
+    }
+
+    // ============================================================
+    // Search input — clear on Escape and re-submit the form
+    // ============================================================
+    var searchInput = document.getElementById('bookingsSearch');
+    if (searchInput && filterForm) {
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && searchInput.value !== '') {
+          searchInput.value = '';
+          filterForm.submit();
+        }
       });
     }
   });

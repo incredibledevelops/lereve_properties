@@ -6,59 +6,516 @@
 
 {% block content %}
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-  <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
-    <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40">
-      <h3 class="font-serif text-lg font-semibold text-primary">Site Configuration</h3>
-    </div>
-    <form method="POST" class="p-6 space-y-4">
-      {{ form.hidden_tag() }}
-
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Site Name *</label>
-        {{ form.site_name(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Contact Email *</label>
-        {{ form.contact_email(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">WhatsApp</label>
-        {{ form.whatsapp(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Instagram</label>
-        {{ form.instagram(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-
-      <div class="pt-2">
-        <button type="submit" class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md flex items-center gap-2">
-          <i class="fa-solid fa-floppy-disk"></i> Save Settings
-        </button>
-      </div>
-    </form>
-  </div>
-
-  <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
-    <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40">
-      <h3 class="font-serif text-lg font-semibold text-primary">Data Management</h3>
-    </div>
-    <div class="p-6 space-y-3">
-      <a href="{{ url_for('admin.export_data') }}" class="flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-charcoal/15 hover:border-gold hover:bg-gold/5 transition-all group">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <i class="fa-solid fa-download text-sm"></i>
-          </div>
-          <div>
-            <p class="text-sm font-semibold text-primary">Export Backup</p>
-            <p class="text-[10px] text-charcoal/50">Download all data as JSON</p>
-          </div>
-        </div>
-        <i class="fa-solid fa-chevron-right text-charcoal/40 group-hover:text-gold"></i>
-      </a>
-    </div>
-  </div>
+{# ── Top tab strip ──────────────────────────────────────────── #}
+<div class="flex flex-wrap gap-2 mb-5">
+  <button type="button"
+          data-tab="site"
+          class="js-tab px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider
+                 transition-all bg-primary text-gold shadow-sm
+                 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          aria-selected="true"
+          role="tab">
+    <i class="fa-solid fa-sliders text-[10px] mr-1.5" aria-hidden="true"></i>
+    Site
+  </button>
+  <button type="button"
+          data-tab="data"
+          class="js-tab px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider
+                 transition-all border border-primary/20 bg-white text-primary
+                 hover:border-gold hover:bg-ivory/60
+                 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          aria-selected="false"
+          role="tab">
+    <i class="fa-solid fa-database text-[10px] mr-1.5" aria-hidden="true"></i>
+    Data
+  </button>
 </div>
 
+{# ============================================================
+   Tab 1: Site Configuration
+   ============================================================ #}
+<section id="tab-site" data-tab-panel="site" role="tabpanel">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    {# ── Main config card (2/3 width) ─────────────────────── #}
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+      <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40 flex items-center gap-2">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-sliders text-[10px]"></i>
+        </div>
+        <h3 class="font-serif text-lg font-semibold text-primary">Site Configuration</h3>
+      </div>
+
+      <form method="POST" id="settingsForm" class="p-6 space-y-5" novalidate>
+        {{ form.hidden_tag() }}
+
+        {# Form-level errors #}
+        {% if form.errors %}
+          <div class="rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3"
+               role="alert">
+            <i class="fa-solid fa-circle-exclamation text-red-500 mt-0.5" aria-hidden="true"></i>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-red-700 mb-1">
+                Please fix {{ form.errors|length }}
+                issue{{ 's' if form.errors|length != 1 else '' }} below.
+              </p>
+              <ul class="text-xs text-red-600 list-disc list-inside space-y-0.5">
+                {% for field, errs in form.errors.items() %}
+                  {% for err in errs %}
+                    <li>
+                      <span class="font-semibold">{{ form[field].label.text if form[field] is defined else field }}:</span>
+                      {{ err }}
+                    </li>
+                  {% endfor %}
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        {% endif %}
+
+        {# Site name #}
+        <div>
+          <label for="{{ form.site_name.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Site Name <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <div class="relative">
+            <i class="fa-solid fa-globe absolute left-3.5 top-1/2 -translate-y-1/2
+                      text-charcoal/30 text-xs pointer-events-none"
+               aria-hidden="true"></i>
+            {{ form.site_name(
+              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition
+                     {% if form.site_name.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+              required=true,
+              maxlength=120
+            ) }}
+          </div>
+          {% if form.site_name.errors %}
+            <p class="text-[11px] text-red-600 mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation text-[9px]" aria-hidden="true"></i>
+              {{ form.site_name.errors[0] }}
+            </p>
+          {% endif %}
+        </div>
+
+        {# Contact email #}
+        <div>
+          <label for="{{ form.contact_email.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Contact Email <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <div class="relative">
+            <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2
+                      text-charcoal/30 text-xs pointer-events-none"
+               aria-hidden="true"></i>
+            {{ form.contact_email(
+              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition
+                     {% if form.contact_email.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+              type="email",
+              required=true,
+              maxlength=200,
+              placeholder="hello@example.com"
+            ) }}
+          </div>
+          {% if form.contact_email.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.contact_email.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        {# WhatsApp #}
+        <div>
+          <label for="{{ form.whatsapp.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            WhatsApp
+            <span class="text-charcoal/40 normal-case tracking-normal font-normal ml-1">(optional)</span>
+          </label>
+          <div class="relative">
+            <i class="fa-brands fa-whatsapp absolute left-3.5 top-1/2 -translate-y-1/2
+                      text-emerald-500 text-sm pointer-events-none"
+               aria-hidden="true"></i>
+            {{ form.whatsapp(
+              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition
+                     {% if form.whatsapp.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+              maxlength=40,
+              placeholder="+1 234 567 8900",
+              inputmode="tel"
+            ) }}
+          </div>
+          <p class="text-[11px] text-charcoal/50 mt-1">
+            Include country code — used for the "Chat on WhatsApp" link.
+          </p>
+          {% if form.whatsapp.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.whatsapp.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        {# Instagram #}
+        <div>
+          <label for="{{ form.instagram.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Instagram
+            <span class="text-charcoal/40 normal-case tracking-normal font-normal ml-1">(optional)</span>
+          </label>
+          <div class="relative">
+            <i class="fa-brands fa-instagram absolute left-3.5 top-1/2 -translate-y-1/2
+                      text-pink-500 text-sm pointer-events-none"
+               aria-hidden="true"></i>
+            {{ form.instagram(
+              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition
+                     {% if form.instagram.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+              maxlength=60,
+              placeholder="lereve"
+            ) }}
+            <span class="absolute right-3 top-1/2 -translate-y-1/2
+                         text-charcoal/30 text-xs pointer-events-none"
+                  aria-hidden="true">@</span>
+          </div>
+          <p class="text-[11px] text-charcoal/50 mt-1">
+            Handle only (without the <code class="text-[10px] bg-ivory px-1 rounded">@</code>).
+          </p>
+          {% if form.instagram.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.instagram.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        {# Actions #}
+        <div class="pt-3 border-t border-charcoal/10 flex flex-wrap items-center justify-end gap-3">
+          <button type="reset"
+                  class="px-4 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold
+                         hover:bg-ivory transition-all
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+            Reset
+          </button>
+          <button type="submit"
+                  id="saveBtn"
+                  class="bg-primary text-gold hover:bg-gold hover:text-primary
+                         px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider
+                         transition-all shadow-md flex items-center gap-2
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                         disabled:opacity-60 disabled:cursor-wait">
+            <i class="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+            <span>Save Settings</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    {# ── Live preview card (1/3 width) ─────────────────────── #}
+    <aside class="lg:col-span-1 space-y-4">
+      <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-charcoal/5 bg-ivory/40 flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                      flex items-center justify-center" aria-hidden="true">
+            <i class="fa-solid fa-eye text-[10px]"></i>
+          </div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Live Preview</h4>
+        </div>
+        <div class="p-5 space-y-3">
+          <div class="text-center pb-3 border-b border-charcoal/5">
+            <p id="previewName"
+               class="font-serif text-lg font-semibold text-primary truncate">
+              {{ form.site_name.data or 'Your Site' }}
+            </p>
+            <p class="text-[10px] text-charcoal/50 uppercase tracking-widest mt-0.5">
+              Concierge Experience
+            </p>
+          </div>
+
+          <div class="space-y-2.5 text-sm">
+            <div class="flex items-center gap-2.5 text-charcoal/70">
+              <i class="fa-solid fa-envelope text-charcoal/40 w-4 text-center" aria-hidden="true"></i>
+              <span id="previewEmail" class="truncate">
+                {{ form.contact_email.data or 'contact@example.com' }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2.5 text-charcoal/70">
+              <i class="fa-brands fa-whatsapp text-emerald-500 w-4 text-center" aria-hidden="true"></i>
+              <span id="previewWhatsapp" class="truncate">
+                {{ form.whatsapp.data or 'Not set' }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2.5 text-charcoal/70">
+              <i class="fa-brands fa-instagram text-pink-500 w-4 text-center" aria-hidden="true"></i>
+              <span id="previewInstagram" class="truncate">
+                {{ '@' + form.instagram.data if form.instagram.data else 'Not set' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gold/20 bg-gold/5 p-4
+                  flex items-start gap-3">
+        <i class="fa-solid fa-lightbulb text-gold mt-0.5" aria-hidden="true"></i>
+        <p class="text-[11px] text-charcoal/70 leading-relaxed">
+          These details appear in the site footer and on the concierge contact page.
+        </p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+{# ============================================================
+   Tab 2: Data Management
+   ============================================================ #}
+<section id="tab-data" data-tab-panel="data" role="tabpanel" class="hidden">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    {# Export backup #}
+    <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
+      <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40 flex items-center gap-2">
+        <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-download text-[10px]"></i>
+        </div>
+        <h3 class="font-serif text-lg font-semibold text-primary">Export Backup</h3>
+      </div>
+      <div class="p-6 space-y-4">
+        <p class="text-sm text-charcoal/70 leading-relaxed">
+          Download a complete JSON snapshot of your site — settings, categories,
+          properties, inquiries, reviews, bookings, and subscribers.
+        </p>
+
+        <ul class="text-xs text-charcoal/60 space-y-1.5">
+          <li class="flex items-center gap-2">
+            <i class="fa-solid fa-check text-emerald-500 text-[10px]" aria-hidden="true"></i>
+            Human-readable JSON, portable across environments
+          </li>
+          <li class="flex items-center gap-2">
+            <i class="fa-solid fa-check text-emerald-500 text-[10px]" aria-hidden="true"></i>
+            Timestamped filename for version history
+          </li>
+          <li class="flex items-center gap-2">
+            <i class="fa-solid fa-check text-emerald-500 text-[10px]" aria-hidden="true"></i>
+            No passwords or secrets included
+          </li>
+        </ul>
+
+        <a href="{{ url_for('admin.export_data') }}"
+           id="exportBtn"
+           class="inline-flex items-center justify-center gap-2 w-full sm:w-auto
+                  bg-primary text-gold hover:bg-gold hover:text-primary
+                  px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider
+                  transition-all shadow-md
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+          <i class="fa-solid fa-download text-xs" aria-hidden="true"></i>
+          <span>Download Backup</span>
+        </a>
+        <p id="exportStatus" class="text-[11px] text-charcoal/50 hidden"></p>
+      </div>
+    </div>
+
+    {# Danger zone #}
+    <div class="bg-white rounded-2xl border border-red-200 shadow-sm overflow-hidden">
+      <div class="px-6 py-5 border-b border-red-100 bg-red-50/60 flex items-center gap-2">
+        <div class="w-6 h-6 rounded-full bg-red-100 text-red-500
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-triangle-exclamation text-[10px]"></i>
+        </div>
+        <h3 class="font-serif text-lg font-semibold text-red-700">Danger Zone</h3>
+      </div>
+      <div class="p-6 space-y-4">
+        <p class="text-sm text-charcoal/70 leading-relaxed">
+          Irreversible operations that affect your live site. Use with caution.
+        </p>
+
+        <div class="rounded-xl border border-charcoal/10 p-4 flex items-start gap-3">
+          <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600
+                      flex items-center justify-center flex-shrink-0"
+               aria-hidden="true">
+            <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-primary">Restore from backup</p>
+            <p class="text-[11px] text-charcoal/50 mt-0.5">
+              Import a previously exported JSON snapshot. Contact engineering
+              to schedule a restore — this is intentionally not one-click.
+            </p>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-charcoal/10 p-4 flex items-start gap-3">
+          <div class="w-9 h-9 rounded-lg bg-red-50 text-red-500
+                      flex items-center justify-center flex-shrink-0"
+               aria-hidden="true">
+            <i class="fa-solid fa-trash text-sm"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-primary">Purge analytics</p>
+            <p class="text-[11px] text-charcoal/50 mt-0.5">
+              Permanently delete all analytics events older than 365 days.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ── Unsaved changes bar ────────────────────────────────────── #}
+<div id="unsavedBar"
+     class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40
+            bg-primary text-ivory px-4 py-2.5 rounded-xl shadow-xl
+            text-xs font-semibold flex items-center gap-3 border border-gold/40">
+  <i class="fa-solid fa-circle-exclamation text-gold" aria-hidden="true"></i>
+  <span>You have unsaved changes.</span>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     Tabs
+     ============================================================ */
+  var tabs   = document.querySelectorAll('.js-tab');
+  var panels = document.querySelectorAll('[data-tab-panel]');
+
+  function activateTab(name) {
+    tabs.forEach(function (t) {
+      var active = t.dataset.tab === name;
+      t.setAttribute('aria-selected', active ? 'true' : 'false');
+      t.classList.toggle('bg-primary', active);
+      t.classList.toggle('text-gold', active);
+      t.classList.toggle('shadow-sm', active);
+      t.classList.toggle('border', !active);
+      t.classList.toggle('border-primary/20', !active);
+      t.classList.toggle('bg-white', !active);
+      t.classList.toggle('text-primary', !active);
+    });
+    panels.forEach(function (p) {
+      p.classList.toggle('hidden', p.dataset.tabPanel !== name);
+    });
+    // Persist choice in the URL hash
+    try { history.replaceState(null, '', '#' + name); } catch (e) {}
+  }
+
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () { activateTab(t.dataset.tab); });
+  });
+
+  // Restore from hash on load
+  var initial = (location.hash || '').replace('#', '');
+  if (initial && document.querySelector('[data-tab-panel="' + initial + '"]')) {
+    activateTab(initial);
+  }
+
+  /* ============================================================
+     Live preview (site tab)
+     ============================================================ */
+  var form = document.getElementById('settingsForm');
+  if (form) {
+    var nameIn   = form.querySelector('[name="site_name"]');
+    var emailIn  = form.querySelector('[name="contact_email"]');
+    var waIn     = form.querySelector('[name="whatsapp"]');
+    var igIn     = form.querySelector('[name="instagram"]');
+
+    var pvName   = document.getElementById('previewName');
+    var pvEmail  = document.getElementById('previewEmail');
+    var pvWa     = document.getElementById('previewWhatsapp');
+    var pvIg     = document.getElementById('previewInstagram');
+
+    function refreshPreview() {
+      if (pvName)  pvName.textContent  = (nameIn  && nameIn.value.trim())  || 'Your Site';
+      if (pvEmail) pvEmail.textContent = (emailIn && emailIn.value.trim()) || 'contact@example.com';
+      if (pvWa)    pvWa.textContent    = (waIn    && waIn.value.trim())    || 'Not set';
+
+      var ig = (igIn && igIn.value.trim()) || '';
+      ig = ig.replace(/^@/, '');
+      if (pvIg) pvIg.textContent = ig ? '@' + ig : 'Not set';
+    }
+
+    [nameIn, emailIn, waIn, igIn].forEach(function (el) {
+      if (el) el.addEventListener('input', refreshPreview);
+    });
+
+    /* ============================================================
+       Dirty tracking + beforeunload + submit spinner
+       ============================================================ */
+    var dirty = false, submitting = false;
+    var unsavedBar = document.getElementById('unsavedBar');
+
+    form.addEventListener('input', function () {
+      if (dirty || submitting) return;
+      dirty = true;
+      unsavedBar && unsavedBar.classList.remove('hidden');
+    }, { passive: true });
+
+    form.addEventListener('submit', function (e) {
+      if (submitting) { e.preventDefault(); return; }
+      submitting = true;
+      dirty = false;
+      unsavedBar && unsavedBar.classList.add('hidden');
+
+      var btn = document.getElementById('saveBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin text-xs" aria-hidden="true"></i>' +
+          '<span>Saving…</span>';
+      }
+    });
+
+    // Reset button also clears the dirty flag
+    form.addEventListener('reset', function () {
+      dirty = false;
+      submitting = false;
+      unsavedBar && unsavedBar.classList.add('hidden');
+      setTimeout(refreshPreview, 0);
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+      if (dirty && !submitting) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    // Ctrl/Cmd+S saves
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        var btn = document.getElementById('saveBtn');
+        btn && btn.click();
+      }
+    });
+  }
+
+  /* ============================================================
+     Export button feedback
+     ============================================================ */
+  var exportBtn    = document.getElementById('exportBtn');
+  var exportStatus = document.getElementById('exportStatus');
+  if (exportBtn && exportStatus) {
+    exportBtn.addEventListener('click', function () {
+      exportBtn.classList.add('opacity-70', 'pointer-events-none');
+      exportStatus.classList.remove('hidden');
+      exportStatus.textContent = 'Preparing your download…';
+      exportStatus.className = 'text-[11px] text-charcoal/60 mt-1';
+
+      // The link triggers a download; we just reset visual state after a beat.
+      setTimeout(function () {
+        exportBtn.classList.remove('opacity-70', 'pointer-events-none');
+        exportStatus.textContent = '✓ Download started';
+        exportStatus.className = 'text-[11px] text-emerald-600 mt-1';
+        setTimeout(function () { exportStatus.classList.add('hidden'); }, 4000);
+      }, 1500);
+    });
+  }
+
+})();
+</script>
 {% endblock %}

@@ -6,266 +6,629 @@
 
 {% block content %}
 
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  <a href="{{ url_for('admin.properties') }}" class="group bg-white rounded-2xl p-5 border border-gold/20 shadow-sm hover:border-gold hover:shadow-luxury transition-all">
+{# ============================================================
+   Defensive locals — never crash if the view passed a partial dict
+   ============================================================ #}
+{% set s = stats if stats else {} %}
+
+{% set n_properties        = s.get('properties', 0) or 0 %}
+{% set n_inquiries         = s.get('inquiries', 0) or 0 %}
+{% set n_users             = s.get('users', 0) or 0 %}
+{% set n_new_inquiries     = s.get('new_inquiries', 0) or 0 %}
+{% set n_pending_reviews   = s.get('pending_reviews', 0) or 0 %}
+{% set n_confirmed_bookings= s.get('confirmed_bookings', 0) or 0 %}
+{% set n_pending_bookings  = s.get('pending_bookings', 0) or 0 %}
+{% set n_cancelled_bookings= s.get('cancelled_bookings', 0) or 0 %}
+{% set n_revenue_month     = s.get('revenue_month', 0) or 0 %}
+{% set n_unread_messages   = s.get('unread_messages', 0) or 0 %}
+
+{% set occupancy = s.get('occupancy') if s.get('occupancy') is mapping else {} %}
+{% set avg_occupancy = s.get('avg_occupancy', '0%') %}
+
+{# ============================================================
+   KPI row
+   ============================================================ #}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+     aria-label="Key performance indicators">
+
+  {# --- Properties --- #}
+  <a href="{{ url_for('admin.properties') }}"
+     class="group bg-white rounded-2xl p-5 border border-gold/20 shadow-sm
+            hover:border-gold hover:shadow-md transition-all
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
     <div class="flex items-center justify-between mb-3">
-      <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-gold transition-all">
+      <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary
+                  flex items-center justify-center
+                  group-hover:bg-primary group-hover:text-gold transition-all"
+           aria-hidden="true">
         <i class="fa-solid fa-house-chimney"></i>
       </div>
-      <i class="fa-solid fa-arrow-up-right-from-square text-charcoal/20 group-hover:text-gold text-xs"></i>
+      <i class="fa-solid fa-arrow-up-right-from-square text-charcoal/20
+                group-hover:text-gold text-xs transition-colors"
+         aria-hidden="true"></i>
     </div>
-    <p class="font-serif text-3xl font-bold text-primary" data-stat="properties">{{ stats.properties }}</p>
+    <p class="font-serif text-3xl font-bold text-primary tabular-nums"
+       data-stat="properties">{{ n_properties }}</p>
     <p class="text-xs text-charcoal/60 uppercase tracking-wider mt-1">Properties</p>
   </a>
 
-  <a href="{{ url_for('admin.bookings') }}" class="group bg-white rounded-2xl p-5 border border-gold/20 shadow-sm hover:border-gold hover:shadow-luxury transition-all">
+  {# --- Bookings --- #}
+  <a href="{{ url_for('admin.bookings', status='confirmed') }}"
+     class="group bg-white rounded-2xl p-5 border border-gold/20 shadow-sm
+            hover:border-gold hover:shadow-md transition-all
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
     <div class="flex items-center justify-between mb-3">
-      <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-gold transition-all">
+      <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary
+                  flex items-center justify-center
+                  group-hover:bg-primary group-hover:text-gold transition-all"
+           aria-hidden="true">
         <i class="fa-solid fa-calendar-check"></i>
       </div>
-      {% if stats.pending_bookings > 0 %}
-        <span class="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">{{ stats.pending_bookings }} Pending</span>
+      {% if n_pending_bookings > 0 %}
+        <span class="text-[10px] font-bold text-amber-700 bg-amber-100
+                     px-2 py-0.5 rounded-full whitespace-nowrap">
+          {{ n_pending_bookings }} pending
+        </span>
       {% endif %}
     </div>
-    <p class="font-serif text-3xl font-bold text-primary" data-stat="confirmed_bookings">{{ stats.confirmed_bookings }}</p>
+    <p class="font-serif text-3xl font-bold text-primary tabular-nums"
+       data-stat="confirmed_bookings">{{ n_confirmed_bookings }}</p>
     <p class="text-xs text-charcoal/60 uppercase tracking-wider mt-1">Bookings</p>
   </a>
 
-  <a href="{{ url_for('admin.users') }}" class="group bg-white rounded-2xl p-5 border border-gold/20 shadow-sm hover:border-gold hover:shadow-luxury transition-all">
+  {# --- Clients --- #}
+  <a href="{{ url_for('admin.users') }}"
+     class="group bg-white rounded-2xl p-5 border border-gold/20 shadow-sm
+            hover:border-gold hover:shadow-md transition-all
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
     <div class="flex items-center justify-between mb-3">
-      <div class="w-10 h-10 rounded-xl bg-gold/20 text-gold-dark flex items-center justify-center group-hover:bg-gold group-hover:text-primary transition-all">
+      <div class="w-10 h-10 rounded-xl bg-gold/20 text-gold-dark
+                  flex items-center justify-center
+                  group-hover:bg-gold group-hover:text-primary transition-all"
+           aria-hidden="true">
         <i class="fa-solid fa-users"></i>
       </div>
+      <i class="fa-solid fa-arrow-up-right-from-square text-charcoal/20
+                group-hover:text-gold text-xs transition-colors"
+         aria-hidden="true"></i>
     </div>
-    <p class="font-serif text-3xl font-bold text-primary" data-stat="users">{{ stats.users }}</p>
+    <p class="font-serif text-3xl font-bold text-primary tabular-nums"
+       data-stat="users">{{ n_users }}</p>
     <p class="text-xs text-charcoal/60 uppercase tracking-wider mt-1">Clients</p>
   </a>
 
-  <a href="{{ url_for('admin.inquiries') }}" class="group bg-white rounded-2xl p-5 border border-gold/20 shadow-sm hover:border-gold hover:shadow-luxury transition-all">
+  {# --- Inquiries --- #}
+  <a href="{{ url_for('admin.inquiries') }}"
+     class="group bg-white rounded-2xl p-5 border border-gold/20 shadow-sm
+            hover:border-gold hover:shadow-md transition-all
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
     <div class="flex items-center justify-between mb-3">
-      <div class="w-10 h-10 rounded-xl bg-gold/20 text-gold-dark flex items-center justify-center group-hover:bg-gold group-hover:text-primary transition-all">
+      <div class="w-10 h-10 rounded-xl bg-gold/20 text-gold-dark
+                  flex items-center justify-center
+                  group-hover:bg-gold group-hover:text-primary transition-all"
+           aria-hidden="true">
         <i class="fa-solid fa-envelope"></i>
       </div>
-      {% if stats.new_inquiries > 0 %}
-        <span class="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full animate-pulse">{{ stats.new_inquiries }} New</span>
+      {% if n_new_inquiries > 0 %}
+        <span class="text-[10px] font-bold text-amber-700 bg-amber-100
+                     px-2 py-0.5 rounded-full whitespace-nowrap animate-pulse">
+          {{ n_new_inquiries }} new
+        </span>
       {% endif %}
     </div>
-    <p class="font-serif text-3xl font-bold text-primary" data-stat="inquiries">{{ stats.inquiries }}</p>
+    <p class="font-serif text-3xl font-bold text-primary tabular-nums"
+       data-stat="inquiries">{{ n_inquiries }}</p>
     <p class="text-xs text-charcoal/60 uppercase tracking-wider mt-1">Inquiries</p>
   </a>
 </div>
 
-<div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm mb-6">
+{# ============================================================
+   Quick Actions
+   ============================================================ #}
+<section class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm mb-6">
   <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
     <div>
       <h3 class="font-serif text-lg font-semibold text-primary">Quick Actions</h3>
       <p class="text-xs text-charcoal/50 mt-0.5">Frequently used admin operations</p>
     </div>
-    <span class="text-[10px] text-charcoal/40 flex items-center gap-1">
-      <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>Updated just now
-    </span>
+
+    <div class="flex items-center gap-3">
+      <span class="text-[10px] text-charcoal/40 flex items-center gap-1.5"
+            aria-live="polite">
+        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"
+              aria-hidden="true"></span>
+        <span id="lastUpdatedLabel">Live</span>
+      </span>
+
+      <button type="button"
+              id="dashboardRefreshBtn"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                     border border-charcoal/15 hover:border-gold hover:text-gold
+                     text-[10px] font-bold uppercase tracking-wider text-charcoal/60
+                     transition-all
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                     disabled:opacity-50 disabled:cursor-wait"
+              title="Refresh stats now">
+        <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+        <span>Refresh</span>
+      </button>
+    </div>
   </div>
+
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <a href="{{ url_for('admin.property_create') }}" class="flex items-center gap-3 p-3 rounded-xl border border-charcoal/10 hover:border-gold hover:bg-gold/5 transition-all group">
-      <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-gold transition-all">
+    <a href="{{ url_for('admin.property_create') }}"
+       class="flex items-center gap-3 p-3 rounded-xl border border-charcoal/10
+              hover:border-gold hover:bg-gold/5 transition-all group
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+      <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary
+                  flex items-center justify-center
+                  group-hover:bg-primary group-hover:text-gold transition-all"
+           aria-hidden="true">
         <i class="fa-solid fa-plus text-sm"></i>
       </div>
       <span class="text-xs font-semibold text-primary">Add Property</span>
     </a>
-    <a href="{{ url_for('admin.user_create') }}" class="flex items-center gap-3 p-3 rounded-xl border border-charcoal/10 hover:border-gold hover:bg-gold/5 transition-all group">
-      <div class="w-9 h-9 rounded-lg bg-gold/20 text-gold-dark flex items-center justify-center group-hover:bg-gold group-hover:text-primary transition-all">
+
+    <a href="{{ url_for('admin.user_create') }}"
+       class="flex items-center gap-3 p-3 rounded-xl border border-charcoal/10
+              hover:border-gold hover:bg-gold/5 transition-all group
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+      <div class="w-9 h-9 rounded-lg bg-gold/20 text-gold-dark
+                  flex items-center justify-center
+                  group-hover:bg-gold group-hover:text-primary transition-all"
+           aria-hidden="true">
         <i class="fa-solid fa-user-plus text-sm"></i>
       </div>
       <span class="text-xs font-semibold text-primary">Add User</span>
     </a>
-    <a href="{{ url_for('admin.analytics') }}" class="flex items-center gap-3 p-3 rounded-xl border border-charcoal/10 hover:border-gold hover:bg-gold/5 transition-all group">
-      <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-gold transition-all">
+
+    <a href="{{ url_for('admin.analytics') }}"
+       class="flex items-center gap-3 p-3 rounded-xl border border-charcoal/10
+              hover:border-gold hover:bg-gold/5 transition-all group
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+      <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary
+                  flex items-center justify-center
+                  group-hover:bg-primary group-hover:text-gold transition-all"
+           aria-hidden="true">
         <i class="fa-solid fa-chart-line text-sm"></i>
       </div>
       <span class="text-xs font-semibold text-primary">Analytics</span>
     </a>
-    <a href="{{ url_for('admin.export_data') }}" class="flex items-center gap-3 p-3 rounded-xl border border-charcoal/10 hover:border-gold hover:bg-gold/5 transition-all group">
-      <div class="w-9 h-9 rounded-lg bg-gold/20 text-gold-dark flex items-center justify-center group-hover:bg-gold group-hover:text-primary transition-all">
+
+    <a href="{{ url_for('admin.export_data') }}"
+       class="flex items-center gap-3 p-3 rounded-xl border border-charcoal/10
+              hover:border-gold hover:bg-gold/5 transition-all group
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+      <div class="w-9 h-9 rounded-lg bg-gold/20 text-gold-dark
+                  flex items-center justify-center
+                  group-hover:bg-gold group-hover:text-primary transition-all"
+           aria-hidden="true">
         <i class="fa-solid fa-download text-sm"></i>
       </div>
       <span class="text-xs font-semibold text-primary">Export</span>
     </a>
   </div>
-</div>
+</section>
 
+{# ============================================================
+   Recent Inquiries + Occupancy
+   ============================================================ #}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-  <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
-    <div class="flex items-center justify-between mb-5">
+
+  {# --- Recent Inquiries --- #}
+  <section class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+    <header class="flex items-center justify-between mb-5">
       <div>
         <h3 class="font-serif text-xl font-semibold text-primary">Recent Inquiries</h3>
         <p class="text-xs text-charcoal/50 mt-0.5">Latest guest requests</p>
       </div>
-      <a href="{{ url_for('admin.inquiries') }}" class="text-xs font-semibold text-gold hover:text-gold-dark uppercase tracking-wider flex items-center gap-1">
-        View All <i class="fa-solid fa-arrow-right text-[10px]"></i>
+      <a href="{{ url_for('admin.inquiries') }}"
+         class="text-xs font-semibold text-gold hover:text-gold-dark
+                uppercase tracking-wider flex items-center gap-1 transition-colors">
+        View All <i class="fa-solid fa-arrow-right text-[10px]" aria-hidden="true"></i>
       </a>
-    </div>
+    </header>
 
     <div class="space-y-2">
-      {% for i in recent_inquiries %}
-        <a href="{{ url_for('admin.inquiries') }}" class="flex items-start gap-3 p-3 rounded-xl hover:bg-ivory/60 transition-all border border-transparent hover:border-gold/20">
-          <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+      {% for i in recent_inquiries or [] %}
+        {% set inquiry_status = (i.status or 'new') | lower %}
+        <a href="{{ url_for('admin.inquiries', status=inquiry_status) }}"
+           class="flex items-start gap-3 p-3 rounded-xl hover:bg-ivory/60
+                  transition-all border border-transparent hover:border-gold/20
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+          <div class="w-10 h-10 rounded-full bg-primary/10 text-primary
+                      flex items-center justify-center shrink-0"
+               aria-hidden="true">
             <i class="fa-solid fa-user text-sm"></i>
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2 mb-0.5">
-              <p class="text-sm font-semibold text-primary truncate">{{ i.name or 'Guest' }}</p>
-              <span class="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full flex-shrink-0
-                {% if i.status == 'new' %}text-amber-700 bg-amber-100
-                {% elif i.status == 'contacted' %}text-blue-700 bg-blue-100
-                {% elif i.status == 'booked' %}text-emerald-700 bg-emerald-100
-                {% else %}text-charcoal/60 bg-ivory-dark{% endif %}">{{ i.status or 'new' }}</span>
+              <p class="text-sm font-semibold text-primary truncate">
+                {{ i.name or 'Guest' }}
+              </p>
+              <span class="text-[10px] uppercase tracking-wider font-bold
+                           px-2 py-0.5 rounded-full shrink-0 max-w-[110px] truncate
+                {% if inquiry_status == 'new' %}text-amber-700 bg-amber-100
+                {% elif inquiry_status == 'contacted' %}text-blue-700 bg-blue-100
+                {% elif inquiry_status == 'booked' %}text-emerald-700 bg-emerald-100
+                {% elif inquiry_status == 'closed' %}text-charcoal/60 bg-ivory-dark
+                {% else %}text-charcoal/60 bg-ivory-dark{% endif %}"
+                    title="{{ inquiry_status | replace('-', ' ') }}">
+                {{ inquiry_status | replace('-', ' ') }}
+              </span>
             </div>
-            <p class="text-xs text-charcoal/60 truncate"><i class="fa-solid fa-house-chimney text-gold/70 mr-1"></i>{{ i.property or 'General' }}</p>
-            <p class="text-[10px] text-charcoal/40 mt-1"><i class="fa-regular fa-clock mr-1"></i>{{ i.created_at|relative_time }}</p>
+            <p class="text-xs text-charcoal/60 truncate">
+              <i class="fa-solid fa-house-chimney text-gold/70 mr-1" aria-hidden="true"></i>
+              {{ i.property or 'General' }}
+            </p>
+            <p class="text-[10px] text-charcoal/40 mt-1">
+              <i class="fa-regular fa-clock mr-1" aria-hidden="true"></i>
+              {{ i.created_at | relative_time if i.created_at else '—' }}
+            </p>
           </div>
         </a>
       {% else %}
         <div class="text-center py-10">
-          <div class="w-14 h-14 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+          <div class="w-14 h-14 mx-auto rounded-full bg-gold/10
+                      flex items-center justify-center mb-3"
+               aria-hidden="true">
             <i class="fa-regular fa-envelope text-gold text-xl"></i>
           </div>
           <p class="text-sm text-charcoal/60">No inquiries yet.</p>
+          <p class="text-xs text-charcoal/40 mt-1">
+            New guest requests will appear here.
+          </p>
         </div>
       {% endfor %}
     </div>
-  </div>
+  </section>
 
-  <div class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
-    <h3 class="font-serif text-xl font-semibold text-primary mb-5">Occupancy</h3>
-    <div class="space-y-4">
-      {% set occ = stats.occupancy if stats.occupancy else {} %}
-      {% if occ %}
-        {% for category, pct in occ.items() %}
+  {# --- Occupancy --- #}
+  <section class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+    <header class="flex items-center justify-between mb-5">
+      <h3 class="font-serif text-xl font-semibold text-primary">Occupancy</h3>
+      <span class="text-[10px] text-charcoal/40 uppercase tracking-widest font-bold">
+        By category
+      </span>
+    </header>
+
+    {% if occupancy %}
+      <div class="space-y-4 max-h-80 overflow-y-auto pr-1">
+        {% for category, pct in occupancy.items() %}
+          {% set p = pct | int %}
           <div>
             <div class="flex justify-between text-xs mb-1.5">
-              <span class="text-charcoal/70 font-medium">{{ category }}</span>
-              <span class="font-bold text-primary">{{ pct }}%</span>
+              <span class="text-charcoal/70 font-medium truncate pr-2">{{ category }}</span>
+              <span class="font-bold text-primary tabular-nums shrink-0">{{ p }}%</span>
             </div>
-            <div class="w-full h-2 bg-ivory-dark rounded-full overflow-hidden">
+            <div class="w-full h-2 bg-ivory-dark rounded-full overflow-hidden"
+                 role="progressbar"
+                 aria-label="{{ category }} occupancy"
+                 aria-valuenow="{{ p }}"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
               <div class="h-full rounded-full transition-all duration-700
-                {% if pct >= 85 %}bg-emerald-500{% elif pct >= 70 %}bg-gold{% else %}bg-amber-500{% endif %}"
-                style="width: {{ pct }}%"></div>
+                {% if p >= 85 %}bg-emerald-500
+                {% elif p >= 60 %}bg-gold
+                {% elif p >= 30 %}bg-amber-500
+                {% else %}bg-red-400{% endif %}"
+                style="width: {{ p }}%"></div>
             </div>
           </div>
         {% endfor %}
-      {% else %}
-        <p class="text-xs text-charcoal/50 text-center py-4">No occupancy data yet.</p>
-      {% endif %}
-    </div>
+      </div>
+
+      {# Legend #}
+      <div class="mt-5 pt-4 border-t border-charcoal/5 flex flex-wrap gap-x-4 gap-y-1.5 text-[10px] text-charcoal/50">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500" aria-hidden="true"></span> ≥ 85%
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-gold" aria-hidden="true"></span> 60–84%
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-amber-500" aria-hidden="true"></span> 30–59%
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-red-400" aria-hidden="true"></span> &lt; 30%
+        </span>
+      </div>
+    {% else %}
+      <p class="text-xs text-charcoal/50 text-center py-6">
+        No occupancy data yet.
+      </p>
+    {% endif %}
+
+    {# Portfolio average — icon color matches the tier #}
     <div class="mt-6 pt-5 border-t border-charcoal/5">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-charcoal/50 font-semibold">Portfolio Average</p>
-          <p class="font-serif text-2xl font-bold text-primary mt-0.5">{{ stats.avg_occupancy }}</p>
+          <p class="text-[10px] uppercase tracking-wider text-charcoal/50 font-semibold">
+            Portfolio Average
+          </p>
+          <p class="font-serif text-2xl font-bold text-primary mt-0.5 tabular-nums">
+            {{ avg_occupancy }}
+          </p>
         </div>
-        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-          <i class="fa-solid fa-chart-line text-lg"></i>
+        {% set avg_num = (avg_occupancy | replace('%','') | int) if avg_occupancy else 0 %}
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center
+          {% if avg_num >= 85 %}bg-emerald-50 text-emerald-600
+          {% elif avg_num >= 60 %}bg-gold/20 text-gold-dark
+          {% elif avg_num >= 30 %}bg-amber-50 text-amber-600
+          {% else %}bg-red-50 text-red-500{% endif %}">
+          <i class="fa-solid fa-chart-line text-lg" aria-hidden="true"></i>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </div>
 
+{# ============================================================
+   Revenue + Recent Bookings
+   ============================================================ #}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <div class="bg-gradient-to-br from-primary via-primary-dark to-primary rounded-2xl p-6 text-ivory relative overflow-hidden">
-    <div class="absolute -top-10 -right-10 w-40 h-40 bg-gold/10 rounded-full blur-3xl pointer-events-none"></div>
+
+  {# --- Revenue card --- #}
+  <section class="bg-gradient-to-br from-primary via-primary-dark to-primary
+                  rounded-2xl p-6 text-ivory relative overflow-hidden">
+    <div class="absolute -top-10 -right-10 w-40 h-40 bg-gold/10 rounded-full blur-3xl pointer-events-none"
+         aria-hidden="true"></div>
     <div class="relative z-10">
       <div class="flex items-center justify-between mb-6">
-        <span class="text-[10px] uppercase tracking-[0.2em] text-gold font-bold">Revenue · This Month</span>
-        <i class="fa-solid fa-coins text-gold text-lg"></i>
+        <span class="text-[10px] uppercase tracking-[0.2em] text-gold font-bold">
+          Revenue · This Month
+        </span>
+        <i class="fa-solid fa-coins text-gold text-lg" aria-hidden="true"></i>
       </div>
-      <p class="font-serif text-4xl font-bold text-ivory mb-1">{{ stats.revenue_month|format_currency }}</p>
+
+      <p class="font-serif text-4xl font-bold text-ivory mb-1 tabular-nums">
+        {{ n_revenue_month | format_currency }}
+      </p>
       <p class="text-xs text-ivory/60 mb-6">From paid reservations</p>
+
       <div class="space-y-2 text-xs">
-        <div class="flex items-center justify-between"><span class="text-ivory/70">Confirmed</span><span class="font-bold">{{ stats.confirmed_bookings }}</span></div>
-        <div class="flex items-center justify-between"><span class="text-ivory/70">Pending</span><span class="font-bold text-amber-300">{{ stats.pending_bookings }}</span></div>
-        <div class="flex items-center justify-between"><span class="text-ivory/70">Cancellations</span><span class="font-bold text-ivory/70">{{ stats.cancelled_bookings }}</span></div>
+        <div class="flex items-center justify-between">
+          <span class="text-ivory/70">Confirmed</span>
+          <span class="font-bold tabular-nums">{{ n_confirmed_bookings }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-ivory/70">Pending</span>
+          <span class="font-bold text-amber-300 tabular-nums">{{ n_pending_bookings }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-ivory/70">Cancellations</span>
+          <span class="font-bold text-ivory/70 tabular-nums">{{ n_cancelled_bookings }}</span>
+        </div>
       </div>
-      <a href="{{ url_for('admin.bookings') }}" class="mt-6 w-full inline-flex items-center justify-center gap-2 bg-gold text-primary hover:bg-white py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
-        <i class="fa-solid fa-chart-simple text-[10px]"></i> View All Bookings
+
+      <a href="{{ url_for('admin.bookings') }}"
+         class="mt-6 w-full inline-flex items-center justify-center gap-2
+                bg-gold text-primary hover:bg-white py-2.5 rounded-xl
+                text-xs font-bold uppercase tracking-wider transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+        <i class="fa-solid fa-chart-simple text-[10px]" aria-hidden="true"></i>
+        View All Bookings
       </a>
     </div>
-  </div>
+  </section>
 
-  <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
-    <div class="flex items-center justify-between mb-5">
+  {# --- Recent Bookings --- #}
+  <section class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
+    <header class="flex items-center justify-between mb-5">
       <div>
         <h3 class="font-serif text-xl font-semibold text-primary">Recent Bookings</h3>
         <p class="text-xs text-charcoal/50 mt-0.5">Latest reservations</p>
       </div>
-      <a href="{{ url_for('admin.bookings') }}" class="text-xs font-semibold text-gold hover:text-gold-dark uppercase tracking-wider flex items-center gap-1">
-        View All <i class="fa-solid fa-arrow-right text-[10px]"></i>
+      <a href="{{ url_for('admin.bookings') }}"
+         class="text-xs font-semibold text-gold hover:text-gold-dark
+                uppercase tracking-wider flex items-center gap-1 transition-colors">
+        View All <i class="fa-solid fa-arrow-right text-[10px]" aria-hidden="true"></i>
       </a>
-    </div>
+    </header>
 
     <div class="space-y-3">
-      {% for b in recent_bookings %}
-        <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-ivory/60 transition-all border border-transparent hover:border-gold/20">
+      {% for b in recent_bookings or [] %}
+        {% set pay_status     = (b.payment_status or 'pending') | lower %}
+        {% set booking_status = (b.status or 'pending') | lower %}
+        <a href="{{ url_for('admin.booking_detail', bid=b.id) if b.id else url_for('admin.bookings') }}"
+           class="flex items-center gap-3 p-3 rounded-xl hover:bg-ivory/60
+                  transition-all border border-transparent hover:border-gold/20
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
           {% if b.image %}
-            <img src="{{ b.image }}" alt="" class="w-12 h-12 rounded-lg object-cover border border-gold/20 flex-shrink-0" loading="lazy">
+            <img src="{{ b.image }}"
+                 alt=""
+                 class="w-12 h-12 rounded-lg object-cover border border-gold/20 shrink-0"
+                 loading="lazy">
           {% else %}
-            <div class="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+            <div class="w-12 h-12 rounded-lg bg-primary/10 text-primary
+                        flex items-center justify-center shrink-0"
+                 aria-hidden="true">
               <i class="fa-solid fa-house-chimney text-sm"></i>
             </div>
           {% endif %}
+
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
-              <p class="text-sm font-semibold text-primary truncate">{{ b.property or 'Property' }}</p>
-              <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex-shrink-0
-                {% if b.payment_status == 'paid' %}text-emerald-700 bg-emerald-100
-                {% elif b.status == 'cancelled' %}text-red-700 bg-red-100
-                {% else %}text-amber-700 bg-amber-100{% endif %}">
-                {{ b.payment_status or b.status or 'pending' }}
-              </span>
+              <p class="text-sm font-semibold text-primary truncate">
+                {{ b.property or 'Property' }}
+              </p>
+              <div class="flex items-center gap-1 shrink-0">
+                {# Booking status pill #}
+                <span class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full
+                  {% if booking_status == 'confirmed' %}text-emerald-700 bg-emerald-100
+                  {% elif booking_status == 'cancelled' %}text-red-700 bg-red-100
+                  {% elif booking_status == 'completed' %}text-primary bg-primary/10
+                  {% elif booking_status == 'cancellation-requested' %}text-amber-800 bg-amber-100
+                  {% else %}text-amber-700 bg-amber-100{% endif %}"
+                      title="Booking status">
+                  {{ booking_status | replace('-', ' ') }}
+                </span>
+                {# Payment status pill — only if different from booking status #}
+                {% if pay_status != 'pending' and pay_status != booking_status %}
+                  <span class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-full
+                    {% if pay_status == 'paid' %}text-emerald-700 bg-emerald-100
+                    {% elif pay_status == 'failed' %}text-red-700 bg-red-100
+                    {% elif pay_status == 'refunded' %}text-purple-700 bg-purple-100
+                    {% else %}text-amber-700 bg-amber-100{% endif %}"
+                        title="Payment status">
+                    {{ pay_status }}
+                  </span>
+                {% endif %}
+              </div>
             </div>
-            <p class="text-[11px] text-charcoal/60 truncate mt-0.5">{{ b.user_name or 'Guest' }} · {{ b.check_in }} → {{ b.check_out }}</p>
+            <p class="text-[11px] text-charcoal/60 truncate mt-0.5">
+              {{ b.user_name or 'Guest' }} ·
+              {{ b.check_in | format_date if b.check_in else '—' }}
+              <span class="text-charcoal/30">→</span>
+              {{ b.check_out | format_date if b.check_out else '—' }}
+            </p>
           </div>
-          <div class="text-right flex-shrink-0">
-            <p class="font-serif font-bold text-primary text-sm">{{ b.total|format_currency }}</p>
-            <p class="text-[10px] text-charcoal/40">{{ b.nights or 1 }} nights</p>
+
+          <div class="text-right shrink-0">
+            <p class="font-serif font-bold text-primary text-sm tabular-nums">
+              {{ (b.total or 0) | format_currency }}
+            </p>
+            <p class="text-[10px] text-charcoal/40">
+              {% if b.nights is defined and b.nights is not none %}
+                {{ b.nights }} night{% if b.nights != 1 %}s{% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </p>
           </div>
-        </div>
+        </a>
       {% else %}
         <div class="text-center py-10">
-          <div class="w-14 h-14 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+          <div class="w-14 h-14 mx-auto rounded-full bg-gold/10
+                      flex items-center justify-center mb-3"
+               aria-hidden="true">
             <i class="fa-regular fa-calendar text-gold text-xl"></i>
           </div>
           <p class="text-sm text-charcoal/60">No bookings yet.</p>
+          <p class="text-xs text-charcoal/40 mt-1">
+            Reservations will appear here once guests book.
+          </p>
         </div>
       {% endfor %}
     </div>
-  </div>
+  </section>
 </div>
 
 {% endblock %}
 
+
 {% block scripts %}
 <script>
-let timer = setInterval(refreshStats, 60000);
-async function refreshStats() {
-  try {
-    const res = await fetch('{{ url_for("admin.api_stats") }}', { credentials: 'same-origin' });
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data.success) return;
-    Object.entries(data.stats).forEach(([k, v]) => {
-      const el = document.querySelector(`[data-stat="${k}"]`);
-      if (el) {
-        el.textContent = v;
-        el.classList.add('text-gold');
-        setTimeout(() => el.classList.remove('text-gold'), 800);
-      }
+(function () {
+  'use strict';
+
+  /* ============================================================
+     Live stats refresh
+     - Pauses when the tab is hidden
+     - Cleans up on unload
+     - Only flashes stat values that actually changed
+     - Formats numbers with locale-aware thousands separators
+     - Surfaces errors in the "Live" label instead of swallowing them
+     ============================================================ */
+  var apiUrl        = '{{ url_for("admin.api_stats") }}';
+  var POLL_MS       = 60000;
+  var timer         = null;
+  var lastUpdatedEl = document.getElementById('lastUpdatedLabel');
+  var refreshBtn    = document.getElementById('dashboardRefreshBtn');
+  var refreshHTML   = refreshBtn ? refreshBtn.innerHTML : '';
+  var nf            = new Intl.NumberFormat('en-GH');
+
+  function setLastUpdated(text) {
+    if (lastUpdatedEl) lastUpdatedEl.textContent = text;
+  }
+
+  function flashStat(el) {
+    el.classList.add('text-gold');
+    setTimeout(function () { el.classList.remove('text-gold'); }, 900);
+  }
+
+  function applyStats(stats) {
+    if (!stats) return;
+    Object.keys(stats).forEach(function (key) {
+      var el = document.querySelector('[data-stat="' + key + '"]');
+      if (!el) return;
+
+      var next = stats[key];
+      var formatted = (typeof next === 'number')
+        ? nf.format(next)
+        : String(next);
+
+      if (el.textContent.trim() === formatted) return;
+
+      el.textContent = formatted;
+      flashStat(el);
     });
-  } catch (e) {}
-}
-document.addEventListener('visibilitychange', () => {
-  clearInterval(timer);
-  if (!document.hidden) timer = setInterval(refreshStats, 60000);
-});
+  }
+
+  function refreshStats() {
+    return fetch(apiUrl, {
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json' }
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success || !data.stats) {
+          setLastUpdated('Live');
+          return;
+        }
+        applyStats(data.stats);
+        var now = new Date();
+        var hh = String(now.getHours()).padStart(2, '0');
+        var mm = String(now.getMinutes()).padStart(2, '0');
+        setLastUpdated('Updated ' + hh + ':' + mm);
+      })
+      .catch(function () {
+        setLastUpdated('Live');
+      });
+  }
+
+  function startPolling() {
+    if (timer) clearInterval(timer);
+    timer = setInterval(refreshStats, POLL_MS);
+  }
+
+  function stopPolling() {
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  /* Kick off polling */
+  startPolling();
+
+  /* Pause when tab hidden, resume when visible */
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      stopPolling();
+    } else {
+      refreshStats();
+      startPolling();
+    }
+  });
+
+  /* Clean up on unload */
+  window.addEventListener('beforeunload', stopPolling);
+
+  /* Manual refresh button */
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function () {
+      if (refreshBtn.disabled) return;
+      refreshBtn.disabled = true;
+      refreshBtn.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>' +
+        '<span>Refreshing…</span>';
+      refreshStats().finally(function () {
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = refreshHTML;
+      });
+    });
+  }
+})();
 </script>
 {% endblock %}

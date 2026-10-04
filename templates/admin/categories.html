@@ -6,6 +6,9 @@
 
 {% block content %}
 
+{% set q_val = q if q is defined and q else '' %}
+{% set has_search = q_val != '' %}
+
 {# ============================================================
    Flash messages
    ============================================================ #}
@@ -31,11 +34,21 @@
 {% endwith %}
 
 {# ============================================================
-   Compute stats
+   Compute stats — single pass, no fragile filter chains
    ============================================================ #}
-{% set total_categories = categories|length %}
-{% set unused_count = categories | selectattr('property_count', 'equalto', 0) | list | length %}
-{% set total_properties = categories | map(attribute='property_count') | sum %}
+{% set ns = namespace(total_properties=0, unused_count=0, missing_count=0) %}
+{% for c in categories %}
+  {% set pc = c.get('property_count') %}
+  {% if pc is not none %}
+    {% set ns.total_properties = ns.total_properties + (pc | int) %}
+    {% if (pc | int) == 0 %}
+      {% set ns.unused_count = ns.unused_count + 1 %}
+    {% endif %}
+  {% else %}
+    {% set ns.missing_count = ns.missing_count + 1 %}
+  {% endif %}
+{% endfor %}
+{% set total_categories = categories | length %}
 
 {# ============================================================
    Toolbar
@@ -47,18 +60,35 @@
     <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
       <p class="text-charcoal/60">
         <span class="font-bold text-primary text-sm tabular-nums">{{ total_categories }}</span>
-        <span class="ml-1">{% if total_categories == 1 %}category{% else %}categories{% endif %}</span>
+        <span class="ml-1">
+          {% if total_categories == 1 %}category{% else %}categories{% endif %}
+          {% if has_search %}(matching){% endif %}
+        </span>
       </p>
-      <p class="text-charcoal/60">
-        <span class="font-bold text-primary text-sm tabular-nums">{{ total_properties }}</span>
-        <span class="ml-1">{% if total_properties == 1 %}property{% else %}properties{% endif %} assigned</span>
-      </p>
-      {% if unused_count > 0 %}
-        <p class="text-amber-600">
-          <i class="fa-solid fa-circle-info text-[10px]" aria-hidden="true"></i>
-          <span class="font-bold tabular-nums">{{ unused_count }}</span>
-          <span class="ml-1">unused</span>
+
+      {% if not has_search %}
+        <p class="text-charcoal/60">
+          <span class="font-bold text-primary text-sm tabular-nums">{{ ns.total_properties }}</span>
+          <span class="ml-1">
+            {% if ns.total_properties == 1 %}property{% else %}properties{% endif %} assigned
+          </span>
         </p>
+
+        {% if ns.unused_count > 0 %}
+          <p class="text-amber-600">
+            <i class="fa-solid fa-circle-info text-[10px]" aria-hidden="true"></i>
+            <span class="font-bold tabular-nums">{{ ns.unused_count }}</span>
+            <span class="ml-1">unused</span>
+          </p>
+        {% endif %}
+
+        {% if ns.missing_count > 0 %}
+          <p class="text-red-500">
+            <i class="fa-solid fa-triangle-exclamation text-[10px]" aria-hidden="true"></i>
+            <span class="font-bold tabular-nums">{{ ns.missing_count }}</span>
+            <span class="ml-1">without counts</span>
+          </p>
+        {% endif %}
       {% endif %}
     </div>
 
@@ -67,6 +97,7 @@
       <form method="GET"
             action="{{ url_for('admin.categories') }}"
             role="search"
+            id="categorySearchForm"
             class="relative flex-1 sm:flex-initial min-w-[200px]">
         <label for="categorySearch" class="sr-only">Search categories</label>
         <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2
@@ -74,18 +105,22 @@
         <input id="categorySearch"
                name="q"
                type="search"
-               value="{{ q|default('') }}"
+               enterkeyhint="search"
+               value="{{ q_val }}"
                placeholder="Search categories…"
                autocomplete="off"
                class="w-full sm:w-64 pl-8 pr-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
                       focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
+        {# Hidden submit so Enter works and screen readers find a button #}
+        <button type="submit" class="sr-only">Search</button>
       </form>
 
-      {% if q %}
+      {% if has_search %}
         <a href="{{ url_for('admin.categories') }}"
            class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl
                   border border-charcoal/15 hover:border-red-300 hover:text-red-600
-                  text-[10px] font-bold uppercase tracking-wider text-charcoal/60 transition-all">
+                  text-[10px] font-bold uppercase tracking-wider text-charcoal/60 transition-all
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400">
           <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           <span>Clear</span>
         </a>
@@ -94,7 +129,8 @@
       <a href="{{ url_for('admin.category_create') }}"
          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
                 bg-primary text-gold hover:bg-gold hover:text-primary
-                text-xs font-bold uppercase tracking-wider transition-all shadow-md">
+                text-xs font-bold uppercase tracking-wider transition-all shadow-md
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
         <i class="fa-solid fa-plus" aria-hidden="true"></i>
         <span>Add Category</span>
       </a>
@@ -106,19 +142,25 @@
    Grid
    ============================================================ #}
 {% if categories %}
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
     {% for c in categories %}
-      {% set raw_icon = c.icon or 'fa-house-chimney' %}
+      {% set raw_icon  = c.icon or 'fa-house-chimney' %}
       {% set icon_class = raw_icon if raw_icon.startswith('fa-') else 'fa-' ~ raw_icon %}
-      {% set prop_count = c.property_count|default(0) %}
-      {% set is_unused = prop_count == 0 %}
+      {% set pc_raw    = c.get('property_count') %}
+      {% set pc        = (pc_raw | int) if pc_raw is not none else None %}
+      {% set is_unused = pc == 0 %}
+      {% set is_known  = pc is not none %}
+      {% set can_delete = is_known and pc == 0 %}
 
       <article class="bg-white rounded-2xl border border-gold/20 shadow-sm
                       hover:shadow-md hover:border-gold/50 transition-all
                       flex flex-col overflow-hidden">
 
-        {# Top strip — small visual cue #}
-        <div class="h-1 w-full {% if is_unused %}bg-amber-300{% else %}bg-gold/60{% endif %}"
+        {# Top strip — visual cue for category state #}
+        <div class="h-1 w-full
+                    {% if not is_known %}bg-red-300
+                    {% elif is_unused %}bg-amber-300
+                    {% else %}bg-gold/60{% endif %}"
              aria-hidden="true"></div>
 
         <div class="p-6 flex flex-col flex-1">
@@ -131,12 +173,13 @@
               <i class="fa-solid {{ icon_class }} text-lg"></i>
             </div>
 
-            <div class="text-right shrink-0">
+            <div class="text-right shrink-0"
+                 title="Lower numbers appear first in lists">
               <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
                 Order
               </p>
               <p class="text-sm font-bold text-primary tabular-nums">
-                {{ c.order|default(0) }}
+                {{ c.order if c.order is defined and c.order is not none else 0 }}
               </p>
             </div>
           </div>
@@ -147,8 +190,8 @@
             {{ c.name }}
           </h3>
 
-          {# Description — fixed 3 lines with reserved space #}
-          <p class="text-xs text-charcoal/60 mt-1 line-clamp-3 leading-relaxed min-h-[3rem]">
+          {# Description — reserve 3 lines regardless of content #}
+          <p class="text-xs text-charcoal/60 mt-1 line-clamp-3 leading-relaxed min-h-[3.75rem]">
             {{ c.description or 'No description.' }}
           </p>
 
@@ -156,15 +199,22 @@
           <div class="mt-auto pt-4 border-t border-charcoal/5 flex items-center justify-between gap-2">
             <span class="text-xs text-charcoal/60 flex items-center gap-1.5 min-w-0">
               <i class="fa-solid fa-house-chimney text-gold shrink-0" aria-hidden="true"></i>
-              <span class="tabular-nums">
-                {{ prop_count }}
-                {% if prop_count == 1 %}property{% else %}properties{% endif %}
-              </span>
-              {% if is_unused %}
-                <span class="text-[9px] font-bold uppercase tracking-wider
-                             px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                  Unused
+
+              {% if not is_known %}
+                <span class="text-red-500 font-semibold" title="Property count missing — check the view">
+                  —
                 </span>
+              {% else %}
+                <span class="tabular-nums">
+                  {{ pc }}
+                  {% if pc == 1 %}property{% else %}properties{% endif %}
+                </span>
+                {% if is_unused %}
+                  <span class="text-[9px] font-bold uppercase tracking-wider
+                               px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                    Unused
+                  </span>
+                {% endif %}
               {% endif %}
             </span>
 
@@ -172,22 +222,30 @@
               <a href="{{ url_for('admin.category_edit', cid=c.id) }}"
                  class="w-9 h-9 rounded-lg bg-ivory hover:bg-gold text-primary
                         flex items-center justify-center transition-all
-                        focus:outline-none focus:ring-2 focus:ring-gold"
+                        focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
                  aria-label="Edit {{ c.name }}"
                  title="Edit">
                 <i class="fa-solid fa-pen text-xs" aria-hidden="true"></i>
               </a>
 
               <button type="button"
-                      class="w-9 h-9 rounded-lg bg-red-50 hover:bg-red-500 hover:text-white text-red-500
+                      class="w-9 h-9 rounded-lg
+                             {% if can_delete %}
+                               bg-red-50 hover:bg-red-500 hover:text-white text-red-500
+                             {% else %}
+                               bg-charcoal/5 text-charcoal/30 cursor-not-allowed
+                             {% endif %}
                              flex items-center justify-center transition-all
-                             focus:outline-none focus:ring-2 focus:ring-red-400"
+                             focus:outline-none focus-visible:ring-2
+                             {% if can_delete %}focus-visible:ring-red-400{% else %}focus-visible:ring-charcoal/30{% endif %}"
                       data-delete-category
                       data-category-id="{{ c.id }}"
                       data-category-name="{{ c.name }}"
-                      data-category-count="{{ prop_count }}"
-                      aria-label="Delete {{ c.name }}"
-                      title="Delete">
+                      data-category-count="{{ pc if pc is not none else 'missing' }}"
+                      data-can-delete="{{ 'true' if can_delete else 'false' }}"
+                      aria-label="{% if can_delete %}Delete {{ c.name }}{% else %}Cannot delete {{ c.name }} — {% if not is_known %}property count unavailable{% else %}in use by {{ pc }} propert{% if pc == 1 %}y{% else %}ies{% endif %}{% endif %}{% endif %}"
+                      title="{% if can_delete %}Delete{% else %}{% if not is_known %}Property count unavailable{% else %}In use by {{ pc }} propert{% if pc == 1 %}y{% else %}ies{% endif %}{% endif %}{% endif %}"
+                      {% if not can_delete %}disabled{% endif %}>
                 <i class="fa-solid fa-trash text-xs" aria-hidden="true"></i>
               </button>
             </div>
@@ -198,7 +256,7 @@
   </div>
 
   {# Hidden delete forms — one per category, submitted by JS after confirm #}
-  <div class="hidden">
+  <div class="hidden" aria-hidden="true">
     {% for c in categories %}
       <form id="delete-form-{{ c.id }}"
             method="POST"
@@ -216,13 +274,13 @@
   <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gold/40">
     <div class="w-16 h-16 mx-auto rounded-full bg-gold/10
                 flex items-center justify-center mb-4">
-      <i class="fa-solid {% if q %}fa-magnifying-glass{% else %}fa-layer-group{% endif %} text-gold text-2xl"
+      <i class="fa-solid {% if has_search %}fa-magnifying-glass{% else %}fa-layer-group{% endif %} text-gold text-2xl"
          aria-hidden="true"></i>
     </div>
 
-    {% if q %}
+    {% if has_search %}
       <p class="text-sm font-semibold text-primary mb-1">
-        No categories match &ldquo;{{ q }}&rdquo;.
+        No categories match &ldquo;{{ q_val }}&rdquo;.
       </p>
       <p class="text-xs text-charcoal/50 mb-5">
         Try a different search term, or clear the search.
@@ -230,7 +288,8 @@
       <a href="{{ url_for('admin.categories') }}"
          class="inline-flex items-center gap-2 border border-charcoal/15 hover:border-gold hover:text-gold
                 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider
-                text-charcoal/70 transition-all">
+                text-charcoal/70 transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         Clear search
       </a>
@@ -241,7 +300,8 @@
       </p>
       <a href="{{ url_for('admin.category_create') }}"
          class="inline-flex items-center gap-2 bg-primary text-gold hover:bg-gold hover:text-primary
-                px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
+                px-6 py-3 rounded-full text-sm font-bold uppercase tracking-wider transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
         <i class="fa-solid fa-plus" aria-hidden="true"></i>
         Add First Category
       </a>
@@ -266,39 +326,123 @@
   ready(function () {
 
     // ============================================================
-    // Delete confirmation (typed for in-use categories)
+    // Search form — clear on Escape, disable on submit
+    // ============================================================
+    var searchForm  = document.getElementById('categorySearchForm');
+    var searchInput = document.getElementById('categorySearch');
+    if (searchForm && searchInput) {
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && searchInput.value !== '') {
+          searchInput.value = '';
+          searchForm.submit();
+        }
+      });
+      searchForm.addEventListener('submit', function () {
+        // Nothing to do — page reloads. But blur the input so the
+        // native focus ring doesn't linger on the new page.
+        searchInput.blur();
+      });
+    }
+
+    // ============================================================
+    // Delete confirmation
+    // ------------------------------------------------------------
+    // Two paths:
+    //   * Category in use  → block with a toast. Never prompts.
+    //   * Category unused  → ask the admin to type the name.
+    //   * Count missing    → fail closed (block with a toast).
     // ============================================================
     document.querySelectorAll('[data-delete-category]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        var id    = btn.dataset.categoryId;
-        var name  = btn.dataset.categoryName || '';
-        var count = parseInt(btn.dataset.categoryCount || '0', 10);
-        var form  = document.getElementById('delete-form-' + id);
+        var id        = btn.dataset.categoryId;
+        var name      = btn.dataset.categoryName || '';
+        var countRaw  = btn.dataset.categoryCount || '';
+        var canDelete = btn.dataset.canDelete === 'true';
+        var form      = document.getElementById('delete-form-' + id);
         if (!form) return;
 
-        // In-use categories: warn that it's blocked
-        if (count > 0) {
-          window.alert(
-            '\u201C' + name + '\u201D is currently used by ' +
-            count + ' propert' + (count === 1 ? 'y' : 'ies') + '.\n\n' +
-            'It cannot be deleted until those properties are reassigned.'
+        // Fail closed if the view didn't supply a count.
+        if (countRaw === 'missing' || countRaw === '') {
+          notify(
+            'Property count unavailable for \u201C' + name + '\u201D. ' +
+            'Reload the page and try again.',
+            'error'
           );
           return;
         }
 
-        // Unused categories: confirm before deleting
+        var count = parseInt(countRaw, 10);
+        if (isNaN(count)) {
+          notify('Invalid property count for \u201C' + name + '\u201D.', 'error');
+          return;
+        }
+
+        if (!canDelete || count > 0) {
+          notify(
+            '\u201C' + name + '\u201D is used by ' + count +
+            ' propert' + (count === 1 ? 'y' : 'ies') + '. ' +
+            'Reassign those properties first.',
+            'error'
+          );
+          return;
+        }
+
+        // Unused category — typed confirmation.
         var typed = window.prompt(
-          'Delete category \u201C' + name + '\u201D?\n\n' +
-          'Type the category name to confirm:'
+          'Delete the empty category \u201C' + name + '\u201D?\n\n' +
+          'This cannot be undone. Type the category name to confirm:'
         );
         if (typed !== name) return;
 
-        // Disable the button to prevent double-submission
+        // Prevent double-submission.
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs" aria-hidden="true"></i>';
+        btn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin text-xs" aria-hidden="true"></i>';
         form.submit();
       });
     });
+
+    // ============================================================
+    // Toast helper — reuse the admin toast container if present,
+    // otherwise fall back to a plain alert so we never silently fail.
+    // ============================================================
+    function notify(message, type) {
+      var container = document.getElementById('adminToast');
+      if (!container) {
+        window.alert(message);
+        return;
+      }
+
+      var styles = {
+        error:   'bg-red-600 text-white border-red-400',
+        info:    'bg-gold text-primary border-primary',
+        success: 'bg-primary text-gold border-gold'
+      };
+      var icons = {
+        error:   'fa-circle-exclamation',
+        info:    'fa-circle-info',
+        success: 'fa-circle-check'
+      };
+      var cls = styles[type] || styles.info;
+      var icon = icons[type] || icons.info;
+
+      var t = document.createElement('div');
+      t.className =
+        'pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border ' +
+        'shadow-2xl text-xs font-semibold animate-fade-in ' + cls;
+      t.setAttribute('role', 'alert');
+      t.innerHTML =
+        '<i class="fa-solid ' + icon + ' text-lg" aria-hidden="true"></i>' +
+        '<span></span>';
+      // Set text safely (avoids HTML injection if the name contains markup).
+      t.querySelector('span').textContent = message;
+
+      container.appendChild(t);
+      setTimeout(function () {
+        t.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+        setTimeout(function () { t.remove(); }, 300);
+      }, 4500);
+    }
   });
 })();
 </script>

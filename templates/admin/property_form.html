@@ -2,92 +2,1039 @@
 {% block title %}{{ 'Edit' if property else 'Add' }} Property · Admin Console{% endblock %}
 {% set active_section = 'properties' %}
 {% block page_title %}{{ 'Edit Property' if property else 'Add Property' }}{% endblock %}
+{% block page_subtitle %}
+  {{ 'Update listing details' if property else 'Create a new estate listing' }}
+{% endblock %}
 
 {% block content %}
 
-<nav class="flex items-center gap-2 text-xs text-charcoal/60 mb-5">
-  <a href="{{ url_for('admin.properties') }}" class="hover:text-gold">Properties</a>
-  <i class="fa-solid fa-chevron-right text-[9px]"></i>
-  <span class="text-primary font-semibold">{{ 'Edit' if property else 'New' }}</span>
+{# ── Breadcrumb ──────────────────────────────────────────────── #}
+<nav class="flex items-center gap-2 text-xs text-charcoal/60 mb-5"
+     aria-label="Breadcrumb">
+  <a href="{{ url_for('admin.properties') }}"
+     class="hover:text-gold transition-colors focus:outline-none
+            focus-visible:ring-2 focus-visible:ring-gold rounded">
+    Properties
+  </a>
+  <i class="fa-solid fa-chevron-right text-[9px] text-charcoal/30" aria-hidden="true"></i>
+  <span class="text-primary font-semibold" aria-current="page">
+    {{ 'Edit' if property else 'New' }}
+  </span>
 </nav>
 
 <div class="max-w-4xl mx-auto bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
-  <form method="POST" class="p-6 sm:p-8 space-y-6">
+  <form method="POST" id="propertyForm" enctype="multipart/form-data"
+        action="{{ url_for('admin.property_edit', pid=property.id) if property else url_for('admin.property_create') }}"
+        class="p-6 sm:p-8 space-y-6" novalidate>
     {{ form.hidden_tag() }}
     <input type="hidden" id="formAction" name="action" value="save">
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div class="sm:col-span-2">
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Title *</label>
-        {{ form.title(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Category *</label>
-        {{ form.category(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Location *</label>
-        {{ form.location(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Original Price ({{ CURRENCY_SYMBOL }}) *</label>
-        {{ form.original_price(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Member Price ({{ CURRENCY_SYMBOL }}) *</label>
-        {{ form.price(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Beds *</label>
-        {{ form.beds(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Baths *</label>
-        {{ form.baths(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Guests *</label>
-        {{ form.guests(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Rating</label>
-        {{ form.rating(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Reviews Count</label>
-        {{ form.reviews_count(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div class="sm:col-span-2">
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Main Image URL *</label>
-        {{ form.image(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div class="sm:col-span-2">
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Gallery URLs (one per line)</label>
-        {{ form.gallery(rows=3, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-xs font-mono resize-none") }}
-      </div>
-      <div class="sm:col-span-2">
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Amenities (comma-separated)</label>
-        {{ form.amenities(class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div class="sm:col-span-2">
-        <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Description</label>
-        {{ form.description(rows=4, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm resize-none") }}
-      </div>
-    </div>
+    {# Hidden field collecting gallery paths the user chose to remove #}
+    <input type="hidden" id="galleryRemoveInput" name="gallery_remove" value="">
 
-    <div class="pt-4 border-t border-charcoal/10 flex flex-wrap justify-end gap-3">
-      <a href="{{ url_for('admin.properties') }}" class="px-5 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold hover:bg-ivory transition-all">Cancel</a>
+    {# ── Form-level errors ──────────────────────────────────── #}
+    {% if form.errors %}
+      <div class="rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3"
+           role="alert">
+        <i class="fa-solid fa-circle-exclamation text-red-500 mt-0.5" aria-hidden="true"></i>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-red-700 mb-1">
+            Please fix {{ form.errors|length }}
+            issue{{ 's' if form.errors|length != 1 else '' }} below.
+          </p>
+          <ul class="text-xs text-red-600 list-disc list-inside space-y-0.5">
+            {% for field, errs in form.errors.items() %}
+              {% for err in errs %}
+                <li>
+                  <span class="font-semibold">{{ form[field].label.text if form[field] is defined else field }}:</span>
+                  {{ err }}
+                </li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+
+    {# ============================================================
+       Section: Basics
+       ============================================================ #}
+    <section>
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-circle-info text-[10px]"></i>
+        </div>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-primary">Basics</h2>
+      </header>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label for="{{ form.title.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Title <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          {{ form.title(
+            class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm transition
+                   {% if form.title.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+            required=true,
+            autofocus=(not property),
+            maxlength=200
+          ) }}
+          {% if form.title.errors %}
+            <p class="text-[11px] text-red-600 mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation text-[9px]" aria-hidden="true"></i>
+              {{ form.title.errors[0] }}
+            </p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.category.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Category <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          {{ form.category(
+            class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm transition
+                   {% if form.category.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+            required=true
+          ) }}
+          {% if form.category.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.category.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.location.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Location <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          {{ form.location(
+            class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm transition
+                   {% if form.location.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+            required=true,
+            placeholder="e.g. Beverly Hills, CA"
+          ) }}
+          {% if form.location.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.location.errors[0] }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Section: Pricing
+       ============================================================ #}
+    <section>
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-tag text-[10px]"></i>
+        </div>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-primary">Pricing</h2>
+      </header>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="{{ form.original_price.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Original Price ({{ CURRENCY_SYMBOL }})
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-charcoal/40 text-sm pointer-events-none"
+                  aria-hidden="true">{{ CURRENCY_SYMBOL }}</span>
+            {{ form.original_price(
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition tabular-nums
+                     {% if form.original_price.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+              required=true,
+              inputmode="decimal",
+              placeholder="0.00"
+            ) }}
+          </div>
+          {% if form.original_price.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.original_price.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.price.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Member Price ({{ CURRENCY_SYMBOL }})
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-charcoal/40 text-sm pointer-events-none"
+                  aria-hidden="true">{{ CURRENCY_SYMBOL }}</span>
+            {{ form.price(
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition tabular-nums
+                     {% if form.price.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+              required=true,
+              inputmode="decimal",
+              placeholder="0.00"
+            ) }}
+          </div>
+          {% if form.price.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.price.errors[0] }}</p>
+          {% endif %}
+          <p id="priceHint" class="text-[11px] text-emerald-600 mt-1 hidden items-center gap-1">
+            <i class="fa-solid fa-circle-check text-[9px]" aria-hidden="true"></i>
+            <span></span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Section: Details
+       ============================================================ #}
+    <section>
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-bed text-[10px]"></i>
+        </div>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-primary">Details</h2>
+      </header>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div>
+          <label for="{{ form.beds.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Beds <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          {{ form.beds(
+            class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm transition tabular-nums
+                   {% if form.beds.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+            required=true, min=0, inputmode="numeric"
+          ) }}
+          {% if form.beds.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.beds.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.baths.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Baths <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          {{ form.baths(
+            class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm transition tabular-nums
+                   {% if form.baths.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+            required=true, min=0, step="0.5", inputmode="decimal"
+          ) }}
+          {% if form.baths.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.baths.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.guests.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Guests <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          {{ form.guests(
+            class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm transition tabular-nums
+                   {% if form.guests.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+            required=true, min=1, inputmode="numeric"
+          ) }}
+          {% if form.guests.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.guests.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.rating.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Rating
+          </label>
+          {{ form.rating(
+            class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm transition tabular-nums
+                   {% if form.rating.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+            min=0, max=5, step="0.1", inputmode="decimal"
+          ) }}
+          {% if form.rating.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.rating.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        <div class="col-span-2 sm:col-span-4">
+          <label for="{{ form.reviews_count.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Reviews Count
+          </label>
+          {{ form.reviews_count(
+            class="w-full sm:w-40 px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm transition tabular-nums",
+            min=0, inputmode="numeric"
+          ) }}
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Section: Media
+       ============================================================ #}
+    <section>
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-image text-[10px]"></i>
+        </div>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-primary">Media</h2>
+      </header>
+
+      <div class="space-y-6">
+        {# ── Main image upload ──────────────────────────────── #}
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Main Image
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+
+          <div id="imageDropzone"
+               class="relative rounded-2xl border-2 border-dashed border-charcoal/20
+                      bg-ivory/40 hover:bg-ivory/60 hover:border-gold/50
+                      transition-colors cursor-pointer
+                      focus-within:ring-2 focus-within:ring-gold/60"
+               tabindex="0"
+               role="button"
+               aria-label="Upload main image">
+
+            {{ form.image(
+              id="imageInput",
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer",
+              accept="image/png,image/jpeg,image/webp,image/gif"
+            ) }}
+
+            {# Prompt (hidden when a preview exists) #}
+            <div id="imagePrompt"
+                 class="flex flex-col items-center justify-center gap-2 p-5 text-center pointer-events-none">
+              <div class="w-12 h-12 rounded-full bg-gold/15 text-gold
+                          flex items-center justify-center">
+                <i class="fa-solid fa-cloud-arrow-up text-lg" aria-hidden="true"></i>
+              </div>
+              <p class="text-sm font-semibold text-primary">
+                Click or drag the main property image
+              </p>
+              <p class="text-[11px] text-charcoal/50">
+                PNG, JPG, WEBP, or GIF · up to 8 MB
+              </p>
+            </div>
+
+            {# Preview #}
+            <div id="imagePreviewWrap"
+                 class="hidden items-center gap-4 p-4">
+              <div class="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0
+                          bg-primary/10 ring-2 ring-gold/30">
+                <img id="imagePreview"
+                     src=""
+                     alt=""
+                     class="w-full h-full object-cover">
+              </div>
+              <div class="min-w-0 flex-1 pointer-events-none">
+                <p id="imageFileName"
+                   class="text-sm font-semibold text-primary truncate"></p>
+                <p id="imageFileMeta"
+                   class="text-[11px] text-charcoal/50"></p>
+                <p class="text-[11px] text-charcoal/50 mt-1">
+                  Click to replace.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {# Remove + status row #}
+          <div id="imageStatusRow" class="hidden mt-2 flex items-center justify-between">
+            <p id="imageStatus" class="text-[11px] text-charcoal/50"></p>
+            <button type="button"
+                    id="imageRemoveBtn"
+                    class="inline-flex items-center gap-1.5 text-[11px] font-semibold
+                           text-red-500 hover:text-red-600 underline underline-offset-2
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded">
+              <i class="fa-solid fa-trash text-[10px]" aria-hidden="true"></i>
+              <span>Remove image</span>
+            </button>
+          </div>
+
+          {% if form.image.errors %}
+            <p class="text-[11px] text-red-600 mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation text-[9px]" aria-hidden="true"></i>
+              {{ form.image.errors[0] }}
+            </p>
+          {% endif %}
+        </div>
+
+        {# ── Gallery upload ─────────────────────────────────── #}
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-primary/80">
+              Gallery
+              <span class="text-charcoal/40 normal-case tracking-normal font-normal ml-1">(optional)</span>
+            </label>
+            <span id="galleryCount" class="text-[10px] text-charcoal/50 tabular-nums"></span>
+          </div>
+
+          <div id="galleryDropzone"
+               class="relative rounded-2xl border-2 border-dashed border-charcoal/20
+                      bg-ivory/40 hover:bg-ivory/60 hover:border-gold/50
+                      transition-colors cursor-pointer
+                      focus-within:ring-2 focus-within:ring-gold/60"
+               tabindex="0"
+               role="button"
+               aria-label="Upload gallery images">
+
+            {{ form.gallery(
+              id="galleryInput",
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer",
+              accept="image/png,image/jpeg,image/webp,image/gif",
+              multiple=true
+            ) }}
+
+            <div class="flex flex-col items-center justify-center gap-2 p-5 text-center pointer-events-none">
+              <div class="w-12 h-12 rounded-full bg-gold/15 text-gold
+                          flex items-center justify-center">
+                <i class="fa-solid fa-images text-lg" aria-hidden="true"></i>
+              </div>
+              <p class="text-sm font-semibold text-primary">
+                Click or drag multiple images to add to the gallery
+              </p>
+              <p class="text-[11px] text-charcoal/50">
+                Up to 20 images · PNG, JPG, WEBP, or GIF · 8 MB each
+              </p>
+            </div>
+          </div>
+
+          {# Live preview grid of pending (new) uploads #}
+          <div id="galleryPreviewGrid"
+               class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-3"></div>
+
+          {# Existing gallery images (edit mode) #}
+          {% if property and property.gallery %}
+            <div class="mt-4">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-charcoal/50 mb-2">
+                Existing images
+              </p>
+              <div id="existingGallery"
+                   class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {% for url in property.gallery %}
+                  <div class="relative group rounded-xl overflow-hidden
+                              border border-charcoal/10 bg-white"
+                       data-existing-path="{{ url }}">
+                    <img src="{{ url }}"
+                         alt=""
+                         class="w-full h-24 object-cover"
+                         loading="lazy"
+                         onerror="this.style.opacity='0.3'">
+                    <button type="button"
+                            class="js-remove-existing absolute top-1.5 right-1.5
+                                   w-7 h-7 rounded-full bg-red-500 text-white
+                                   flex items-center justify-center
+                                   opacity-0 group-hover:opacity-100
+                                   focus:opacity-100 transition-opacity
+                                   focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                            title="Remove from gallery"
+                            aria-label="Remove this image from the gallery"
+                            data-path="{{ url }}">
+                      <i class="fa-solid fa-xmark text-xs" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          {% if form.gallery.errors %}
+            <p class="text-[11px] text-red-600 mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation text-[9px]" aria-hidden="true"></i>
+              {{ form.gallery.errors[0] }}
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Section: Content
+       ============================================================ #}
+    <section>
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-align-left text-[10px]"></i>
+        </div>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-primary">Content</h2>
+      </header>
+
+      <div class="space-y-4">
+        <div>
+          <label for="{{ form.amenities.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Amenities
+          </label>
+          {{ form.amenities(
+            class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm transition",
+            placeholder="Wi-Fi, Pool, Air Conditioning, Parking",
+            id="amenitiesInput"
+          ) }}
+          <div id="amenitiesTags" class="flex flex-wrap gap-1.5 mt-2"></div>
+          <p class="text-[11px] text-charcoal/50 mt-1">Comma-separated.</p>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="{{ form.description.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider text-primary/80">
+              Description
+            </label>
+            <span id="descCounter" class="text-[10px] text-charcoal/50 tabular-nums">
+              {{ (form.description.data or '')|length }}/3000
+            </span>
+          </div>
+          {{ form.description(
+            rows=5,
+            maxlength=3000,
+            class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm resize-y transition",
+            placeholder="Describe the property, its highlights, and the experience guests can expect…",
+            id="descriptionInput"
+          ) }}
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Sticky action bar
+       ============================================================ #}
+    <div class="sticky bottom-0 -mx-6 sm:-mx-8 px-6 sm:px-8 py-4 mt-6
+                bg-white/95 backdrop-blur border-t border-charcoal/10
+                flex flex-wrap items-center justify-end gap-3">
+
+      <a href="{{ url_for('admin.properties') }}"
+         class="px-5 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold
+                hover:bg-ivory transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+        Cancel
+      </a>
+
       {% if not property %}
-        <button type="submit" onclick="document.getElementById('formAction').value='save_and_new'"
-                class="border border-primary text-primary hover:bg-primary hover:text-gold px-5 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all">
-          <i class="fa-solid fa-plus mr-1"></i> Save &amp; Add Another
+        <button type="submit"
+                data-action="save_and_new"
+                class="js-submit border border-primary text-primary
+                       hover:bg-primary hover:text-gold
+                       px-5 py-3 rounded-xl text-sm font-bold uppercase tracking-wider
+                       transition-all flex items-center gap-2
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                       disabled:opacity-60 disabled:cursor-wait">
+          <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i>
+          <span>Save &amp; Add Another</span>
         </button>
       {% endif %}
-      <button type="submit" class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-md flex items-center gap-2">
-        <i class="fa-solid fa-floppy-disk"></i> {{ 'Update' if property else 'Save' }} Property
+
+      <button type="submit"
+              data-action="save"
+              class="js-submit bg-primary text-gold hover:bg-gold hover:text-primary
+                     px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider
+                     transition-all shadow-md flex items-center gap-2
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                     disabled:opacity-60 disabled:cursor-wait">
+        <i class="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+        <span>{{ 'Update' if property else 'Save' }} Property</span>
       </button>
+
     </div>
   </form>
 </div>
 
+{# ── Unsaved changes warning bar ─────────────────────────────── #}
+<div id="unsavedBar"
+     class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40
+            bg-primary text-ivory px-4 py-2.5 rounded-xl shadow-xl
+            text-xs font-semibold flex items-center gap-3 border border-gold/40">
+  <i class="fa-solid fa-circle-exclamation text-gold" aria-hidden="true"></i>
+  <span>You have unsaved changes.</span>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  var form = document.getElementById('propertyForm');
+  if (!form) return;
+
+  var formAction         = document.getElementById('formAction');
+  var galleryRemoveInput = document.getElementById('galleryRemoveInput');
+  var unsavedBar         = document.getElementById('unsavedBar');
+
+  // Main image
+  var imageDropzone  = document.getElementById('imageDropzone');
+  var imageInput     = document.getElementById('imageInput');
+  var imagePrompt    = document.getElementById('imagePrompt');
+  var imagePreviewWrap = document.getElementById('imagePreviewWrap');
+  var imagePreview   = document.getElementById('imagePreview');
+  var imageFileName  = document.getElementById('imageFileName');
+  var imageFileMeta  = document.getElementById('imageFileMeta');
+  var imageStatusRow = document.getElementById('imageStatusRow');
+  var imageStatus    = document.getElementById('imageStatus');
+  var imageRemoveBtn = document.getElementById('imageRemoveBtn');
+
+  // Gallery
+  var galleryDropzone   = document.getElementById('galleryDropzone');
+  var galleryInput      = document.getElementById('galleryInput');
+  var galleryPreviewGrid = document.getElementById('galleryPreviewGrid');
+  var galleryCount      = document.getElementById('galleryCount');
+  var existingGallery   = document.getElementById('existingGallery');
+
+  // Content
+  var amenitiesIn   = document.getElementById('amenitiesInput');
+  var amenitiesTags = document.getElementById('amenitiesTags');
+  var descInput     = document.getElementById('descriptionInput');
+  var descCounter   = document.getElementById('descCounter');
+  var priceInput    = form.querySelector('input[name="price"]');
+  var origPriceIn   = form.querySelector('input[name="original_price"]');
+  var priceHint     = document.getElementById('priceHint');
+
+  var existingImage = {{ (property.image if property and property.image else '') | tojson }};
+  var imageRemoveFlag = false;
+
+  var objectUrls = [];  // for revoking later
+
+  var dirty = false;
+  var submitting = false;
+
+  /* ============================================================
+     Utilities
+     ============================================================ */
+  function formatBytes(bytes) {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function revokeAll() {
+    objectUrls.forEach(function (u) { URL.revokeObjectURL(u); });
+    objectUrls = [];
+  }
+
+  function validImage(file) {
+    if (!file) return false;
+    if (!/^image\/(png|jpe?g|webp|gif)$/i.test(file.type)) return false;
+    if (file.size > 8 * 1024 * 1024) return false;
+    return true;
+  }
+
+  /* ============================================================
+     Main image — dropzone + preview
+     ============================================================ */
+  function showImagePreview(src, name, meta) {
+    if (!imagePreview || !imagePreviewWrap || !imagePrompt) return;
+    imagePreview.src = src;
+    if (imageFileName) imageFileName.textContent = name || '';
+    if (imageFileMeta) imageFileMeta.textContent = meta || '';
+    imagePreviewWrap.classList.remove('hidden');
+    imagePreviewWrap.classList.add('flex');
+    imagePrompt.classList.add('hidden');
+    if (imageStatusRow) imageStatusRow.classList.remove('hidden');
+  }
+
+  function hideImagePreview() {
+    if (!imagePreview || !imagePreviewWrap || !imagePrompt) return;
+    imagePreview.removeAttribute('src');
+    imagePreviewWrap.classList.add('hidden');
+    imagePreviewWrap.classList.remove('flex');
+    imagePrompt.classList.remove('hidden');
+    if (imageStatusRow) imageStatusRow.classList.add('hidden');
+    if (imageStatus) {
+      imageStatus.textContent = '';
+      imageStatus.className = 'text-[11px] text-charcoal/50';
+    }
+  }
+
+  function handleImageFile(file) {
+    if (!file) return;
+    if (!validImage(file)) {
+      if (imageStatus) {
+        imageStatus.textContent = '⚠ Only PNG, JPG, WEBP, or GIF · up to 8 MB.';
+        imageStatus.className = 'text-[11px] text-red-600';
+      }
+      if (imageInput) imageInput.value = '';
+      return;
+    }
+
+    var url = URL.createObjectURL(file);
+    objectUrls.push(url);
+    imageRemoveFlag = false;
+
+    showImagePreview(url, file.name, formatBytes(file.size));
+    if (imageStatus) {
+      imageStatus.textContent = 'Ready to upload on save.';
+      imageStatus.className = 'text-[11px] text-emerald-600';
+    }
+    markDirty();
+  }
+
+  if (imageInput) {
+    imageInput.addEventListener('change', function () {
+      handleImageFile(imageInput.files && imageInput.files[0]);
+    });
+  }
+
+  if (imageDropzone) {
+    ['dragenter', 'dragover'].forEach(function (evt) {
+      imageDropzone.addEventListener(evt, function (e) {
+        e.preventDefault(); e.stopPropagation();
+        imageDropzone.classList.add('border-gold', 'bg-gold/5');
+      });
+    });
+    ['dragleave', 'drop'].forEach(function (evt) {
+      imageDropzone.addEventListener(evt, function (e) {
+        e.preventDefault(); e.stopPropagation();
+        imageDropzone.classList.remove('border-gold', 'bg-gold/5');
+      });
+    });
+    imageDropzone.addEventListener('drop', function (e) {
+      var dt = e.dataTransfer;
+      if (!dt || !dt.files || !dt.files.length) return;
+      var file = dt.files[0];
+      try {
+        var d = new DataTransfer(); d.items.add(file);
+        imageInput.files = d.files;
+      } catch (err) {}
+      handleImageFile(file);
+    });
+  }
+
+  if (imageRemoveBtn) {
+    imageRemoveBtn.addEventListener('click', function () {
+      if (imageInput) imageInput.value = '';
+      if (existingImage) imageRemoveFlag = true;
+      hideImagePreview();
+      markDirty();
+    });
+  }
+
+  // Show existing image on load (edit mode)
+  if (existingImage) {
+    showImagePreview(existingImage, existingImage.split('/').pop() || 'image', '');
+  }
+
+  /* ============================================================
+     Gallery — multi-file dropzone + preview grid
+     ============================================================ */
+  function collectGalleryFiles() {
+    if (!galleryInput) return [];
+    return Array.prototype.slice.call(galleryInput.files || []);
+  }
+
+  function renderGalleryPreview() {
+    if (!galleryPreviewGrid) return;
+    var files = collectGalleryFiles();
+    galleryPreviewGrid.innerHTML = '';
+
+    if (!files.length) {
+      galleryPreviewGrid.classList.add('hidden');
+      updateGalleryCount();
+      return;
+    }
+    galleryPreviewGrid.classList.remove('hidden');
+
+    files.forEach(function (file, idx) {
+      var url = URL.createObjectURL(file);
+      objectUrls.push(url);
+
+      var cell = document.createElement('div');
+      cell.className = 'relative group rounded-xl overflow-hidden border border-charcoal/10 bg-white';
+
+      var img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      img.className = 'w-full h-24 object-cover';
+      cell.appendChild(img);
+
+      // Filename strip
+      var label = document.createElement('p');
+      label.className = 'absolute bottom-0 left-0 right-0 bg-black/60 text-white ' +
+                        'text-[10px] px-2 py-1 truncate';
+      label.textContent = file.name;
+      cell.appendChild(label);
+
+      // Remove button
+      var rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-red-500 text-white ' +
+                     'flex items-center justify-center opacity-0 group-hover:opacity-100 ' +
+                     'focus:opacity-100 transition-opacity';
+      rm.setAttribute('aria-label', 'Remove this image');
+      rm.innerHTML = '<i class="fa-solid fa-xmark text-xs" aria-hidden="true"></i>';
+      rm.addEventListener('click', function () {
+        removeGalleryFileAt(idx);
+      });
+      cell.appendChild(rm);
+
+      galleryPreviewGrid.appendChild(cell);
+    });
+
+    updateGalleryCount();
+  }
+
+  function removeGalleryFileAt(index) {
+    if (!galleryInput) return;
+    var dt = new DataTransfer();
+    collectGalleryFiles().forEach(function (f, i) {
+      if (i !== index) dt.items.add(f);
+    });
+    try {
+      galleryInput.files = dt.files;
+    } catch (err) {
+      // Fallback: clear all if we can't rewrite the FileList.
+      galleryInput.value = '';
+    }
+    renderGalleryPreview();
+    markDirty();
+  }
+
+  function addGalleryFiles(newFiles) {
+    if (!galleryInput || !newFiles || !newFiles.length) return;
+    var dt = new DataTransfer();
+    collectGalleryFiles().forEach(function (f) { dt.items.add(f); });
+    Array.prototype.slice.call(newFiles).forEach(function (f) {
+      if (validImage(f) && dt.items.length < 20) dt.items.add(f);
+    });
+    try {
+      galleryInput.files = dt.files;
+    } catch (err) {
+      console.warn('[gallery] could not merge file lists');
+    }
+    renderGalleryPreview();
+  }
+
+  if (galleryInput) {
+    galleryInput.addEventListener('change', function () {
+      renderGalleryPreview();
+      markDirty();
+    });
+  }
+
+  if (galleryDropzone) {
+    ['dragenter', 'dragover'].forEach(function (evt) {
+      galleryDropzone.addEventListener(evt, function (e) {
+        e.preventDefault(); e.stopPropagation();
+        galleryDropzone.classList.add('border-gold', 'bg-gold/5');
+      });
+    });
+    ['dragleave', 'drop'].forEach(function (evt) {
+      galleryDropzone.addEventListener(evt, function (e) {
+        e.preventDefault(); e.stopPropagation();
+        galleryDropzone.classList.remove('border-gold', 'bg-gold/5');
+      });
+    });
+    galleryDropzone.addEventListener('drop', function (e) {
+      var dt = e.dataTransfer;
+      if (!dt || !dt.files || !dt.files.length) return;
+      addGalleryFiles(dt.files);
+    });
+  }
+
+  function updateGalleryCount() {
+    if (!galleryCount) return;
+    var pending = collectGalleryFiles().length;
+    var existing = existingGallery
+      ? existingGallery.querySelectorAll('[data-existing-path]').length
+      : 0;
+    var total = pending + existing;
+    galleryCount.textContent = total ? total + ' image' + (total === 1 ? '' : 's') : '';
+  }
+
+  /* ============================================================
+     Existing gallery — remove buttons
+     ============================================================ */
+  function collectRemoved() {
+    if (!galleryRemoveInput) return;
+    var removed = [];
+    if (existingGallery) {
+      existingGallery.querySelectorAll('[data-remove-path]').forEach(function (cell) {
+        removed.push(cell.dataset.removePath);
+      });
+    }
+    galleryRemoveInput.value = removed.join(',');
+  }
+
+  if (existingGallery) {
+    existingGallery.addEventListener('click', function (e) {
+      var btn = e.target.closest('.js-remove-existing');
+      if (!btn) return;
+      e.preventDefault();
+      var path = btn.dataset.path;
+      var cell = existingGallery.querySelector('[data-existing-path="' + CSS.escape(path) + '"]');
+      if (!cell) return;
+
+      // Instead of removing the node entirely, mark it removed and hide it.
+      cell.style.display = 'none';
+      cell.dataset.removePath = path;
+      collectRemoved();
+      updateGalleryCount();
+      markDirty();
+    });
+  }
+
+  updateGalleryCount();
+
+  /* ============================================================
+     Amenities → live tag chips
+     ============================================================ */
+  function renderAmenityTags() {
+    if (!amenitiesIn || !amenitiesTags) return;
+    var parts = (amenitiesIn.value || '')
+      .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    amenitiesTags.innerHTML = '';
+    parts.forEach(function (a) {
+      var chip = document.createElement('span');
+      chip.className =
+        'inline-flex items-center text-[10px] font-semibold uppercase tracking-wider ' +
+        'bg-gold/15 text-primary border border-gold/30 px-2 py-0.5 rounded-full';
+      chip.textContent = a;
+      amenitiesTags.appendChild(chip);
+    });
+  }
+  if (amenitiesIn) {
+    amenitiesIn.addEventListener('input', renderAmenityTags);
+    renderAmenityTags();
+  }
+
+  /* ============================================================
+     Description counter
+     ============================================================ */
+  function updateDescCounter() {
+    if (!descInput || !descCounter) return;
+    var len = (descInput.value || '').length;
+    descCounter.textContent = len + '/3000';
+    descCounter.classList.toggle('text-amber-600', len >= 2500 && len < 2900);
+    descCounter.classList.toggle('text-red-600',   len >= 2900);
+    descCounter.classList.toggle('text-charcoal/50', len < 2500);
+  }
+  if (descInput) {
+    descInput.addEventListener('input', updateDescCounter);
+    updateDescCounter();
+  }
+
+  /* ============================================================
+     Price hint (discount %)
+     ============================================================ */
+  function updatePriceHint() {
+    if (!priceInput || !origPriceIn || !priceHint) return;
+    var orig = parseFloat(origPriceIn.value) || 0;
+    var cur  = parseFloat(priceInput.value) || 0;
+
+    if (orig > 0 && cur > 0 && orig > cur) {
+      var pct = Math.round((1 - cur / orig) * 100);
+      priceHint.querySelector('span').textContent = pct + '% off the original price';
+      priceHint.classList.remove('hidden');
+      priceHint.classList.add('flex');
+      priceHint.classList.remove('text-amber-600');
+      priceHint.classList.add('text-emerald-600');
+    } else if (orig > 0 && cur > 0 && cur > orig) {
+      priceHint.querySelector('span').textContent =
+        'Member price is higher than the original price.';
+      priceHint.classList.remove('hidden');
+      priceHint.classList.add('flex', 'text-amber-600');
+      priceHint.classList.remove('text-emerald-600');
+    } else {
+      priceHint.classList.add('hidden');
+      priceHint.classList.remove('flex', 'text-amber-600');
+      priceHint.classList.add('text-emerald-600');
+    }
+  }
+  if (priceInput)  priceInput.addEventListener('input', updatePriceHint);
+  if (origPriceIn) origPriceIn.addEventListener('input', updatePriceHint);
+  updatePriceHint();
+
+  /* ============================================================
+     Dirty tracking + submit (the fix from review_form)
+     ============================================================ */
+  function markDirty() {
+    if (dirty || submitting) return;
+    dirty = true;
+    if (unsavedBar) unsavedBar.classList.remove('hidden');
+  }
+
+  form.addEventListener('input', markDirty, { passive: true });
+  form.addEventListener('change', markDirty, { passive: true });
+
+  form.querySelectorAll('.js-submit').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (submitting) return;
+      var action = btn.dataset.action || 'save';
+      if (formAction) formAction.value = action;
+
+      dirty = false;
+      if (unsavedBar) unsavedBar.classList.add('hidden');
+    });
+  });
+
+  form.addEventListener('submit', function () {
+    if (submitting) return;
+    submitting = true;
+
+    setTimeout(function () {
+      form.querySelectorAll('.js-submit').forEach(function (b) {
+        b.disabled = true;
+        if (b.dataset.action === (formAction && formAction.value)) {
+          b.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin text-xs" aria-hidden="true"></i>' +
+            '<span>Saving…</span>';
+        }
+      });
+    }, 0);
+  });
+
+  window.addEventListener('beforeunload', function (e) {
+    if (dirty && !submitting) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) { location.reload(); }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      var saveBtn = form.querySelector('.js-submit[data-action="save"]');
+      saveBtn && saveBtn.click();
+    }
+  });
+
+  window.addEventListener('pagehide', revokeAll);
+
+})();
+</script>
 {% endblock %}

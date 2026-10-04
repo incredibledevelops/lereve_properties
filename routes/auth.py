@@ -247,6 +247,16 @@ def why_us():
         categories=_load_categories(),
     )
 
+# ============================================================
+# ABOUT
+# ============================================================
+@auth_bp.route('/about')
+def about():
+    return render_template(
+        'about.html',
+        reviews=_load_reviews(limit=6),
+        categories=_load_categories(),
+    )
 
 # ============================================================
 # REVIEWS

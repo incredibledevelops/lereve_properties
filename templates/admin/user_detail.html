@@ -33,7 +33,7 @@
 {% endif %}
 
 {# ============================================================
-   Flash messages (right above the form, same style as auth)
+   Flash messages
    ============================================================ #}
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
@@ -70,269 +70,356 @@
             Changes save immediately on submit. Leave password blank to keep the current one.
           </p>
         </div>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-charcoal/40
+                     bg-ivory px-2.5 py-1 rounded-full border border-charcoal/10 whitespace-nowrap">
+          <i class="fa-solid fa-keyboard text-[9px] mr-1" aria-hidden="true"></i>
+          ⌘S to save
+        </span>
       </div>
 
-      <form method="POST" class="space-y-5" novalidate>
-        {{ form.hidden_tag() }}
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-          {# --- Name --- #}
-          <div>
-            <label for="{{ form.name.id }}"
-                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
-                          {% if form.name.errors %}text-red-600{% else %}text-primary/80{% endif %}">
-              Name <span class="text-gold">*</span>
-            </label>
-            {{ form.name(
-                id=form.name.id,
-                required=true,
-                aria_invalid="true" if form.name.errors else "false",
-                aria_describedby="editUserNameError",
-                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
-                      + ("border-red-300 bg-red-50" if form.name.errors else "border-charcoal/15")
-            ) }}
-            {% if form.name.errors %}
-              <ul id="editUserNameError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
-                {% for e in form.name.errors %}
-                  <li class="flex items-start gap-1">
-                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
-                    <span>{{ e }}</span>
+      {# Form-level error summary #}
+      {% if form.errors %}
+        <div class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3"
+             role="alert">
+          <i class="fa-solid fa-circle-exclamation text-red-500 mt-0.5" aria-hidden="true"></i>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-red-700 mb-1">
+              Please fix {{ form.errors|length }}
+              issue{{ 's' if form.errors|length != 1 else '' }} below.
+            </p>
+            <ul class="text-xs text-red-600 list-disc list-inside space-y-0.5">
+              {% for field, errs in form.errors.items() %}
+                {% for err in errs %}
+                  <li>
+                    <span class="font-semibold">{{ form[field].label.text if form[field] is defined else field }}:</span>
+                    {{ err }}
                   </li>
                 {% endfor %}
-              </ul>
-            {% endif %}
-          </div>
-
-          {# --- Email --- #}
-          <div>
-            <label for="{{ form.email.id }}"
-                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
-                          {% if form.email.errors %}text-red-600{% else %}text-primary/80{% endif %}">
-              Email <span class="text-gold">*</span>
-            </label>
-            {{ form.email(
-                id=form.email.id,
-                type="email",
-                autocomplete="email",
-                required=true,
-                aria_invalid="true" if form.email.errors else "false",
-                aria_describedby="editUserEmailError",
-                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
-                      + ("border-red-300 bg-red-50" if form.email.errors else "border-charcoal/15")
-            ) }}
-            {% if form.email.errors %}
-              <ul id="editUserEmailError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
-                {% for e in form.email.errors %}
-                  <li class="flex items-start gap-1">
-                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
-                    <span>{{ e }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </div>
-
-          {# --- Phone --- #}
-          <div>
-            <label for="{{ form.phone.id }}"
-                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
-                          {% if form.phone.errors %}text-red-600{% else %}text-primary/80{% endif %}">
-              Phone
-            </label>
-            {{ form.phone(
-                id=form.phone.id,
-                type="tel",
-                autocomplete="tel",
-                inputmode="tel",
-                aria_invalid="true" if form.phone.errors else "false",
-                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
-                      + ("border-red-300 bg-red-50" if form.phone.errors else "border-charcoal/15")
-            ) }}
-            {% if form.phone.errors %}
-              <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
-                {% for e in form.phone.errors %}
-                  <li class="flex items-start gap-1">
-                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
-                    <span>{{ e }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </div>
-
-          {# --- Country --- #}
-          <div>
-            <label for="{{ form.country.id }}"
-                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
-                          {% if form.country.errors %}text-red-600{% else %}text-primary/80{% endif %}">
-              Country
-            </label>
-            {{ form.country(
-                id=form.country.id,
-                autocomplete="country-name",
-                aria_invalid="true" if form.country.errors else "false",
-                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
-                      + ("border-red-300 bg-red-50" if form.country.errors else "border-charcoal/15")
-            ) }}
-            {% if form.country.errors %}
-              <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
-                {% for e in form.country.errors %}
-                  <li class="flex items-start gap-1">
-                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
-                    <span>{{ e }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </div>
-
-          {# --- Tier --- #}
-          <div>
-            <label for="{{ form.tier.id }}"
-                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
-                          {% if form.tier.errors %}text-red-600{% else %}text-primary/80{% endif %}">
-              Tier
-            </label>
-            {{ form.tier(
-                id=form.tier.id,
-                aria_invalid="true" if form.tier.errors else "false",
-                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
-                      + ("border-red-300 bg-red-50" if form.tier.errors else "border-charcoal/15")
-            ) }}
-            {% if form.tier.errors %}
-              <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
-                {% for e in form.tier.errors %}
-                  <li class="flex items-start gap-1">
-                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
-                    <span>{{ e }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </div>
-
-          {# --- Role --- #}
-          <div>
-            <label for="{{ form.role.id }}"
-                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
-                          {% if form.role.errors %}text-red-600{% else %}text-primary/80{% endif %}">
-              Role
-              {% if is_self %}
-                <i class="fa-solid fa-lock text-[10px] text-charcoal/40 ml-1" aria-hidden="true"
-                   title="You cannot change your own role"></i>
-              {% endif %}
-            </label>
-            {{ form.role(
-                id=form.role.id,
-                disabled=is_self,
-                aria_invalid="true" if form.role.errors else "false",
-                aria_describedby="editUserRoleHint",
-                class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
-                      + ("border-red-300 bg-red-50" if form.role.errors else "border-charcoal/15")
-                      + (" opacity-60 cursor-not-allowed" if is_self else "")
-            ) }}
-            {% if is_self %}
-              <p id="editUserRoleHint" class="text-[11px] text-charcoal/50 mt-1.5">
-                You cannot change your own role.
-              </p>
-            {% elif form.role.errors %}
-              <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
-                {% for e in form.role.errors %}
-                  <li class="flex items-start gap-1">
-                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
-                    <span>{{ e }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </div>
-        </div>
-
-        {# --- New Password --- #}
-        <div>
-          <label for="{{ form.new_password.id }}"
-                 class="block text-xs font-bold uppercase tracking-wider mb-1.5
-                        {% if form.new_password.errors %}text-red-600{% else %}text-primary/80{% endif %}">
-            New Password
-          </label>
-          <div class="relative">
-            {{ form.new_password(
-                id=form.new_password.id,
-                type="password",
-                autocomplete="new-password",
-                placeholder="Leave blank to keep the current password",
-                aria_invalid="true" if form.new_password.errors else "false",
-                aria_describedby="editUserPwHint editUserPwError",
-                class="w-full px-4 py-2.5 pr-12 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
-                      + ("border-red-300 bg-red-50" if form.new_password.errors else "border-charcoal/15")
-            ) }}
-            <button type="button"
-                    id="editUserPwToggle"
-                    data-target="{{ form.new_password.id }}"
-                    data-icon="editUserPwIcon"
-                    aria-label="Show password"
-                    aria-pressed="false"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 p-1
-                           text-charcoal/40 hover:text-gold transition-colors
-                           focus:outline-none focus:ring-2 focus:ring-gold rounded-full">
-              <i id="editUserPwIcon" class="fa-regular fa-eye" aria-hidden="true"></i>
-            </button>
-          </div>
-
-          {# Strength meter #}
-          <div id="editUserPwStrength" class="mt-2" aria-live="polite">
-            <div class="h-1 w-full bg-charcoal/10 rounded-full overflow-hidden">
-              <div id="editUserPwBar"
-                   class="h-full w-0 rounded-full transition-all duration-300"
-                   style="background:#ef4444;"></div>
-            </div>
-            <p id="editUserPwHint" class="text-[10px] mt-1 text-charcoal/50"></p>
-          </div>
-
-          {% if form.new_password.errors %}
-            <ul id="editUserPwError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
-              {% for e in form.new_password.errors %}
-                <li class="flex items-start gap-1">
-                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
-                  <span>{{ e }}</span>
-                </li>
               {% endfor %}
             </ul>
-          {% endif %}
-        </div>
-
-        {# --- Active toggle --- #}
-        <label for="{{ form.is_active.id }}"
-               class="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all
-                      {% if form.is_active.errors %}border-red-300 bg-red-50
-                      {% else %}border-charcoal/10 hover:border-gold/40 bg-ivory/30{% endif %}
-                      {% if is_self %}opacity-60 cursor-not-allowed{% endif %}">
-          {{ form.is_active(
-              id=form.is_active.id,
-              disabled=is_self,
-              class="accent-gold w-4 h-4 mt-0.5"
-          ) }}
-          <div class="flex-1">
-            <p class="text-sm font-semibold text-primary">Account Active</p>
-            <p class="text-xs text-charcoal/60 mt-0.5">
-              {% if is_self %}
-                You cannot deactivate your own account.
-              {% else %}
-                Inactive users cannot sign in. Their data is preserved.
-              {% endif %}
-            </p>
           </div>
-          {% if is_self %}
-            <i class="fa-solid fa-lock text-charcoal/40 mt-1" aria-hidden="true"></i>
-          {% endif %}
-        </label>
+        </div>
+      {% endif %}
+
+      <form method="POST" id="userEditForm" class="space-y-5" novalidate>
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="next" value="{{ url_for('admin.user_detail', uid=user.id) }}">
+
+        {# ============================================================
+           Section: Identity
+           ============================================================ #}
+        <section>
+          <header class="flex items-center gap-2 mb-4">
+            <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                        flex items-center justify-center" aria-hidden="true">
+              <i class="fa-solid fa-id-card text-[10px]"></i>
+            </div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Identity</h4>
+          </header>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {# Name #}
+            <div>
+              <label for="{{ form.name.id }}"
+                     class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                            {% if form.name.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+                Name <span class="text-gold" aria-hidden="true">*</span>
+              </label>
+              {{ form.name(
+                  id=form.name.id,
+                  required=true,
+                  maxlength=200,
+                  aria_invalid="true" if form.name.errors else "false",
+                  aria_describedby="editUserNameError",
+                  class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60 text-sm transition-all "
+                        + ("border-red-300 bg-red-50" if form.name.errors else "border-charcoal/15")
+              ) }}
+              {% if form.name.errors %}
+                <ul id="editUserNameError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                  {% for e in form.name.errors %}
+                    <li class="flex items-start gap-1">
+                      <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                      <span>{{ e }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+
+            {# Email #}
+            <div>
+              <label for="{{ form.email.id }}"
+                     class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                            {% if form.email.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+                Email <span class="text-gold" aria-hidden="true">*</span>
+              </label>
+              {{ form.email(
+                  id=form.email.id,
+                  type="email",
+                  autocomplete="email",
+                  required=true,
+                  maxlength=200,
+                  aria_invalid="true" if form.email.errors else "false",
+                  aria_describedby="editUserEmailError",
+                  class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60 text-sm transition-all "
+                        + ("border-red-300 bg-red-50" if form.email.errors else "border-charcoal/15")
+              ) }}
+              {% if form.email.errors %}
+                <ul id="editUserEmailError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                  {% for e in form.email.errors %}
+                    <li class="flex items-start gap-1">
+                      <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                      <span>{{ e }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+
+            {# Phone #}
+            <div>
+              <label for="{{ form.phone.id }}"
+                     class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                            {% if form.phone.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+                Phone
+              </label>
+              {{ form.phone(
+                  id=form.phone.id,
+                  type="tel",
+                  autocomplete="tel",
+                  inputmode="tel",
+                  maxlength=40,
+                  aria_invalid="true" if form.phone.errors else "false",
+                  class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60 text-sm transition-all "
+                        + ("border-red-300 bg-red-50" if form.phone.errors else "border-charcoal/15")
+              ) }}
+              {% if form.phone.errors %}
+                <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                  {% for e in form.phone.errors %}
+                    <li class="flex items-start gap-1">
+                      <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                      <span>{{ e }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+
+            {# Country #}
+            <div>
+              <label for="{{ form.country.id }}"
+                     class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                            {% if form.country.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+                Country
+              </label>
+              {{ form.country(
+                  id=form.country.id,
+                  autocomplete="country-name",
+                  maxlength=80,
+                  aria_invalid="true" if form.country.errors else "false",
+                  class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60 text-sm transition-all "
+                        + ("border-red-300 bg-red-50" if form.country.errors else "border-charcoal/15")
+              ) }}
+              {% if form.country.errors %}
+                <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                  {% for e in form.country.errors %}
+                    <li class="flex items-start gap-1">
+                      <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                      <span>{{ e }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+
+        {# ============================================================
+           Section: Access
+           ============================================================ #}
+        <section class="pt-5 border-t border-charcoal/10">
+          <header class="flex items-center gap-2 mb-4">
+            <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                        flex items-center justify-center" aria-hidden="true">
+              <i class="fa-solid fa-shield-halved text-[10px]"></i>
+            </div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Access</h4>
+          </header>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {# Tier #}
+            <div>
+              <label for="{{ form.tier.id }}"
+                     class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                            {% if form.tier.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+                Tier
+              </label>
+              <div class="relative">
+                {{ form.tier(
+                    id=form.tier.id,
+                    aria_invalid="true" if form.tier.errors else "false",
+                    class="w-full appearance-none px-4 pr-10 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60 text-sm transition-all cursor-pointer "
+                          + ("border-red-300 bg-red-50" if form.tier.errors else "border-charcoal/15")
+                ) }}
+                <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2
+                          text-charcoal/40 text-[10px] pointer-events-none"
+                   aria-hidden="true"></i>
+              </div>
+              {% if form.tier.errors %}
+                <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                  {% for e in form.tier.errors %}
+                    <li class="flex items-start gap-1">
+                      <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                      <span>{{ e }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+
+            {# Role #}
+            <div>
+              <label for="{{ form.role.id }}"
+                     class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                            {% if form.role.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+                Role
+                {% if is_self %}
+                  <i class="fa-solid fa-lock text-[10px] text-charcoal/40 ml-1" aria-hidden="true"
+                     title="You cannot change your own role"></i>
+                {% endif %}
+              </label>
+              <div class="relative">
+                {{ form.role(
+                    id=form.role.id,
+                    disabled=is_self,
+                    aria_invalid="true" if form.role.errors else "false",
+                    aria_describedby="editUserRoleHint",
+                    class="w-full appearance-none px-4 pr-10 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60 text-sm transition-all cursor-pointer "
+                          + ("border-red-300 bg-red-50" if form.role.errors else "border-charcoal/15")
+                          + (" opacity-60 cursor-not-allowed" if is_self else "")
+                ) }}
+                <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2
+                          text-charcoal/40 text-[10px] pointer-events-none"
+                   aria-hidden="true"></i>
+              </div>
+              {% if is_self %}
+                <p id="editUserRoleHint" class="text-[11px] text-charcoal/50 mt-1.5 flex items-center gap-1">
+                  <i class="fa-solid fa-circle-info text-[9px]" aria-hidden="true"></i>
+                  You cannot change your own role.
+                </p>
+              {% elif form.role.errors %}
+                <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                  {% for e in form.role.errors %}
+                    <li class="flex items-start gap-1">
+                      <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                      <span>{{ e }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+          </div>
+
+          {# Active toggle #}
+          <label for="{{ form.is_active.id }}"
+                 class="flex items-start gap-3 p-4 mt-4 rounded-xl border cursor-pointer transition-all
+                        {% if form.is_active.errors %}border-red-300 bg-red-50
+                        {% else %}border-charcoal/10 hover:border-gold/40 bg-ivory/30{% endif %}
+                        {% if is_self %}opacity-60 cursor-not-allowed{% endif %}">
+            {{ form.is_active(
+                id=form.is_active.id,
+                disabled=is_self,
+                class="accent-gold w-4 h-4 mt-0.5"
+            ) }}
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-primary">Account Active</p>
+              <p class="text-xs text-charcoal/60 mt-0.5">
+                {% if is_self %}
+                  You cannot deactivate your own account.
+                {% else %}
+                  Inactive users cannot sign in. Their data is preserved.
+                {% endif %}
+              </p>
+            </div>
+            {% if is_self %}
+              <i class="fa-solid fa-lock text-charcoal/40 mt-1" aria-hidden="true"></i>
+            {% endif %}
+          </label>
+        </section>
+
+        {# ============================================================
+           Section: Password
+           ============================================================ #}
+        <section class="pt-5 border-t border-charcoal/10">
+          <header class="flex items-center gap-2 mb-4">
+            <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                        flex items-center justify-center" aria-hidden="true">
+              <i class="fa-solid fa-key text-[10px]"></i>
+            </div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Password</h4>
+          </header>
+
+          <div>
+            <label for="{{ form.new_password.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                          {% if form.new_password.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+              New Password
+              <span class="text-charcoal/40 normal-case tracking-normal font-normal ml-1">(optional)</span>
+            </label>
+            <div class="relative">
+              {{ form.new_password(
+                  id=form.new_password.id,
+                  type="password",
+                  autocomplete="new-password",
+                  placeholder="Leave blank to keep the current password",
+                  aria_invalid="true" if form.new_password.errors else "false",
+                  aria_describedby="editUserPwHint editUserPwError",
+                  class="w-full px-4 py-2.5 pr-12 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60 text-sm transition-all "
+                        + ("border-red-300 bg-red-50" if form.new_password.errors else "border-charcoal/15")
+              ) }}
+              <button type="button"
+                      id="editUserPwToggle"
+                      data-target="{{ form.new_password.id }}"
+                      data-icon="editUserPwIcon"
+                      aria-label="Show password"
+                      aria-pressed="false"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg
+                             text-charcoal/40 hover:text-gold hover:bg-ivory
+                             transition-colors
+                             focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+                <i id="editUserPwIcon" class="fa-regular fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            {# Strength meter #}
+            <div id="editUserPwStrength" class="mt-2 hidden" aria-live="polite">
+              <div class="h-1 w-full bg-charcoal/10 rounded-full overflow-hidden">
+                <div id="editUserPwBar"
+                     class="h-full w-0 rounded-full transition-all duration-300"
+                     style="background:#ef4444;"></div>
+              </div>
+              <p id="editUserPwHint" class="text-[10px] mt-1 text-charcoal/50"></p>
+            </div>
+
+            {% if form.new_password.errors %}
+              <ul id="editUserPwError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+                {% for e in form.new_password.errors %}
+                  <li class="flex items-start gap-1">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                    <span>{{ e }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </section>
 
         {# --- Actions --- #}
         <div class="pt-4 border-t border-charcoal/10 flex flex-wrap justify-end gap-3">
           <a href="{{ url_for('admin.users') }}"
              class="px-5 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold
-                    hover:bg-ivory transition-all">
+                    hover:bg-ivory transition-all
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
             Cancel
           </a>
           <button type="submit"
@@ -340,6 +427,7 @@
                   class="bg-primary text-gold hover:bg-gold hover:text-primary
                          px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider
                          transition-all shadow-md flex items-center gap-2
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
                          disabled:opacity-70 disabled:cursor-wait">
             <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
             <span>Save Changes</span>
@@ -358,7 +446,7 @@
                aria-hidden="true">
             <i class="fa-solid fa-triangle-exclamation"></i>
           </div>
-          <div>
+          <div class="flex-1">
             <h3 class="font-serif text-lg font-semibold text-red-600">Danger Zone</h3>
             <p class="text-xs text-charcoal/60 mt-0.5">
               Deleting this user removes their account permanently.
@@ -368,20 +456,19 @@
           </div>
         </div>
 
-        <form method="POST"
-              action="{{ url_for('admin.user_delete', uid=user.id) }}"
-              id="deleteUserForm"
-              data-user-email="{{ user.email }}"
-              data-user-name="{{ user.name }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit"
-                  class="bg-red-500 text-white hover:bg-red-600
-                         px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider
-                         transition-all flex items-center gap-2">
-            <i class="fa-solid fa-trash" aria-hidden="true"></i>
-            <span>Delete User</span>
-          </button>
-        </form>
+        <button type="button"
+                id="openDeleteModal"
+                data-user-id="{{ user.id }}"
+                data-user-email="{{ user.email }}"
+                data-user-name="{{ user.name }}"
+                data-delete-url="{{ url_for('admin.user_delete', uid=user.id) }}"
+                class="bg-red-500 text-white hover:bg-red-600
+                       px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider
+                       transition-all flex items-center gap-2
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400">
+          <i class="fa-solid fa-trash" aria-hidden="true"></i>
+          <span>Delete User</span>
+        </button>
       </div>
     {% endif %}
   </div>
@@ -398,7 +485,7 @@
         {{ user.initials }}
       </div>
       <p class="font-serif text-lg font-semibold text-primary truncate">{{ user.name }}</p>
-      <p class="text-xs text-charcoal/50 truncate">{{ user.email }}</p>
+      <p class="text-xs text-charcoal/50 truncate" title="{{ user.email }}">{{ user.email }}</p>
 
       <div class="flex items-center justify-center gap-2 mt-3 flex-wrap">
         <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-gold/15 text-gold-dark border border-gold/30">
@@ -422,14 +509,16 @@
                 id="copyUserEmail"
                 data-email="{{ user.email }}"
                 class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-charcoal/15
-                       text-[11px] font-semibold text-charcoal/70 hover:border-gold hover:text-gold transition-all">
+                       text-[11px] font-semibold text-charcoal/70 hover:border-gold hover:text-gold transition-all
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
           <i class="fa-regular fa-copy" aria-hidden="true"></i>
           <span>Copy email</span>
         </button>
 
         <a href="mailto:{{ user.email }}"
            class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-charcoal/15
-                  text-[11px] font-semibold text-charcoal/70 hover:border-gold hover:text-gold transition-all">
+                  text-[11px] font-semibold text-charcoal/70 hover:border-gold hover:text-gold transition-all
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
           <i class="fa-regular fa-envelope" aria-hidden="true"></i>
           <span>Email</span>
         </a>
@@ -477,7 +566,8 @@
         <div class="space-y-2">
           {% for b in user_bookings[:5] %}
             <a href="{{ url_for('admin.booking_detail', bid=b.id) if b.id else '#' }}"
-               class="block p-3 rounded-xl hover:bg-ivory/60 transition-all border border-transparent hover:border-gold/20">
+               class="block p-3 rounded-xl hover:bg-ivory/60 transition-all border border-transparent hover:border-gold/20
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
               <div class="flex items-start justify-between gap-2">
                 <p class="text-xs font-semibold text-primary truncate flex-1">
                   {{ b.property or 'Unknown property' }}
@@ -540,6 +630,88 @@
   </div>
 </div>
 
+{# ============================================================
+   Delete confirmation modal
+   ============================================================ #}
+{% if not is_self %}
+<div id="deleteUserModal"
+     class="hidden fixed inset-0 z-50 items-center justify-center p-4
+            bg-charcoal/50 backdrop-blur-sm"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="deleteUserTitle">
+
+  <div class="bg-white rounded-2xl border border-red-200 shadow-xl
+              max-w-md w-full p-6 animate-fade-in">
+
+    <div class="flex items-start gap-4 mb-5">
+      <div class="w-12 h-12 rounded-full bg-red-50 text-red-500
+                  flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h3 id="deleteUserTitle" class="font-bold text-primary mb-1">
+          Delete this user?
+        </h3>
+        <p class="text-sm text-charcoal/70 leading-relaxed">
+          You're about to permanently delete
+          <span id="deleteUserName" class="font-semibold text-primary"></span>.
+          This cannot be undone.
+        </p>
+      </div>
+    </div>
+
+    <div class="rounded-xl bg-ivory/60 border border-charcoal/10 p-4 mb-5">
+      <label for="deleteConfirmEmail"
+             class="block text-[11px] font-bold uppercase tracking-wider text-charcoal/60 mb-2">
+        Type the email to confirm:
+      </label>
+      <p class="text-xs font-mono text-charcoal/70 mb-2 select-all"
+         id="deleteUserEmailDisplay"></p>
+      <input type="text"
+             id="deleteConfirmEmail"
+             autocomplete="off"
+             spellcheck="false"
+             placeholder="user@example.com"
+             class="w-full px-3 py-2 rounded-lg border border-charcoal/15 bg-white
+                    focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400
+                    text-sm font-mono transition"
+      />
+      <p id="deleteMatchHint" class="text-[11px] mt-1.5 hidden"></p>
+    </div>
+
+    <div class="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+      <button type="button"
+              id="deleteUserCancel"
+              class="px-4 py-2.5 rounded-xl border border-charcoal/15 bg-white
+                     text-charcoal/70 hover:bg-ivory text-xs font-bold
+                     uppercase tracking-wider transition
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+        Cancel
+      </button>
+
+      <form id="deleteUserForm" method="POST" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="confirm_email" id="deleteConfirmEmailHidden" value="">
+        <button type="submit"
+                id="deleteUserConfirm"
+                disabled
+                class="w-full sm:w-auto px-4 py-2.5 rounded-xl
+                       bg-red-500 hover:bg-red-600 text-white
+                       text-xs font-bold uppercase tracking-wider transition
+                       flex items-center justify-center gap-2
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400
+                       disabled:opacity-50 disabled:cursor-not-allowed">
+          <i class="fa-solid fa-trash text-[10px]" aria-hidden="true"></i>
+          <span>Delete User</span>
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endif %}
+
 {% endblock %}
 
 
@@ -555,9 +727,9 @@
 
   ready(function () {
 
-    // ============================================================
-    // 1. Password toggle
-    // ============================================================
+    /* ============================================================
+       1. Password toggle
+       ============================================================ */
     var pwToggle = document.getElementById('editUserPwToggle');
     if (pwToggle) {
       pwToggle.addEventListener('click', function () {
@@ -573,12 +745,13 @@
       });
     }
 
-    // ============================================================
-    // 2. Password strength meter
-    // ============================================================
-    var pw     = document.getElementById('{{ form.new_password.id }}');
-    var pwBar  = document.getElementById('editUserPwBar');
-    var pwHint = document.getElementById('editUserPwHint');
+    /* ============================================================
+       2. Password strength meter
+       ============================================================ */
+    var pw       = document.getElementById('{{ form.new_password.id }}');
+    var pwWrap   = document.getElementById('editUserPwStrength');
+    var pwBar    = document.getElementById('editUserPwBar');
+    var pwHint   = document.getElementById('editUserPwHint');
 
     function scorePassword(v) {
       if (!v) return { label: '', color: '#ef4444', width: '0%' };
@@ -594,25 +767,34 @@
       return             { label: 'Strong', color: '#059669', width: '100%' };
     }
 
-    if (pw && pwBar && pwHint) {
+    if (pw && pwBar && pwHint && pwWrap) {
       pw.addEventListener('input', function () {
-        var s = scorePassword(pw.value);
+        var v = pw.value;
+        if (!v) {
+          pwWrap.classList.add('hidden');
+          pwBar.style.width = '0%';
+          pwHint.textContent = '';
+          return;
+        }
+        pwWrap.classList.remove('hidden');
+        var s = scorePassword(v);
         pwBar.style.width      = s.width;
         pwBar.style.background = s.color;
-        pwHint.textContent     = s.label ? 'Strength: ' + s.label : '';
+        pwHint.textContent     = 'Strength: ' + s.label;
         pwHint.style.color     = s.color;
       });
     }
 
-    // ============================================================
-    // 3. Copy email button
-    // ============================================================
+    /* ============================================================
+       3. Copy email button
+       ============================================================ */
     var copyBtn = document.getElementById('copyUserEmail');
-    if (copyBtn && navigator.clipboard) {
+    if (copyBtn) {
       copyBtn.addEventListener('click', function () {
         var email = copyBtn.dataset.email || '';
         if (!email) return;
-        navigator.clipboard.writeText(email).then(function () {
+
+        function showCopied() {
           var original = copyBtn.innerHTML;
           copyBtn.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i><span>Copied</span>';
           copyBtn.classList.add('text-emerald-600', 'border-emerald-300');
@@ -620,50 +802,204 @@
             copyBtn.innerHTML = original;
             copyBtn.classList.remove('text-emerald-600', 'border-emerald-300');
           }, 1500);
-        }).catch(function () {});
-      });
-    }
+        }
 
-    // ============================================================
-    // 4. Delete confirmation (typed)
-    // ============================================================
-    var deleteForm = document.getElementById('deleteUserForm');
-    if (deleteForm) {
-      deleteForm.addEventListener('submit', function (e) {
-        var email = deleteForm.dataset.userEmail || '';
-        var typed = window.prompt(
-          'This will permanently delete the user: ' + email + '\n\n' +
-          'Type the email address to confirm deletion:'
-        );
-        if (typed !== email) {
-          e.preventDefault();
-          if (typed !== null) {
-            // user typed something wrong — brief visual shake on the button
-            var btn = deleteForm.querySelector('button[type="submit"]');
-            if (btn) {
-              btn.classList.add('animate-pulse');
-              setTimeout(function () { btn.classList.remove('animate-pulse'); }, 600);
-            }
-          }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(email).then(showCopied).catch(function () {
+            fallbackCopy(email, showCopied);
+          });
+        } else {
+          fallbackCopy(email, showCopied);
         }
       });
     }
 
-    // ============================================================
-    // 5. Save button loading state
-    // ============================================================
-    var form = document.querySelector('form[method="POST"]:not(#deleteUserForm)');
+    function fallbackCopy(text, cb) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'absolute';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        cb();
+      } catch (e) { /* noop */ }
+    }
+
+    /* ============================================================
+       4. Delete modal with typed confirmation
+       ============================================================ */
+    var modal      = document.getElementById('deleteUserModal');
+    if (!modal) return;
+
+    var openBtn    = document.getElementById('openDeleteModal');
+    var cancelBtn  = document.getElementById('deleteUserCancel');
+    var deleteForm = document.getElementById('deleteUserForm');
+    var confirmBtn = document.getElementById('deleteUserConfirm');
+    var nameEl     = document.getElementById('deleteUserName');
+    var emailDisp  = document.getElementById('deleteUserEmailDisplay');
+    var emailInput = document.getElementById('deleteConfirmEmail');
+    var emailHidden= document.getElementById('deleteConfirmEmailHidden');
+    var matchHint  = document.getElementById('deleteMatchHint');
+    var expectedEmail = '';
+    var lastFocus  = null;
+
+    function openModal() {
+      if (!openBtn) return;
+      expectedEmail = (openBtn.dataset.userEmail || '').trim();
+      var name = openBtn.dataset.userName || 'this user';
+      var url  = openBtn.dataset.deleteUrl || '';
+
+      if (nameEl) nameEl.textContent = '"' + name + '"';
+      if (emailDisp) emailDisp.textContent = expectedEmail;
+      if (emailInput) {
+        emailInput.value = '';
+        emailInput.placeholder = expectedEmail;
+      }
+      if (emailHidden) emailHidden.value = '';
+      if (matchHint) {
+        matchHint.classList.add('hidden');
+        matchHint.textContent = '';
+      }
+      if (confirmBtn) confirmBtn.disabled = true;
+      deleteForm.setAttribute('action', url);
+
+      lastFocus = document.activeElement;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+      setTimeout(function () { emailInput && emailInput.focus(); }, 60);
+    }
+
+    function closeModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+      if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+    }
+
+    openBtn && openBtn.addEventListener('click', openModal);
+    cancelBtn && cancelBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeModal();
+    });
+
+    // Live match check
+    if (emailInput) {
+      emailInput.addEventListener('input', function () {
+        var typed = emailInput.value.trim();
+        var matches = typed.toLowerCase() === expectedEmail.toLowerCase();
+
+        if (emailHidden) emailHidden.value = typed;
+        if (confirmBtn)  confirmBtn.disabled = !matches;
+
+        if (matchHint) {
+          if (!typed) {
+            matchHint.classList.add('hidden');
+          } else {
+            matchHint.classList.remove('hidden');
+            if (matches) {
+              matchHint.textContent = '✓ Email matches — you can now delete.';
+              matchHint.className = 'text-[11px] mt-1.5 text-emerald-600';
+            } else {
+              matchHint.textContent = '✗ Does not match the user\'s email.';
+              matchHint.className = 'text-[11px] mt-1.5 text-red-600';
+            }
+          }
+        }
+      });
+
+      // Esc inside input clears
+      emailInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && emailInput.value) {
+          e.stopPropagation();
+          emailInput.value = '';
+          emailInput.dispatchEvent(new Event('input'));
+        }
+      });
+    }
+
+    // Esc + focus trap
+    document.addEventListener('keydown', function (e) {
+      if (modal.classList.contains('hidden')) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeModal();
+        return;
+      }
+      if (e.key === 'Tab') {
+        var focusables = modal.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusables.length) return;
+        var first = focusables[0];
+        var last  = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault(); first.focus();
+        }
+      }
+    });
+
+    // Prevent double submit
+    deleteForm && deleteForm.addEventListener('submit', function (e) {
+      if (confirmBtn && confirmBtn.disabled) {
+        e.preventDefault();
+        return;
+      }
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin text-[10px]" aria-hidden="true"></i>' +
+          '<span>Deleting…</span>';
+      }
+    });
+
+    /* ============================================================
+       5. Save button loading state + dirty tracking
+       ============================================================ */
+    var form      = document.getElementById('userEditForm');
     var submitBtn = document.getElementById('editUserSubmitBtn');
+    var dirty     = false;
+    var submitting= false;
+
     if (form && submitBtn) {
-      form.addEventListener('submit', function () {
+      form.addEventListener('input', function () { dirty = true; }, { passive: true });
+      form.addEventListener('change', function () { dirty = true; }, { passive: true });
+
+      form.addEventListener('submit', function (e) {
         if (!form.checkValidity()) return;
+        if (submitting) { e.preventDefault(); return; }
+        submitting = true;
+        dirty = false;
         if (!submitBtn.disabled) {
           submitBtn.disabled = true;
           submitBtn.innerHTML =
             '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Saving…</span>';
         }
       });
+
+      window.addEventListener('beforeunload', function (e) {
+        if (dirty && !submitting) {
+          e.preventDefault();
+          e.returnValue = '';
+        }
+      });
+
+      // Ctrl/Cmd + S saves
+      document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          submitBtn.click();
+        }
+      });
     }
+
   });
 })();
 </script>

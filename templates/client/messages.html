@@ -1,3 +1,4 @@
+{# client/templates/client/messages.html #}
 {% extends "client/base.html" %}
 {% block title %}Concierge Chat · Client Portal{% endblock %}
 {% set active_section = 'messages' %}
@@ -6,80 +7,369 @@
 
 {% block content %}
 
-<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden flex flex-col" style="height:calc(100vh - 200px); min-height:500px;">
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden
+            flex flex-col h-[calc(100dvh-12rem)] min-h-[32rem]">
 
-  <div class="px-6 py-4 border-b border-charcoal/10 flex items-center gap-3 flex-shrink-0">
-    <div class="w-10 h-10 rounded-full bg-primary text-gold flex items-center justify-center">
+  {# ── Header ────────────────────────────────────────────── #}
+  <div class="px-5 sm:px-6 py-4 border-b border-charcoal/10
+              flex items-center gap-3 flex-shrink-0 bg-white">
+
+    <div class="w-10 h-10 rounded-full bg-primary text-gold
+                flex items-center justify-center flex-shrink-0"
+         aria-hidden="true">
       <i class="fa-solid fa-bell-concierge"></i>
     </div>
+
     <div class="min-w-0 flex-1">
-      <p class="font-semibold text-primary text-sm">Le Rêve Concierge</p>
-      <p class="text-[11px] text-emerald-600 flex items-center gap-1">
-        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Online — usually replies within 5 min
+      <p class="font-semibold text-primary text-sm truncate">
+        Le Rêve Concierge
+      </p>
+      <p id="connectionStatus"
+         class="text-[11px] text-emerald-600 flex items-center gap-1.5"
+         role="status"
+         aria-live="polite">
+        <span id="connectionDot"
+              class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"
+              aria-hidden="true"></span>
+        <span id="connectionText">Online — usually replies within 5 min</span>
       </p>
     </div>
-    <button type="button" onclick="LeReve.scrollToBottom('chatMessages', true)"
-            class="w-9 h-9 rounded-full bg-ivory hover:bg-gold text-primary flex items-center justify-center transition-all" title="Scroll to latest">
-      <i class="fa-solid fa-arrow-down text-xs"></i>
+
+    <button type="button"
+            id="jumpToLatestBtn"
+            class="hidden w-9 h-9 rounded-full bg-primary text-gold
+                   hover:bg-gold hover:text-primary
+                   flex items-center justify-center transition-all
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+            title="Jump to latest message"
+            aria-label="Jump to latest message">
+      <i class="fa-solid fa-arrow-down text-xs" aria-hidden="true"></i>
+    </button>
+
+    <button type="button"
+            id="refreshBtn"
+            class="w-9 h-9 rounded-full border border-charcoal/15 text-charcoal/60
+                   hover:border-gold hover:text-gold
+                   flex items-center justify-center transition-all
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                   disabled:opacity-50 disabled:cursor-wait"
+            title="Refresh messages"
+            aria-label="Refresh messages">
+      <i class="fa-solid fa-rotate text-xs" aria-hidden="true"></i>
     </button>
   </div>
 
-  <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-ivory/40"
-       data-thread="{{ thread_id }}" role="log" aria-live="polite">
-    {% if messages %}
-      {% for m in messages %}
-        {% set is_me = m.sender == 'client' %}
-        <div class="flex {% if is_me %}justify-end{% else %}justify-start{% endif %}" data-msg-id="{{ m.id }}" data-ts="{{ m.created_at }}">
-          <div class="max-w-[80%] sm:max-w-[70%]">
-            {% if not is_me %}
-              <div class="flex items-center gap-2 mb-1">
-                <div class="w-6 h-6 rounded-full bg-primary text-gold flex items-center justify-center text-[10px]">
-                  <i class="fa-solid fa-bell-concierge"></i>
-                </div>
-                <span class="text-[11px] font-semibold text-primary">Concierge</span>
-              </div>
-            {% endif %}
-            <div class="{% if is_me %}bg-primary text-ivory{% else %}bg-white text-charcoal border border-gold/20{% endif %} rounded-2xl px-4 py-3 shadow-sm">
-              <p class="text-sm leading-relaxed whitespace-pre-wrap break-words">{{ m.text }}</p>
-            </div>
-            <p class="text-[10px] text-charcoal/40 mt-1 {% if is_me %}text-right{% endif %}">{{ m.created_at|relative_time }}</p>
-          </div>
-        </div>
-      {% endfor %}
-    {% else %}
-      <div id="emptyChat" class="text-center py-12">
-        <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+  {# ── Message list ──────────────────────────────────────── #}
+  <div id="chatMessages"
+       class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 bg-ivory/40
+              scroll-smooth overscroll-contain"
+       data-thread="{{ thread_id }}"
+       data-last-ts="{% if messages %}{{ messages[-1].created_at or '' }}{% endif %}"
+       role="log"
+       aria-live="polite"
+       aria-label="Conversation messages">
+
+    {% if not messages %}
+      <div id="emptyChat"
+           class="flex flex-col items-center justify-center h-full text-center">
+        <div class="w-16 h-16 rounded-full bg-gold/10
+                    flex items-center justify-center mb-3"
+             aria-hidden="true">
           <i class="fa-solid fa-comments text-gold text-2xl"></i>
         </div>
-        <p class="text-sm font-semibold text-primary mb-1">Start the conversation</p>
-        <p class="text-xs text-charcoal/50 max-w-sm mx-auto">Your concierge is here to arrange chefs, chauffeurs, and bespoke experiences.</p>
+        <p class="text-sm font-semibold text-primary mb-1">
+          Start the conversation
+        </p>
+        <p class="text-xs text-charcoal/50 max-w-sm mx-auto">
+          Your concierge is here to arrange chefs, chauffeurs, and bespoke experiences.
+        </p>
       </div>
     {% endif %}
+
+    {% for m in messages %}
+      {% set is_me = m.sender == 'client' %}
+      {% set prev = messages[loop.index0 - 1] if not loop.first else None %}
+      {% set same_sender = prev and prev.sender == m.sender %}
+      <div class="flex {% if is_me %}justify-end{% else %}justify-start{% endif %}
+                  animate-fade-in
+                  {% if same_sender %}mt-1{% else %}mt-3{% endif %}"
+           data-msg-id="{{ m.id }}"
+           data-sender="{{ m.sender or '' }}"
+           data-ts="{{ m.created_at or '' }}">
+        <div class="max-w-[85%] sm:max-w-[75%]">
+
+          {% if not is_me and not same_sender %}
+            <div class="flex items-center gap-2 mb-1">
+              <div class="w-6 h-6 rounded-full bg-primary text-gold
+                          flex items-center justify-center text-[10px]"
+                   aria-hidden="true">
+                <i class="fa-solid fa-bell-concierge"></i>
+              </div>
+              <span class="text-[11px] font-semibold text-primary truncate">
+                Concierge
+              </span>
+            </div>
+          {% endif %}
+
+          <div class="{% if is_me %}bg-primary text-ivory{% else %}bg-white text-charcoal border border-gold/20{% endif %}
+                      rounded-2xl px-4 py-3 shadow-sm
+                      {% if same_sender %}{% if is_me %}rounded-tr-md{% else %}rounded-tl-md{% endif %}{% endif %}">
+            <p class="text-sm leading-relaxed whitespace-pre-wrap break-words">{{ m.text }}</p>
+          </div>
+
+          <p class="text-[10px] text-charcoal/40 mt-1 {% if is_me %}text-right{% endif %}">
+            <time {% if m.created_at %}datetime="{{ m.created_at }}"{% endif %}
+                  title="{{ m.created_at or '' }}">
+              {{ m.created_at|relative_time if m.created_at else '' }}
+            </time>
+          </p>
+        </div>
+      </div>
+    {% endfor %}
   </div>
 
-  <form id="chatForm" onsubmit="sendMessage(event)" class="border-t border-charcoal/10 p-4 flex gap-2 bg-white flex-shrink-0">
+  {# ── Composer ──────────────────────────────────────────── #}
+  <form id="chatForm"
+        class="border-t border-charcoal/10 p-3 sm:p-4 flex gap-2
+               bg-white flex-shrink-0"
+        novalidate>
+
     <label for="chatInput" class="sr-only">Type your message</label>
-    <input type="text" id="chatInput" required maxlength="2000" autocomplete="off" autofocus
-           placeholder="Type your message…"
-           class="flex-1 px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:ring-2 focus:ring-gold text-sm">
-    <button type="submit" id="sendBtn"
-            class="bg-primary text-gold hover:bg-gold hover:text-primary px-5 rounded-xl font-bold text-sm transition-all flex items-center justify-center min-w-[56px]"
+    <div class="flex-1 min-w-0 relative">
+      <input type="text"
+             id="chatInput"
+             name="text"
+             required
+             maxlength="2000"
+             autocomplete="off"
+             enterkeyhint="send"
+             placeholder="Type your message…"
+             aria-describedby="chatCounter"
+             class="w-full px-4 py-3 pr-16 rounded-xl border border-charcoal/15
+                    bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold
+                    focus:border-gold/50 text-sm transition-all">
+      <span id="chatCounter"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] tabular-nums
+                   text-charcoal/30 pointer-events-none select-none"
+            aria-live="off">
+        0/2000
+      </span>
+    </div>
+
+    <button type="submit"
+            id="sendBtn"
+            class="bg-primary text-gold hover:bg-gold hover:text-primary
+                   px-4 sm:px-5 rounded-xl font-bold text-sm transition-all
+                   flex items-center justify-center min-w-[3rem] min-h-[3rem]
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                   disabled:opacity-60 disabled:cursor-wait shrink-0"
             aria-label="Send">
-      <i class="fa-solid fa-paper-plane"></i>
+      <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
     </button>
   </form>
 </div>
 
+{# Screen-reader-only announcements #}
+<p id="chatLiveRegion" class="sr-only" role="status" aria-live="polite"></p>
+
 {% endblock %}
+
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 <script>
-LeReve.initChat({
-  pollUrl: '{{ url_for("client.poll_messages") }}',
-  sendUrl: '{{ url_for("client.send_message") }}',
-  role: 'client',
-  threadId: '{{ thread_id }}'
-});
+(function () {
+  'use strict';
+
+  function ready(fn) {
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  ready(function () {
+    var chatBox    = document.getElementById('chatMessages');
+    var form       = document.getElementById('chatForm');
+    var input      = document.getElementById('chatInput');
+    var sendBtn    = document.getElementById('sendBtn');
+    var counter    = document.getElementById('chatCounter');
+    var jumpBtn    = document.getElementById('jumpToLatestBtn');
+    var refreshBtn = document.getElementById('refreshBtn');
+    var statusText = document.getElementById('connectionText');
+    var statusDot  = document.getElementById('connectionDot');
+    var liveRegion = document.getElementById('chatLiveRegion');
+
+    if (!chatBox || !form || !input) return;
+
+    var initialLastTs = chatBox.dataset.lastTs || '';
+    var nearBottom    = true;
+
+    /* ============================================================
+       Utilities
+       ============================================================ */
+    function scrollToBottom(smooth) {
+      if (smooth) {
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+      } else {
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    }
+
+    function isNearBottom(threshold) {
+      threshold = threshold || 80;
+      return (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < threshold;
+    }
+
+    function announce(msg) {
+      if (!liveRegion) return;
+      liveRegion.textContent = '';
+      setTimeout(function () { liveRegion.textContent = msg; }, 50);
+    }
+
+    function setStatus(text, tone) {
+      if (statusText) statusText.textContent = text;
+      if (!statusDot) return;
+      statusDot.classList.remove(
+        'bg-emerald-500', 'bg-red-500', 'bg-amber-500', 'animate-pulse'
+      );
+      if (tone === 'error') {
+        statusDot.classList.add('bg-red-500');
+      } else if (tone === 'busy') {
+        statusDot.classList.add('bg-amber-500', 'animate-pulse');
+      } else {
+        statusDot.classList.add('bg-emerald-500', 'animate-pulse');
+      }
+    }
+
+    function updateCounter() {
+      if (!counter) return;
+      var len = (input.value || '').length;
+      counter.textContent = len + '/2000';
+      counter.classList.toggle('text-amber-600', len >= 1600 && len < 1900);
+      counter.classList.toggle('text-red-600',  len >= 1900);
+      counter.classList.toggle('text-charcoal/30', len < 1600);
+    }
+
+    input.addEventListener('input', updateCounter);
+    updateCounter();
+
+    /* ============================================================
+       Scroll tracking
+       ============================================================ */
+    chatBox.addEventListener('scroll', function () {
+      nearBottom = isNearBottom();
+      if (jumpBtn) jumpBtn.classList.toggle('hidden', nearBottom);
+    }, { passive: true });
+
+    if (jumpBtn) {
+      jumpBtn.addEventListener('click', function () { scrollToBottom(true); });
+    }
+
+    /* ============================================================
+       Escape clears the input
+       ============================================================ */
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && input.value !== '') {
+        input.value = '';
+        updateCounter();
+      }
+    });
+
+    /* ============================================================
+       Init the chat client
+       ============================================================ */
+    if (typeof LeReve === 'undefined' || !LeReve.initChat) {
+      console.warn('[chat] LeReve.initChat not available — falling back to basic mode');
+
+      // Minimal fallback so the page still works if chat.js is missing.
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var text = (input.value || '').trim();
+        if (!text) return;
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
+
+        fetch('{{ url_for("client.send_message") }}', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}',
+          },
+          body: JSON.stringify({ text: text }),
+        })
+          .then(function (r) { return r.json(); })
+          .then(function () {
+            input.value = '';
+            updateCounter();
+            window.location.reload();
+          })
+          .catch(function () {
+            announce('Could not send message.');
+          })
+          .finally(function () {
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i>';
+          });
+      });
+    } else {
+      LeReve.initChat({
+        pollUrl:  '{{ url_for("client.poll_messages") }}',
+        sendUrl:  '{{ url_for("client.send_message") }}',
+        role:     'client',
+        threadId: '{{ thread_id }}',
+        lastTs:   initialLastTs,   // skip re-fetching already-rendered history
+        onStatus: setStatus,       // update the connection pill
+        onAnnounce: announce,      // a11y announcements
+      });
+    }
+
+    /* ============================================================
+       Manual refresh
+       ============================================================ */
+    if (refreshBtn) {
+      var originalHTML = refreshBtn.innerHTML;
+      refreshBtn.addEventListener('click', function () {
+        if (refreshBtn.disabled) return;
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin text-xs" aria-hidden="true"></i>';
+
+        var done = function () {
+          refreshBtn.disabled = false;
+          refreshBtn.innerHTML = originalHTML;
+        };
+
+        if (LeReve && typeof LeReve.poll === 'function') {
+          Promise.resolve(LeReve.poll()).finally(done);
+        } else {
+          setTimeout(done, 600);
+        }
+      });
+    }
+
+    /* ============================================================
+       Initial position + bfcache restore
+       ============================================================ */
+    scrollToBottom(false);
+    nearBottom = true;
+
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) {
+        scrollToBottom(false);
+        if (LeReve && typeof LeReve.poll === 'function') LeReve.poll();
+      }
+    });
+
+    // Pause polling when hidden, resume when visible.
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        if (LeReve && typeof LeReve.stop === 'function') LeReve.stop();
+      } else {
+        if (LeReve && typeof LeReve.poll === 'function') LeReve.poll();
+        if (LeReve && typeof LeReve.start === 'function') LeReve.start();
+      }
+    });
+  });
+})();
 </script>
 {% endblock %}

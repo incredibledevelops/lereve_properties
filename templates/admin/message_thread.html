@@ -2,48 +2,583 @@
 {% block title %}Thread · Admin Console{% endblock %}
 {% set active_section = 'messages' %}
 {% block page_title %}Conversation{% endblock %}
+{% block page_subtitle %}
+  {% set first = (messages[0] if messages else None) %}
+  {{ first.user_name if first else 'Guest' }}
+  {% if first and first.user_email %}· {{ first.user_email }}{% endif %}
+{% endblock %}
 
 {% block content %}
 
-<a href="{{ url_for('admin.messages') }}" class="inline-flex items-center gap-2 text-xs font-semibold text-gold hover:text-gold-dark uppercase tracking-wider mb-4">
-  <i class="fa-solid fa-arrow-left"></i> Back to Inbox
-</a>
+{# ============================================================
+   Header row — back link + thread metadata + actions
+   ============================================================ #}
+{% set first = (messages[0] if messages else None) %}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+  <a href="{{ url_for('admin.messages') }}"
+     class="inline-flex items-center gap-2 text-xs font-semibold text-gold hover:text-gold-dark
+            uppercase tracking-wider transition-colors
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded">
+    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+    <span>Back to Inbox</span>
+  </a>
 
-<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden flex flex-col" style="height:calc(100vh - 220px); min-height:500px;">
+  <div class="flex items-center gap-2">
+    {# Live status pill #}
+    <span id="threadStatusLabel"
+          class="text-[10px] uppercase tracking-widest font-bold text-charcoal/40 flex items-center gap-1.5
+                 px-2.5 py-1.5 rounded-lg bg-ivory/60 border border-charcoal/5"
+          role="status"
+          aria-live="polite">
+      <span id="threadStatusDot"
+            class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"
+            aria-hidden="true"></span>
+      <span id="threadStatusText">Live</span>
+    </span>
 
-  <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-ivory/40" data-thread="{{ thread_id }}">
+    {# Jump-to-latest button (appears when scrolled up) #}
+    <button type="button"
+            id="jumpToLatestBtn"
+            class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                   bg-primary text-gold hover:bg-gold hover:text-primary
+                   text-[10px] font-bold uppercase tracking-wider
+                   transition-all shadow-sm
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+            title="Jump to latest message">
+      <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+      <span>Latest</span>
+    </button>
+
+    {# Refresh button #}
+    <button type="button"
+            id="threadRefreshBtn"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                   border border-charcoal/15 hover:border-gold hover:text-gold
+                   text-[10px] font-bold uppercase tracking-wider text-charcoal/60
+                   transition-all
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                   disabled:opacity-50 disabled:cursor-wait"
+            title="Fetch new messages now">
+      <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+      <span>Refresh</span>
+    </button>
+  </div>
+</div>
+
+{# ============================================================
+   Chat container
+   ============================================================ #}
+<div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden
+            flex flex-col
+            h-[calc(100dvh-14rem)] min-h-[28rem]">
+
+  {# ---------- Message list ---------- #}
+  <div id="chatMessages"
+       class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 bg-ivory/40 scroll-smooth
+              overscroll-contain"
+       data-thread="{{ thread_id }}"
+       data-last-ts="{% if messages %}{{ messages[-1].created_at or '' }}{% endif %}"
+       role="log"
+       aria-live="polite"
+       aria-label="Conversation messages">
+
+    {% if not messages %}
+      <div id="emptyChat"
+           class="flex flex-col items-center justify-center h-full text-center">
+        <div class="w-14 h-14 rounded-full bg-gold/10 flex items-center justify-center mb-3"
+             aria-hidden="true">
+          <i class="fa-regular fa-comments text-gold text-xl"></i>
+        </div>
+        <p class="text-sm font-semibold text-primary mb-1">No messages yet</p>
+        <p class="text-xs text-charcoal/50 max-w-xs">
+          Use the reply box below to start the conversation.
+        </p>
+      </div>
+    {% endif %}
+
     {% for m in messages %}
       {% set is_admin = m.sender == 'admin' %}
-      <div class="flex {% if is_admin %}justify-end{% else %}justify-start{% endif %}" data-msg-id="{{ m.id }}" data-ts="{{ m.created_at }}">
-        <div class="max-w-[75%]">
-          <div class="{% if is_admin %}bg-primary text-ivory{% else %}bg-white text-charcoal border border-gold/20{% endif %} rounded-2xl px-4 py-3 shadow-sm">
+      {% set prev = messages[loop.index0 - 1] if not loop.first else None %}
+      {% set same_sender = prev and prev.sender == m.sender %}
+      <div class="flex {% if is_admin %}justify-end{% else %}justify-start{% endif %} animate-fade-in
+                  {% if same_sender %}mt-1{% else %}mt-3{% endif %}"
+           data-msg-id="{{ m.id }}"
+           data-sender="{{ m.sender or '' }}"
+           data-ts="{{ m.created_at or '' }}">
+        <div class="max-w-[85%] sm:max-w-[75%]">
+          {% if not is_admin and not same_sender %}
+            {# Sender label only on the first incoming bubble of a run #}
+            <div class="flex items-center gap-2 mb-1">
+              <div class="w-6 h-6 rounded-full bg-primary text-gold
+                          flex items-center justify-center text-[10px]"
+                   aria-hidden="true">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              <span class="text-[11px] font-semibold text-primary truncate">
+                {{ m.user_name or 'Guest' }}
+              </span>
+            </div>
+          {% endif %}
+
+          <div class="{% if is_admin %}bg-primary text-ivory{% else %}bg-white text-charcoal border border-gold/20{% endif %}
+                      rounded-2xl px-4 py-3 shadow-sm
+                      {% if same_sender %}{% if is_admin %}rounded-tr-md{% else %}rounded-tl-md{% endif %}{% endif %}">
             <p class="text-sm leading-relaxed whitespace-pre-wrap break-words">{{ m.text }}</p>
           </div>
+
           <p class="text-[10px] text-charcoal/40 mt-1 {% if is_admin %}text-right{% endif %}">
-            {{ m.sender|capitalize }} · {{ m.created_at|relative_time }}
+            {% if is_admin %}You{% else %}{{ m.user_name or 'Guest' }}{% endif %}
+            ·
+            <time title="{{ m.created_at or '' }}"
+                  {% if m.created_at %}datetime="{{ m.created_at }}"{% endif %}>
+              {{ m.created_at | relative_time if m.created_at else '—' }}
+            </time>
           </p>
         </div>
       </div>
     {% endfor %}
   </div>
 
-  <form method="POST" action="{{ url_for('admin.message_thread', thread_id=thread_id) }}" class="border-t border-charcoal/10 p-4 flex gap-2 bg-white">
+  {# ---------- Reply box ---------- #}
+  <form id="chatForm"
+        method="POST"
+        action="{{ url_for('admin.message_thread', thread_id=thread_id) }}"
+        class="border-t border-charcoal/10 p-3 sm:p-4 flex gap-2 bg-white shrink-0"
+        novalidate>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="chatInput" class="sr-only">Reply</label>
-    <input type="text" name="text" id="chatInput" required maxlength="2000" autocomplete="off"
-           placeholder="Type your reply…"
-           class="flex-1 px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40 focus:ring-2 focus:ring-gold text-sm">
-    <button type="submit" class="bg-primary text-gold hover:bg-gold hover:text-primary px-5 rounded-xl font-bold text-sm transition-all flex items-center justify-center min-w-[56px]">
-      <i class="fa-solid fa-paper-plane"></i>
+
+    <label for="chatInput" class="sr-only">Reply to the guest</label>
+    <div class="flex-1 min-w-0 relative">
+      <input type="text"
+             name="text"
+             id="chatInput"
+             required
+             maxlength="2000"
+             autocomplete="off"
+             enterkeyhint="send"
+             placeholder="Type your reply…"
+             aria-describedby="chatCounter"
+             class="w-full px-4 py-3 pr-16 rounded-xl border border-charcoal/15 bg-ivory/40
+                    focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/50
+                    text-sm transition-all">
+      <span id="chatCounter"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] tabular-nums
+                   text-charcoal/30 pointer-events-none select-none"
+            aria-live="off">
+        0/2000
+      </span>
+    </div>
+
+    <button type="submit"
+            id="chatSendBtn"
+            class="bg-primary text-gold hover:bg-gold hover:text-primary
+                   px-4 sm:px-5 rounded-xl font-bold text-sm transition-all
+                   flex items-center justify-center min-w-[3rem] min-h-[3rem]
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                   disabled:opacity-60 disabled:cursor-wait shrink-0"
+            aria-label="Send reply">
+      <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
     </button>
   </form>
 </div>
 
+{# Screen-reader-only live region for announcements #}
+<p id="chatLiveRegion" class="sr-only" role="status" aria-live="polite"></p>
+
 {% endblock %}
+
 
 {% block scripts %}
 <script>
-LeReve.scrollToBottom('chatMessages');
-setInterval(() => location.reload(), 20000);
+(function () {
+  'use strict';
+
+  function ready(fn) {
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  ready(function () {
+    var chatBox      = document.getElementById('chatMessages');
+    var form         = document.getElementById('chatForm');
+    var input        = document.getElementById('chatInput');
+    var sendBtn      = document.getElementById('chatSendBtn');
+    var counter      = document.getElementById('chatCounter');
+    var refreshBtn   = document.getElementById('threadRefreshBtn');
+    var jumpBtn      = document.getElementById('jumpToLatestBtn');
+    var statusText   = document.getElementById('threadStatusText');
+    var statusDot    = document.getElementById('threadStatusDot');
+    var liveRegion   = document.getElementById('chatLiveRegion');
+
+    if (!chatBox || !form || !input) return;
+
+    var threadId     = chatBox.dataset.thread || '';
+    var POLL_MS      = 15000;
+    var pollTimer    = null;
+    var lastTs       = chatBox.dataset.lastTs || '';
+    var sending      = false;
+    var nearBottom   = true;
+
+    /* ============================================================
+       Utilities
+       ============================================================ */
+    function scrollToBottom(smooth) {
+      if (smooth) {
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+      } else {
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    }
+
+    function isNearBottom(threshold) {
+      threshold = threshold || 80;
+      return (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < threshold;
+    }
+
+    function announce(message) {
+      if (!liveRegion) return;
+      liveRegion.textContent = '';
+      // Re-trigger for screen readers
+      setTimeout(function () { liveRegion.textContent = message; }, 50);
+    }
+
+    function setStatus(text, tone) {
+      if (statusText) statusText.textContent = text;
+      if (!statusDot) return;
+      statusDot.classList.remove('bg-emerald-500', 'bg-red-500', 'bg-amber-500', 'animate-pulse');
+      if (tone === 'error') {
+        statusDot.classList.add('bg-red-500');
+      } else if (tone === 'busy') {
+        statusDot.classList.add('bg-amber-500', 'animate-pulse');
+      } else {
+        statusDot.classList.add('bg-emerald-500', 'animate-pulse');
+      }
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '';
+      try {
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        return String(d.getHours()).padStart(2, '0') + ':' +
+               String(d.getMinutes()).padStart(2, '0');
+      } catch (e) { return ''; }
+    }
+
+    /* ============================================================
+       Bubble builder
+       ============================================================ */
+    function buildBubble(msg, isMine, opts) {
+      opts = opts || {};
+      var wrap = document.createElement('div');
+      wrap.className =
+        'flex ' + (isMine ? 'justify-end' : 'justify-start') + ' animate-fade-in mt-3';
+      wrap.dataset.msgId = msg.id || '';
+      wrap.dataset.sender = msg.sender || (isMine ? 'admin' : 'user');
+      wrap.dataset.ts = msg.created_at || '';
+
+      var outer = document.createElement('div');
+      outer.className = 'max-w-[85%] sm:max-w-[75%]';
+
+      if (!isMine) {
+        var label = document.createElement('div');
+        label.className = 'flex items-center gap-2 mb-1';
+        var avatar = document.createElement('div');
+        avatar.className = 'w-6 h-6 rounded-full bg-primary text-gold flex items-center justify-center text-[10px]';
+        avatar.setAttribute('aria-hidden', 'true');
+        avatar.innerHTML = '<i class="fa-solid fa-user"></i>';
+        var name = document.createElement('span');
+        name.className = 'text-[11px] font-semibold text-primary truncate';
+        name.textContent = msg.user_name || 'Guest';
+        label.appendChild(avatar);
+        label.appendChild(name);
+        outer.appendChild(label);
+      }
+
+      var bubble = document.createElement('div');
+      bubble.className = isMine
+        ? 'bg-primary text-ivory rounded-2xl px-4 py-3 shadow-sm'
+        : 'bg-white text-charcoal border border-gold/20 rounded-2xl px-4 py-3 shadow-sm';
+
+      var p = document.createElement('p');
+      p.className = 'text-sm leading-relaxed whitespace-pre-wrap break-words';
+      p.textContent = msg.text || '';
+      bubble.appendChild(p);
+
+      var meta = document.createElement('p');
+      meta.className = 'text-[10px] text-charcoal/40 mt-1 ' + (isMine ? 'text-right' : '');
+      var who = isMine ? 'You' : (msg.user_name || 'Guest');
+      var when = msg.created_at_relative || formatTime(msg.created_at) || 'just now';
+      meta.textContent = who + ' · ' + when;
+      meta.title = msg.created_at || '';
+
+      outer.appendChild(bubble);
+      outer.appendChild(meta);
+      wrap.appendChild(outer);
+      return wrap;
+    }
+
+    /* ============================================================
+       Composer state
+       ============================================================ */
+    function updateCounter() {
+      if (!counter) return;
+      var len = (input.value || '').length;
+      counter.textContent = len + '/2000';
+      counter.classList.toggle('text-amber-600', len >= 1600 && len < 1900);
+      counter.classList.toggle('text-red-600',  len >= 1900);
+      counter.classList.toggle('text-charcoal/30', len < 1600);
+    }
+
+    function setSending(on) {
+      sending = on;
+      sendBtn.disabled = on;
+      input.disabled = false; // keep typing available
+      sendBtn.classList.toggle('cursor-wait', on);
+    }
+
+    input.addEventListener('input', updateCounter);
+    updateCounter();
+
+    /* ============================================================
+       Optimistic send
+       ============================================================ */
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (sending) return;
+
+      var text = (input.value || '').trim();
+      if (!text) { input.focus(); return; }
+      if (text.length > 2000) {
+        announce('Message exceeds 2000 characters.');
+        input.focus();
+        return;
+      }
+
+      setSending(true);
+      var originalHTML = sendBtn.innerHTML;
+      sendBtn.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
+
+      var tempId = 'temp-' + Date.now();
+      var tempMsg = {
+        id: tempId,
+        text: text,
+        user_name: 'You',
+        sender: 'admin',
+        created_at: new Date().toISOString(),
+        created_at_relative: 'just now',
+      };
+      var optimistic = buildBubble(tempMsg, true);
+      optimistic.dataset.optimistic = '1';
+      chatBox.appendChild(optimistic);
+      scrollToBottom(true);
+
+      var savedText = text;
+      input.value = '';
+      updateCounter();
+
+      fetch('{{ url_for("admin.message_send", thread_id=thread_id) }}', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token() }}',
+        },
+        body: JSON.stringify({ text: text }),
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data.success) throw new Error(data.error || 'Send failed');
+          var created = data.message || {};
+          if (created.id) {
+            optimistic.dataset.msgId = created.id;
+            optimistic.dataset.optimistic = '';
+            if (created.created_at) {
+              optimistic.dataset.ts = created.created_at;
+              if (created.created_at > lastTs) lastTs = created.created_at;
+            }
+            // Update timestamp text if server returned relative time
+            if (created.created_at_relative) {
+              var meta = optimistic.querySelector('p:last-child');
+              if (meta) meta.textContent = 'You · ' + created.created_at_relative;
+            }
+          }
+        })
+        .catch(function () {
+          optimistic.classList.add('opacity-60');
+          var failed = document.createElement('button');
+          failed.type = 'button';
+          failed.className =
+            'text-[10px] text-red-500 text-right mt-1 w-full hover:underline font-semibold';
+          failed.textContent = 'Not sent — tap to retry';
+          failed.addEventListener('click', function () {
+            input.value = savedText;
+            updateCounter();
+            optimistic.remove();
+            input.focus();
+          });
+          optimistic.querySelector('div > div:last-child').appendChild(failed);
+          announce('Message failed to send. Tap the message to retry.');
+        })
+        .finally(function () {
+          setSending(false);
+          sendBtn.innerHTML = originalHTML;
+          if (window.matchMedia('(min-width: 640px)').matches) input.focus();
+        });
+    });
+
+    // Auto-focus the input on load (desktop only)
+    if (window.matchMedia('(min-width: 640px)').matches) {
+      setTimeout(function () { input.focus(); }, 80);
+    }
+
+    // Escape clears the input
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && input.value !== '') {
+        input.value = '';
+        updateCounter();
+      }
+    });
+
+    /* ============================================================
+       Scroll tracking — show jump-to-latest when scrolled up
+       ============================================================ */
+    chatBox.addEventListener('scroll', function () {
+      nearBottom = isNearBottom();
+      if (jumpBtn) jumpBtn.classList.toggle('hidden', nearBottom);
+    }, { passive: true });
+
+    if (jumpBtn) {
+      jumpBtn.addEventListener('click', function () {
+        scrollToBottom(true);
+      });
+    }
+
+    /* ============================================================
+       Live polling
+       ============================================================ */
+    function startPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(pollOnce, POLL_MS);
+    }
+
+    function stopPolling() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+
+    function pollOnce() {
+      var url = '{{ url_for("admin.message_poll", thread_id=thread_id) }}';
+      if (lastTs) url += '?since=' + encodeURIComponent(lastTs);
+
+      setStatus('Syncing…', 'busy');
+
+      return fetch(url, {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' },
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data.success || !Array.isArray(data.messages)) {
+            setStatus('Live', 'ok');
+            return;
+          }
+
+          var emptyEl = document.getElementById('emptyChat');
+          if (emptyEl && data.messages.length) emptyEl.remove();
+
+          var appended = 0;
+          data.messages.forEach(function (m) {
+            if (!m || !m.id) return;
+            if (chatBox.querySelector('[data-msg-id="' + CSS.escape(String(m.id)) + '"]')) return;
+
+            var isMine = m.sender === 'admin';
+
+            if (isMine) {
+              // If there's a lingering optimistic bubble, adopt server id.
+              var optimistic = chatBox.querySelector('[data-optimistic="1"]');
+              if (optimistic) {
+                optimistic.dataset.msgId = m.id;
+                optimistic.dataset.optimistic = '';
+                optimistic.dataset.ts = m.created_at || '';
+              }
+            } else {
+              chatBox.appendChild(buildBubble(m, false));
+              appended++;
+              announce('New message from ' + (m.user_name || 'Guest'));
+            }
+
+            if ((m.created_at || '') > lastTs) lastTs = m.created_at || '';
+          });
+
+          // Only auto-scroll if the user is already near the bottom
+          if (appended && nearBottom) scrollToBottom(true);
+
+          var now = new Date();
+          var hh = String(now.getHours()).padStart(2, '0');
+          var mm = String(now.getMinutes()).padStart(2, '0');
+          setStatus('Updated ' + hh + ':' + mm, 'ok');
+        })
+        .catch(function () {
+          setStatus('Offline', 'error');
+        });
+    }
+
+    // Initial scroll
+    scrollToBottom(false);
+    nearBottom = true;
+
+    startPolling();
+
+    // Pause polling when tab hidden, resume when visible
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        pollOnce();
+        startPolling();
+      }
+    });
+
+    window.addEventListener('beforeunload', stopPolling);
+
+    // Manual refresh button
+    if (refreshBtn) {
+      var refreshOriginal = refreshBtn.innerHTML;
+      refreshBtn.addEventListener('click', function () {
+        if (refreshBtn.disabled) return;
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Loading…</span>';
+        pollOnce().finally(function () {
+          refreshBtn.disabled = false;
+          refreshBtn.innerHTML = refreshOriginal;
+        });
+      });
+    }
+
+    // bfcache restore
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) {
+        scrollToBottom(false);
+        pollOnce();
+      }
+    });
+
+    // Keyboard shortcut: Ctrl/Cmd+Enter sends from anywhere in the form
+    form.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        form.dispatchEvent(new Event('submit', { cancelable: true }));
+      }
+    });
+  });
+})();
 </script>
 {% endblock %}

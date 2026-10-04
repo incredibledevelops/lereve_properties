@@ -7,35 +7,367 @@
 {% block content %}
 
 {% if threads %}
-  <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden divide-y divide-charcoal/5">
-    {% for t in threads %}
-      <a href="{{ url_for('admin.message_thread', thread_id=t._id) }}" class="block p-5 hover:bg-ivory/50 transition-colors">
-        <div class="flex items-start gap-4">
-          <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 font-bold">
-            {{ (t.user_name or 'U')[0]|upper }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-2 mb-1">
-              <p class="font-semibold text-primary truncate">{{ t.user_name or 'Guest' }}</p>
-              <span class="text-[10px] text-charcoal/50 flex-shrink-0">{{ t.last_at|relative_time if t.last_at else '' }}</span>
-            </div>
-            <p class="text-xs text-charcoal/50 truncate mb-2">{{ t.user_email }}</p>
-            <p class="text-sm text-charcoal/80 truncate">{{ t.last_message }}</p>
-          </div>
-          {% if t.unread and t.unread > 0 %}
-            <span class="bg-gold text-primary text-[10px] font-bold rounded-full min-w-[24px] h-6 px-2 flex items-center justify-center flex-shrink-0">{{ t.unread }}</span>
-          {% endif %}
-        </div>
-      </a>
-    {% endfor %}
+  {% set total_unread = threads | sum(attribute='unread') %}
+
+  {# ── Summary bar ───────────────────────────────────────────── #}
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <p class="text-xs text-charcoal/60" aria-live="polite">
+      <span class="font-semibold text-primary">{{ threads|length }}</span>
+      conversation{{ 's' if threads|length != 1 else '' }}
+      {% if total_unread and total_unread > 0 %}
+        · <span class="font-semibold text-gold">{{ total_unread }}</span> unread
+      {% endif %}
+    </p>
+
+    <div class="flex flex-wrap items-center gap-2">
+      {# Search box with inline clear button #}
+      <div class="relative">
+        <label for="thread-search" class="sr-only">Search conversations</label>
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2
+                  text-charcoal/30 text-xs pointer-events-none" aria-hidden="true"></i>
+        <input
+          type="search"
+          id="thread-search"
+          placeholder="Search conversations…"
+          aria-label="Search conversations"
+          autocomplete="off"
+          class="w-56 sm:w-72 rounded-xl border border-gold/30 bg-white
+                 pl-9 pr-9 py-2 text-sm text-charcoal placeholder:text-charcoal/40
+                 focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold/60 transition"
+        />
+        <button
+          type="button"
+          id="thread-search-clear"
+          class="hidden absolute right-2 top-1/2 -translate-y-1/2
+                 w-6 h-6 rounded-full text-charcoal/40 hover:text-primary hover:bg-ivory
+                 flex items-center justify-center transition
+                 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          aria-label="Clear search"
+        >
+          <i class="fa-solid fa-xmark text-xs" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      {# Filter dropdown #}
+      <select
+        id="thread-filter"
+        aria-label="Filter conversations"
+        class="rounded-xl border border-gold/30 bg-white px-3 py-2 text-sm text-charcoal
+               focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold/60 transition"
+      >
+        <option value="all">All</option>
+        <option value="unread">Unread</option>
+      </select>
+
+      {# Sort dropdown #}
+      <select
+        id="thread-sort"
+        aria-label="Sort conversations"
+        class="rounded-xl border border-gold/30 bg-white px-3 py-2 text-sm text-charcoal
+               focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold/60 transition"
+      >
+        <option value="recent">Most recent</option>
+        <option value="oldest">Oldest first</option>
+        <option value="unread">Unread first</option>
+        <option value="name">Name (A–Z)</option>
+      </select>
+    </div>
   </div>
+
+  {# ── Thread list ──────────────────────────────────────────── #}
+  <ul
+    id="thread-list"
+    role="list"
+    aria-label="Conversations"
+    class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden divide-y divide-charcoal/5"
+  >
+    {% for t in threads %}
+      <li
+        class="thread-item group"
+        data-name="{{ (t.user_name or 'Guest')|lower }}"
+        data-email="{{ (t.user_email or '')|lower }}"
+        data-preview="{{ (t.last_message or '')|lower }}"
+        data-unread="{{ t.unread or 0 }}"
+        data-ts="{{ t.last_at.isoformat() if t.last_at and t.last_at.isoformat is defined else (t.last_at or '') }}"
+      >
+        <a
+          href="{{ url_for('admin.message_thread', thread_id=t._id) }}"
+          class="block p-5 hover:bg-ivory/60 focus:bg-ivory/60
+                 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50
+                 focus-visible:ring-inset transition-colors"
+          aria-label="Open conversation with {{ t.user_name or 'Guest' }}{% if t.unread and t.unread > 0 %}, {{ t.unread }} unread message{{ 's' if t.unread != 1 else '' }}{% endif %}"
+        >
+          <div class="flex items-start gap-4">
+
+            {# Avatar with unread indicator dot #}
+            <div class="relative flex-shrink-0">
+              <div class="w-12 h-12 rounded-full bg-primary/10 text-primary
+                          flex items-center justify-center font-bold text-lg
+                          {% if t.unread and t.unread > 0 %}ring-2 ring-gold/40{% endif %}">
+                {{ (t.user_name or 'U')[0]|upper }}
+              </div>
+              {% if t.unread and t.unread > 0 %}
+                <span class="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-gold border-2 border-white"
+                      aria-hidden="true"></span>
+              {% endif %}
+            </div>
+
+            {# Message details #}
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2 mb-0.5">
+                <p class="text-primary truncate {% if t.unread and t.unread > 0 %}font-bold{% else %}font-semibold{% endif %}">
+                  {{ t.user_name or 'Guest' }}
+                </p>
+                <time
+                  class="text-[10px] text-charcoal/50 flex-shrink-0 whitespace-nowrap"
+                  {% if t.last_at and t.last_at.isoformat is defined %}datetime="{{ t.last_at.isoformat() }}"{% endif %}
+                >
+                  {{ t.last_at|relative_time if t.last_at else '' }}
+                </time>
+              </div>
+
+              <p class="text-xs text-charcoal/50 truncate mb-1.5">{{ t.user_email or '—' }}</p>
+
+              <p class="text-sm truncate {% if t.unread and t.unread > 0 %}text-charcoal font-medium{% else %}text-charcoal/70{% endif %}">
+                {{ t.last_message or 'No messages yet' }}
+              </p>
+            </div>
+
+            {# Unread badge + chevron #}
+            <div class="flex items-center gap-2 flex-shrink-0 self-center">
+              {% if t.unread and t.unread > 0 %}
+                <span
+                  class="bg-gold text-primary text-[10px] font-bold rounded-full
+                         min-w-[24px] h-6 px-2 flex items-center justify-center"
+                  aria-label="{{ t.unread }} unread"
+                >
+                  {{ t.unread if t.unread < 100 else '99+' }}
+                </span>
+              {% endif %}
+              <i class="fa-solid fa-chevron-right text-charcoal/20 text-xs
+                        group-hover:text-gold group-hover:translate-x-0.5 transition-all"
+                 aria-hidden="true"></i>
+            </div>
+
+          </div>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+
+  {# ── Empty filter state ──────────────────────────────────── #}
+  <div id="no-results"
+       class="hidden text-center py-12 bg-white rounded-2xl border border-dashed border-gold/40 mt-4"
+       role="status">
+    <div class="w-12 h-12 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3"
+         aria-hidden="true">
+      <i class="fa-solid fa-magnifying-glass text-gold text-lg"></i>
+    </div>
+    <p class="text-sm font-semibold text-primary mb-1">No matching conversations</p>
+    <p class="text-xs text-charcoal/60 mb-3">Try a different search or filter.</p>
+    <button
+      type="button"
+      id="clear-search"
+      class="inline-flex items-center gap-1.5 text-xs font-semibold text-gold
+             hover:text-primary underline underline-offset-2 transition
+             focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded"
+    >
+      <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+      <span>Reset filters</span>
+    </button>
+  </div>
+
+  {# ── Screen-reader status ────────────────────────────────── #}
+  <p id="thread-status" class="sr-only" role="status" aria-live="polite"></p>
+
 {% else %}
+  {# ── Global empty state ──────────────────────────────────── #}
   <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gold/40">
-    <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
+    <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3"
+         aria-hidden="true">
       <i class="fa-solid fa-comments text-gold text-2xl"></i>
     </div>
-    <p class="text-sm text-charcoal/60">No conversations yet.</p>
+    <p class="text-sm font-semibold text-primary mb-1">No conversations yet</p>
+    <p class="text-xs text-charcoal/60 max-w-xs mx-auto">
+      When clients reach out through the concierge, their messages will appear here.
+    </p>
   </div>
 {% endif %}
 
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  (function () {
+    'use strict';
+
+    var list = document.getElementById('thread-list');
+    if (!list) return;
+
+    var searchInput   = document.getElementById('thread-search');
+    var searchClear   = document.getElementById('thread-search-clear');
+    var filterSelect  = document.getElementById('thread-filter');
+    var sortSelect    = document.getElementById('thread-sort');
+    var noResults     = document.getElementById('no-results');
+    var clearBtn      = document.getElementById('clear-search');
+    var statusEl      = document.getElementById('thread-status');
+    var items         = Array.from(list.querySelectorAll('.thread-item'));
+
+    // Store original order for stable "reset"
+    var originalOrder = items.slice();
+
+    function announce(msg) {
+      if (!statusEl) return;
+      statusEl.textContent = '';
+      setTimeout(function () { statusEl.textContent = msg; }, 50);
+    }
+
+    function visibleCount() {
+      return items.filter(function (el) { return !el.classList.contains('hidden'); }).length;
+    }
+
+    /* ============================================================
+       Sorting — reorders DOM nodes in place
+       ============================================================ */
+    function sortItems(mode) {
+      var sorted = items.slice();
+
+      if (mode === 'oldest') {
+        sorted.sort(function (a, b) {
+          return (a.dataset.ts || '').localeCompare(b.dataset.ts || '');
+        });
+      } else if (mode === 'unread') {
+        sorted.sort(function (a, b) {
+          var ua = parseInt(a.dataset.unread, 10) || 0;
+          var ub = parseInt(b.dataset.unread, 10) || 0;
+          if (ua !== ub) return ub - ua; // unread first
+          return (b.dataset.ts || '').localeCompare(a.dataset.ts || '');
+        });
+      } else if (mode === 'name') {
+        sorted.sort(function (a, b) {
+          return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+        });
+      } else { // recent (default)
+        sorted.sort(function (a, b) {
+          return (b.dataset.ts || '').localeCompare(a.dataset.ts || '');
+        });
+      }
+
+      // Re-append in the new order (moving existing nodes keeps state)
+      var frag = document.createDocumentFragment();
+      sorted.forEach(function (el) { frag.appendChild(el); });
+      list.appendChild(frag);
+    }
+
+    /* ============================================================
+       Filtering + search
+       ============================================================ */
+    function applyFilters(opts) {
+      opts = opts || {};
+      var query  = (searchInput && searchInput.value || '').trim().toLowerCase();
+      var filter = (filterSelect && filterSelect.value) || 'all';
+      var sort   = (sortSelect && sortSelect.value) || 'recent';
+
+      // Reorder first so the visual list is already sorted when we show/hide
+      if (opts.resort !== false) sortItems(sort);
+
+      var visible = 0;
+      items.forEach(function (item) {
+        var haystack = [
+          item.dataset.name,
+          item.dataset.email,
+          item.dataset.preview,
+        ].join(' ');
+
+        var matchesQuery  = !query || haystack.indexOf(query) !== -1;
+        var matchesFilter =
+          filter === 'all' ||
+          (filter === 'unread' && (parseInt(item.dataset.unread, 10) || 0) > 0);
+
+        var show = matchesQuery && matchesFilter;
+        item.classList.toggle('hidden', !show);
+        if (show) visible++;
+      });
+
+      // Toggle empty state
+      var isEmpty = visible === 0;
+      if (noResults) noResults.classList.toggle('hidden', !isEmpty);
+      list.classList.toggle('hidden', isEmpty);
+
+      // Inline clear button visibility
+      if (searchClear) {
+        searchClear.classList.toggle('hidden', !searchInput.value);
+      }
+
+      // Announce for screen readers
+      if (query || filter !== 'all') {
+        announce(visible + ' conversation' + (visible === 1 ? '' : 's') + ' shown');
+      }
+    }
+
+    /* ============================================================
+       Debounced search
+       ============================================================ */
+    var debounceTimer;
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () { applyFilters({ resort: false }); }, 120);
+      });
+
+      // Esc inside search clears it
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && searchInput.value) {
+          e.stopPropagation();
+          searchInput.value = '';
+          applyFilters({ resort: false });
+          searchInput.focus();
+        }
+      });
+    }
+
+    if (searchClear) {
+      searchClear.addEventListener('click', function () {
+        searchInput.value = '';
+        applyFilters({ resort: false });
+        searchInput.focus();
+      });
+    }
+
+    if (filterSelect) filterSelect.addEventListener('change', function () { applyFilters(); });
+    if (sortSelect)   sortSelect.addEventListener('change',   function () { applyFilters(); });
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (searchInput)  searchInput.value = '';
+        if (filterSelect) filterSelect.value = 'all';
+        if (sortSelect)   sortSelect.value = 'recent';
+        applyFilters();
+        searchInput && searchInput.focus();
+      });
+    }
+
+    /* ============================================================
+       Keyboard shortcut: "/" focuses search
+       (Skip when typing in another input/textarea/select)
+       ============================================================ */
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+
+      var tag = (document.activeElement && document.activeElement.tagName) || '';
+      var isTyping = tag === 'INPUT' || tag === 'TEXTAREA' ||
+                     tag === 'SELECT' || document.activeElement.isContentEditable;
+      if (isTyping) return;
+
+      e.preventDefault();
+      if (searchInput) searchInput.focus();
+    });
+
+    /* ============================================================
+       Initial sort so the list matches the default "recent" option
+       ============================================================ */
+    applyFilters({ resort: true });
+  })();
+</script>
 {% endblock %}

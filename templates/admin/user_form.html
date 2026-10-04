@@ -2,63 +2,651 @@
 {% block title %}{{ 'Edit' if user else 'Add' }} User · Admin Console{% endblock %}
 {% set active_section = 'users' %}
 {% block page_title %}{{ 'Edit User' if user else 'Add New User' }}{% endblock %}
+{% block page_subtitle %}
+  {{ 'Update user details' if user else 'Create an account for a client or admin' }}
+{% endblock %}
 
 {% block content %}
 
-<nav class="flex items-center gap-2 text-xs text-charcoal/60 mb-5">
-  <a href="{{ url_for('admin.dashboard') }}" class="hover:text-gold">Dashboard</a>
-  <i class="fa-solid fa-chevron-right text-[9px]"></i>
-  <a href="{{ url_for('admin.users') }}" class="hover:text-gold">Users</a>
-  <i class="fa-solid fa-chevron-right text-[9px]"></i>
-  <span class="text-primary font-semibold">New</span>
+{# ── Breadcrumb ──────────────────────────────────────────────── #}
+<nav class="flex items-center gap-2 text-xs text-charcoal/60 mb-5"
+     aria-label="Breadcrumb">
+  <a href="{{ url_for('admin.dashboard') }}"
+     class="hover:text-gold transition-colors focus:outline-none
+            focus-visible:ring-2 focus-visible:ring-gold rounded">
+    Dashboard
+  </a>
+  <i class="fa-solid fa-chevron-right text-[9px] text-charcoal/30" aria-hidden="true"></i>
+  <a href="{{ url_for('admin.users') }}"
+     class="hover:text-gold transition-colors focus:outline-none
+            focus-visible:ring-2 focus-visible:ring-gold rounded">
+    Users
+  </a>
+  <i class="fa-solid fa-chevron-right text-[9px] text-charcoal/30" aria-hidden="true"></i>
+  <span class="text-primary font-semibold" aria-current="page">
+    {{ 'Edit' if user else 'New' }}
+  </span>
 </nav>
 
-<div class="max-w-2xl mx-auto bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
-  <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40">
-    <h2 class="font-serif text-2xl font-semibold text-primary">Create User</h2>
+<div class="max-w-3xl mx-auto bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
+  <div class="px-6 py-5 border-b border-charcoal/5 bg-ivory/40 flex items-center gap-3">
+    <div class="w-9 h-9 rounded-full bg-gold/15 text-gold
+                flex items-center justify-center" aria-hidden="true">
+      <i class="fa-solid fa-user-plus text-sm"></i>
+    </div>
+    <div>
+      <h2 class="font-serif text-xl font-semibold text-primary">
+        {{ 'Edit User' if user else 'Create User' }}
+      </h2>
+      <p class="text-xs text-charcoal/50 mt-0.5">
+        {{ 'Update the account details below.' if user else 'All fields marked * are required.' }}
+      </p>
+    </div>
   </div>
 
-  <form method="POST" class="p-6 space-y-5">
+  <form method="POST" id="userCreateForm" class="p-6 space-y-6" novalidate>
     {{ form.hidden_tag() }}
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <label for="{{ form.name.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Name *</label>
-        {{ form.name(id=form.name.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
+    {# ── Form-level errors ──────────────────────────────────── #}
+    {% if form.errors %}
+      <div class="rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3"
+           role="alert">
+        <i class="fa-solid fa-circle-exclamation text-red-500 mt-0.5" aria-hidden="true"></i>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-red-700 mb-1">
+            Please fix {{ form.errors|length }}
+            issue{{ 's' if form.errors|length != 1 else '' }} below.
+          </p>
+          <ul class="text-xs text-red-600 list-disc list-inside space-y-0.5">
+            {% for field, errs in form.errors.items() %}
+              {% for err in errs %}
+                <li>
+                  <span class="font-semibold">{{ form[field].label.text if form[field] is defined else field }}:</span>
+                  {{ err }}
+                </li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
       </div>
-      <div>
-        <label for="{{ form.email.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Email *</label>
-        {{ form.email(id=form.email.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label for="{{ form.phone.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Phone</label>
-        {{ form.phone(id=form.phone.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label for="{{ form.country.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Country</label>
-        {{ form.country(id=form.country.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label for="{{ form.password.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Password *</label>
-        {{ form.password(id=form.password.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label for="{{ form.tier.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Tier</label>
-        {{ form.tier(id=form.tier.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-      <div>
-        <label for="{{ form.role.id }}" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">Role</label>
-        {{ form.role(id=form.role.id, class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm") }}
-      </div>
-    </div>
+    {% endif %}
 
-    <div class="pt-4 border-t border-charcoal/10 flex justify-end gap-3">
-      <a href="{{ url_for('admin.users') }}" class="px-5 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold hover:bg-ivory transition-all">Cancel</a>
-      <button type="submit" class="bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-md">
-        <i class="fa-solid fa-floppy-disk mr-1"></i> Create User
+    {# ============================================================
+       Section: Identity
+       ============================================================ #}
+    <section>
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-id-card text-[10px]"></i>
+        </div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-primary">Identity</h3>
+      </header>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {# Name #}
+        <div class="sm:col-span-2">
+          <label for="{{ form.name.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                        {% if form.name.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Full Name <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2
+                      text-charcoal/30 text-xs pointer-events-none"
+               aria-hidden="true"></i>
+            {{ form.name(
+                id=form.name.id,
+                required=true,
+                autofocus=(not user),
+                maxlength=200,
+                autocomplete="name",
+                placeholder="e.g. Amara Okafor",
+                aria_invalid="true" if form.name.errors else "false",
+                aria_describedby="createUserNameError",
+                class="w-full pl-9 pr-4 py-2.5 rounded-xl border bg-ivory/40
+                       focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                       text-sm transition "
+                      + ("border-red-300 bg-red-50" if form.name.errors else "border-charcoal/15")
+            ) }}
+          </div>
+          {% if form.name.errors %}
+            <ul id="createUserNameError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.name.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        {# Email #}
+        <div class="sm:col-span-2">
+          <label for="{{ form.email.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                        {% if form.email.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Email Address <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <div class="relative">
+            <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2
+                      text-charcoal/30 text-xs pointer-events-none"
+               aria-hidden="true"></i>
+            {{ form.email(
+                id=form.email.id,
+                type="email",
+                required=true,
+                autocomplete="email",
+                maxlength=200,
+                placeholder="name@example.com",
+                aria_invalid="true" if form.email.errors else "false",
+                aria_describedby="createUserEmailError createUserEmailHint",
+                class="w-full pl-9 pr-4 py-2.5 rounded-xl border bg-ivory/40
+                       focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                       text-sm transition "
+                      + ("border-red-300 bg-red-50" if form.email.errors else "border-charcoal/15")
+            ) }}
+          </div>
+          <p id="createUserEmailHint" class="text-[11px] text-charcoal/50 mt-1">
+            Used for sign-in and notification emails.
+          </p>
+          {% if form.email.errors %}
+            <ul id="createUserEmailError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.email.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        {# Phone #}
+        <div>
+          <label for="{{ form.phone.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                        {% if form.phone.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Phone
+            <span class="text-charcoal/40 normal-case tracking-normal font-normal ml-1">(optional)</span>
+          </label>
+          {{ form.phone(
+              id=form.phone.id,
+              type="tel",
+              autocomplete="tel",
+              inputmode="tel",
+              maxlength=40,
+              placeholder="+1 234 567 8900",
+              aria_invalid="true" if form.phone.errors else "false",
+              class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition "
+                    + ("border-red-300 bg-red-50" if form.phone.errors else "border-charcoal/15")
+          ) }}
+          {% if form.phone.errors %}
+            <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.phone.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        {# Country #}
+        <div>
+          <label for="{{ form.country.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                        {% if form.country.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Country
+            <span class="text-charcoal/40 normal-case tracking-normal font-normal ml-1">(optional)</span>
+          </label>
+          {{ form.country(
+              id=form.country.id,
+              autocomplete="country-name",
+              maxlength=80,
+              placeholder="e.g. Ghana",
+              aria_invalid="true" if form.country.errors else "false",
+              class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition "
+                    + ("border-red-300 bg-red-50" if form.country.errors else "border-charcoal/15")
+          ) }}
+          {% if form.country.errors %}
+            <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.country.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Section: Access
+       ============================================================ #}
+    <section class="pt-5 border-t border-charcoal/10">
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-shield-halved text-[10px]"></i>
+        </div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-primary">Access</h3>
+      </header>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {# Tier #}
+        <div>
+          <label for="{{ form.tier.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                        {% if form.tier.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Tier
+          </label>
+          <div class="relative">
+            {{ form.tier(
+                id=form.tier.id,
+                aria_invalid="true" if form.tier.errors else "false",
+                class="w-full appearance-none px-4 pr-10 py-2.5 rounded-xl border bg-ivory/40
+                       focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                       text-sm transition cursor-pointer "
+                      + ("border-red-300 bg-red-50" if form.tier.errors else "border-charcoal/15")
+            ) }}
+            <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2
+                      text-charcoal/40 text-[10px] pointer-events-none"
+               aria-hidden="true"></i>
+          </div>
+          {% if form.tier.errors %}
+            <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.tier.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        {# Role #}
+        <div>
+          <label for="{{ form.role.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                        {% if form.role.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+            Role
+          </label>
+          <div class="relative">
+            {{ form.role(
+                id=form.role.id,
+                aria_invalid="true" if form.role.errors else "false",
+                aria_describedby="createUserRoleHint",
+                class="w-full appearance-none px-4 pr-10 py-2.5 rounded-xl border bg-ivory/40
+                       focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                       text-sm transition cursor-pointer "
+                      + ("border-red-300 bg-red-50" if form.role.errors else "border-charcoal/15")
+            ) }}
+            <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2
+                      text-charcoal/40 text-[10px] pointer-events-none"
+               aria-hidden="true"></i>
+          </div>
+          <p id="createUserRoleHint" class="text-[11px] text-charcoal/50 mt-1 flex items-center gap-1">
+            <i class="fa-solid fa-circle-info text-[9px]" aria-hidden="true"></i>
+            <span data-role-hint>Clients can book; admins can manage the console.</span>
+          </p>
+          {% if form.role.errors %}
+            <ul role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+              {% for e in form.role.errors %}
+                <li class="flex items-start gap-1">
+                  <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                  <span>{{ e }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Section: Password
+       ============================================================ #}
+    <section class="pt-5 border-t border-charcoal/10">
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-key text-[10px]"></i>
+        </div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-primary">
+          Initial Password
+        </h3>
+      </header>
+
+      <div>
+        <label for="{{ form.password.id }}"
+               class="block text-xs font-bold uppercase tracking-wider mb-1.5
+                      {% if form.password.errors %}text-red-600{% else %}text-primary/80{% endif %}">
+          Password <span class="text-red-500" aria-hidden="true">*</span>
+        </label>
+        <div class="relative">
+          {{ form.password(
+              id=form.password.id,
+              type="password",
+              required=true,
+              autocomplete="new-password",
+              placeholder="At least 8 characters",
+              aria_invalid="true" if form.password.errors else "false",
+              aria_describedby="createUserPwHint createUserPwError",
+              class="w-full px-4 py-2.5 pr-12 rounded-xl border bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition "
+                    + ("border-red-300 bg-red-50" if form.password.errors else "border-charcoal/15")
+          ) }}
+          <button type="button"
+                  id="createUserPwToggle"
+                  data-target="{{ form.password.id }}"
+                  data-icon="createUserPwIcon"
+                  aria-label="Show password"
+                  aria-pressed="false"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg
+                         text-charcoal/40 hover:text-gold hover:bg-ivory
+                         transition-colors
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+            <i id="createUserPwIcon" class="fa-regular fa-eye" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        {# Strength meter #}
+        <div id="createUserPwStrength" class="mt-2 hidden" aria-live="polite">
+          <div class="h-1 w-full bg-charcoal/10 rounded-full overflow-hidden">
+            <div id="createUserPwBar"
+                 class="h-full w-0 rounded-full transition-all duration-300"
+                 style="background:#ef4444;"></div>
+          </div>
+          <p id="createUserPwHint" class="text-[10px] mt-1 text-charcoal/50"></p>
+        </div>
+
+        {% if form.password.errors %}
+          <ul id="createUserPwError" role="alert" class="mt-1.5 text-[11px] text-red-600 space-y-0.5">
+            {% for e in form.password.errors %}
+              <li class="flex items-start gap-1">
+                <i class="fa-solid fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                <span>{{ e }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        <p class="text-[11px] text-charcoal/50 mt-1.5 flex items-start gap-1">
+          <i class="fa-solid fa-circle-info text-[9px] mt-0.5" aria-hidden="true"></i>
+          <span>Share this with the user securely. They can change it after first sign-in.</span>
+        </p>
+      </div>
+    </section>
+
+    {# ============================================================
+       Live preview
+       ============================================================ #}
+    <section class="pt-5 border-t border-charcoal/10">
+      <div class="rounded-xl bg-ivory/40 border border-charcoal/10 p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <i class="fa-solid fa-eye text-charcoal/40 text-xs" aria-hidden="true"></i>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-charcoal/50">
+            Preview
+          </span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="previewInitials"
+               class="w-12 h-12 rounded-full bg-gold text-primary
+                      flex items-center justify-center font-serif font-bold text-lg
+                      flex-shrink-0">
+            U
+          </div>
+          <div class="min-w-0 flex-1">
+            <p id="previewName"
+               class="font-serif text-base font-semibold text-primary truncate">
+              New User
+            </p>
+            <p id="previewEmail" class="text-xs text-charcoal/50 truncate">
+              name@example.com
+            </p>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <span id="previewRole"
+                  class="text-[10px] font-bold uppercase tracking-wider
+                         px-2 py-0.5 rounded-full
+                         bg-ivory-dark text-charcoal/70 border border-charcoal/10">
+              Client
+            </span>
+            <span id="previewTier"
+                  class="text-[10px] font-bold uppercase tracking-wider
+                         px-2 py-0.5 rounded-full
+                         bg-gold/15 text-gold-dark border border-gold/30">
+              Standard
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Sticky action bar
+       ============================================================ #}
+    <div class="sticky bottom-0 -mx-6 px-6 py-4 mt-2
+                bg-white/95 backdrop-blur border-t border-charcoal/10
+                flex flex-wrap items-center justify-end gap-3">
+
+      <a href="{{ url_for('admin.users') }}"
+         class="px-5 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold
+                hover:bg-ivory transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+        Cancel
+      </a>
+
+      <button type="submit"
+              id="createUserSubmitBtn"
+              class="bg-primary text-gold hover:bg-gold hover:text-primary
+                     px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider
+                     transition-all shadow-md flex items-center gap-2
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                     disabled:opacity-60 disabled:cursor-wait">
+        <i class="fa-solid fa-user-plus text-xs" aria-hidden="true"></i>
+        <span>{{ 'Update User' if user else 'Create User' }}</span>
       </button>
     </div>
   </form>
 </div>
 
+{# ── Unsaved changes bar ────────────────────────────────────── #}
+<div id="unsavedBar"
+     class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40
+            bg-primary text-ivory px-4 py-2.5 rounded-xl shadow-xl
+            text-xs font-semibold flex items-center gap-3 border border-gold/40">
+  <i class="fa-solid fa-circle-exclamation text-gold" aria-hidden="true"></i>
+  <span>You have unsaved changes.</span>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  function ready(fn) {
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  ready(function () {
+
+    var form = document.getElementById('userCreateForm');
+    if (!form) return;
+
+    /* ============================================================
+       Password toggle
+       ============================================================ */
+    var pwToggle = document.getElementById('createUserPwToggle');
+    if (pwToggle) {
+      pwToggle.addEventListener('click', function () {
+        var input = document.getElementById(pwToggle.dataset.target);
+        var icon  = document.getElementById(pwToggle.dataset.icon);
+        if (!input || !icon) return;
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+        pwToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        pwToggle.setAttribute('aria-pressed', String(show));
+        input.focus();
+      });
+    }
+
+    /* ============================================================
+       Password strength meter
+       ============================================================ */
+    var pw     = document.getElementById('{{ form.password.id }}');
+    var pwWrap = document.getElementById('createUserPwStrength');
+    var pwBar  = document.getElementById('createUserPwBar');
+    var pwHint = document.getElementById('createUserPwHint');
+
+    function scorePassword(v) {
+      if (!v) return { label: '', color: '#ef4444', width: '0%' };
+      var score = 0;
+      if (v.length >= 6)  score++;
+      if (v.length >= 10) score++;
+      if (/[A-Z]/.test(v) && /[a-z]/.test(v)) score++;
+      if (/\d/.test(v))   score++;
+      if (/[^A-Za-z0-9]/.test(v)) score++;
+      if (score <= 1) return { label: 'Weak',   color: '#ef4444', width: '25%'  };
+      if (score === 2) return { label: 'Fair',  color: '#f59e0b', width: '50%'  };
+      if (score === 3) return { label: 'Good',  color: '#10b981', width: '75%'  };
+      return             { label: 'Strong', color: '#059669', width: '100%' };
+    }
+
+    if (pw && pwBar && pwHint && pwWrap) {
+      pw.addEventListener('input', function () {
+        var v = pw.value;
+        if (!v) {
+          pwWrap.classList.add('hidden');
+          pwBar.style.width = '0%';
+          pwHint.textContent = '';
+          return;
+        }
+        pwWrap.classList.remove('hidden');
+        var s = scorePassword(v);
+        pwBar.style.width      = s.width;
+        pwBar.style.background = s.color;
+        pwHint.textContent     = 'Strength: ' + s.label;
+        pwHint.style.color     = s.color;
+      });
+    }
+
+    /* ============================================================
+       Role hint + preview
+       ============================================================ */
+    var roleSelect   = form.querySelector('[name="role"]');
+    var tierSelect   = form.querySelector('[name="tier"]');
+    var nameInput    = form.querySelector('[name="name"]');
+    var emailInput   = form.querySelector('[name="email"]');
+
+    var previewName  = document.getElementById('previewName');
+    var previewEmail = document.getElementById('previewEmail');
+    var previewInit  = document.getElementById('previewInitials');
+    var previewRole  = document.getElementById('previewRole');
+    var previewTier  = document.getElementById('previewTier');
+    var roleHintSpan = document.querySelector('[data-role-hint]');
+
+    var ROLE_HINTS = {
+      client:      'Clients can book; admins can manage the console.',
+      super_admin: 'Full access to the admin console, including user management.',
+    };
+
+    function initialsFrom(name) {
+      if (!name) return 'U';
+      var parts = name.trim().split(/\s+/).slice(0, 2);
+      return parts.map(function (p) { return (p[0] || '').toUpperCase(); }).join('') || 'U';
+    }
+
+    function refreshPreview() {
+      if (previewName)  previewName.textContent  = (nameInput  && nameInput.value.trim())  || 'New User';
+      if (previewEmail) previewEmail.textContent = (emailInput && emailInput.value.trim()) || 'name@example.com';
+      if (previewInit)  previewInit.textContent  = initialsFrom(nameInput && nameInput.value);
+
+      if (previewRole && roleSelect) {
+        var role = roleSelect.value || 'client';
+        previewRole.textContent = role === 'super_admin' ? 'Admin' : 'Client';
+        previewRole.className = 'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ' +
+          (role === 'super_admin'
+            ? 'bg-primary/10 text-primary border border-primary/20'
+            : 'bg-ivory-dark text-charcoal/70 border border-charcoal/10');
+
+        if (roleHintSpan) {
+          roleHintSpan.textContent = ROLE_HINTS[role] || ROLE_HINTS.client;
+        }
+      }
+
+      if (previewTier && tierSelect) {
+        previewTier.textContent = (tierSelect.value || 'Standard');
+      }
+    }
+
+    [nameInput, emailInput, roleSelect, tierSelect].forEach(function (el) {
+      if (el) {
+        el.addEventListener('input', refreshPreview);
+        el.addEventListener('change', refreshPreview);
+      }
+    });
+    refreshPreview();
+
+    /* ============================================================
+       Dirty tracking + submit spinner + beforeunload
+       ============================================================ */
+    var dirty = false;
+    var submitting = false;
+    var unsavedBar = document.getElementById('unsavedBar');
+    var submitBtn  = document.getElementById('createUserSubmitBtn');
+
+    form.addEventListener('input', function () {
+      if (dirty || submitting) return;
+      dirty = true;
+      unsavedBar && unsavedBar.classList.remove('hidden');
+    }, { passive: true });
+
+    form.addEventListener('submit', function (e) {
+      if (submitting) { e.preventDefault(); return; }
+      submitting = true;
+      dirty = false;
+      unsavedBar && unsavedBar.classList.add('hidden');
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin text-xs" aria-hidden="true"></i>' +
+          '<span>Creating…</span>';
+      }
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+      if (dirty && !submitting) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    // Ctrl/Cmd + S
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        submitBtn && submitBtn.click();
+      }
+    });
+  });
+})();
+</script>
 {% endblock %}

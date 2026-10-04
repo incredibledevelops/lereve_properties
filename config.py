@@ -51,6 +51,18 @@ def _get_scheme(url):
         return 'http'
 
 
+def _default_upload_folder():
+    """Absolute path to the uploads root, anchored to this file.
+
+    Kept as a helper so every config subclass inherits the same
+    value even when only one of them sets it explicitly.
+    """
+    return os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'static', 'uploads',
+    )
+
+
 # ============================================================
 # BASE CONFIG
 # ============================================================
@@ -62,9 +74,9 @@ class Config:
     TESTING = False
 
     # ---------- Site ----------
-    SITE_NAME = _env_str('SITE_NAME', 'Le Rêve Properties')
-    SITE_URL = _env_str('SITE_URL', 'https://lereve-properties.com').rstrip('/')
-    PUBLIC_SITE_URL = _env_str('PUBLIC_SITE_URL', 'https://lereve-properties.com').rstrip('/')
+    SITE_NAME = _env_str('SITE_NAME')
+    SITE_URL = _env_str('SITE_URL').rstrip('/')
+    PUBLIC_SITE_URL = _env_str('PUBLIC_SITE_URL').rstrip('/')
     PREFERRED_URL_SCHEME = _get_scheme(SITE_URL)
     PORT = _env_int('PORT', 5007)
 
@@ -101,18 +113,18 @@ class Config:
     )
 
     # ---------- Mail ----------
-    MAIL_SERVER = _env_str('MAIL_SERVER', 'smtp.gmail.com')
-    MAIL_PORT = _env_int('MAIL_PORT', 587)
-    MAIL_USE_TLS = _env_bool('MAIL_USE_TLS', default=True)
-    MAIL_USE_SSL = _env_bool('MAIL_USE_SSL', default=False)
-    MAIL_USERNAME = _env_str('MAIL_USERNAME', '')
-    MAIL_PASSWORD = _env_str('MAIL_PASSWORD', '')
-    MAIL_DEFAULT_SENDER = _env_str('MAIL_DEFAULT_SENDER', 'concierge@lereve-properties.com')
+    MAIL_SERVER = _env_str('MAIL_SERVER')
+    MAIL_PORT = _env_int('MAIL_PORT')
+    MAIL_USE_TLS = _env_bool('MAIL_USE_TLS')
+    MAIL_USE_SSL = _env_bool('MAIL_USE_SSL')
+    MAIL_USERNAME = _env_str('MAIL_USERNAME')
+    MAIL_PASSWORD = _env_str('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = _env_str('MAIL_DEFAULT_SENDER')
     MAIL_SUPPRESS_SEND = not (MAIL_USERNAME and MAIL_PASSWORD)
 
     # ---------- Super Admin ----------
-    SUPER_ADMIN_EMAIL = _env_str('SUPER_ADMIN_EMAIL', 'admin@lereve-properties.com').lower()
-    SUPER_ADMIN_PASSWORD = _env_str('SUPER_ADMIN_PASSWORD', 'lereve2026')
+    SUPER_ADMIN_EMAIL = _env_str('SUPER_ADMIN_EMAIL').lower()
+    SUPER_ADMIN_PASSWORD = _env_str('SUPER_ADMIN_PASSWORD')
     SUPER_ADMIN_NAME = _env_str('SUPER_ADMIN_NAME', 'Super Admin')
 
     # ---------- Currency ----------
@@ -142,7 +154,19 @@ class Config:
     # ---------- Security ----------
     WTF_CSRF_TIME_LIMIT = None
     WTF_CSRF_SSL_STRICT = True
-    MAX_CONTENT_LENGTH = _env_int('MAX_CONTENT_LENGTH', 8 * 1024 * 1024)
+
+    # Single source of truth for request body size. Also caps uploads.
+    MAX_CONTENT_LENGTH = _env_int('MAX_CONTENT_LENGTH', 8 * 1024 * 1024)  # 8 MB
+
+    # ---------- File uploads ----------
+    # Where save_image() writes. Must be an absolute path.
+    UPLOAD_FOLDER = _env_str('UPLOAD_FOLDER', _default_upload_folder())
+    # Extensions accepted by FileAllowed and utils.uploads.save_image.
+    ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
+    # Subfolders under UPLOAD_FOLDER — kept here so both routes and
+    # helpers can reference the same names.
+    UPLOAD_SUBDIR_REVIEWS = 'reviews'
+    UPLOAD_SUBDIR_PROPERTIES = 'properties'
 
     # ---------- Rate Limiting ----------
     RATELIMIT_ENABLED = _env_bool('RATELIMIT_ENABLED', default=True)
@@ -178,6 +202,14 @@ class Config:
         if not cls.MONGO_URI:
             errors.append("MONGO_URI is empty")
 
+        # Upload folder must be a writable directory (create if needed).
+        try:
+            os.makedirs(cls.UPLOAD_FOLDER, exist_ok=True)
+            if not os.access(cls.UPLOAD_FOLDER, os.W_OK):
+                errors.append(f"UPLOAD_FOLDER is not writable: {cls.UPLOAD_FOLDER}")
+        except Exception as e:
+            errors.append(f"UPLOAD_FOLDER could not be created: {e}")
+
         if cls.FLASK_ENV == 'production':
             if not cls.PAYSTACK_SECRET_KEY:
                 errors.append("PAYSTACK_SECRET_KEY is required in production")
@@ -200,6 +232,9 @@ class Config:
         return True
 
 
+# ============================================================
+# ENVIRONMENT VARIANTS
+# ============================================================
 class DevelopmentConfig(Config):
     FLASK_ENV = 'development'
     DEBUG = True
@@ -227,15 +262,18 @@ class TestingConfig(Config):
     MAIL_SUPPRESS_SEND = True
     SESSION_COOKIE_SECURE = False
     RATELIMIT_ENABLED = False
-    MONGO_URI = _env_str('MONGO_TEST_URI', 'mongodb://localhost:27017/lereve_test')
+    MONGO_URI = _env_str('MONGO_TEST_URI')
 
 
+# ============================================================
+# FACTORY
+# ============================================================
 def get_config(name=None):
-    name = (name or os.getenv('FLASK_ENV', 'production')).strip().lower()
+    name = (name or os.getenv('FLASK_ENV')).strip().lower()
     mapping = {
         'development': DevelopmentConfig, 'dev': DevelopmentConfig,
-        'production': ProductionConfig,  'prod': ProductionConfig,
-        'testing': TestingConfig,        'test': TestingConfig,
+        'production':  ProductionConfig,  'prod': ProductionConfig,
+        'testing':     TestingConfig,     'test': TestingConfig,
     }
     config_class = mapping.get(name, ProductionConfig)
     config_class.validate()

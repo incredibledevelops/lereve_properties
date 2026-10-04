@@ -6,82 +6,281 @@
 
 {% block content %}
 
+{# ── Toolbar: search + filters + add button ──────────────────── #}
 <div class="flex flex-col lg:flex-row gap-3 mb-4">
-  <form method="GET" class="relative flex-1">
-    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40 text-sm"></i>
-    <input type="text" name="q" value="{{ q }}" placeholder="Search properties…"
-           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-white focus:ring-2 focus:ring-gold text-sm">
+
+  {# Search + category filter #}
+  <form method="GET" class="flex flex-1 flex-col sm:flex-row gap-3">
+    {# Preserve category filter when searching #}
+    {% if cat_filter and cat_filter != 'all' %}
+      <input type="hidden" name="category" value="{{ cat_filter }}">
+    {% endif %}
+
+    <div class="relative flex-1">
+      <label for="prop-search" class="sr-only">Search properties</label>
+      <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2
+                text-charcoal/40 text-sm pointer-events-none" aria-hidden="true"></i>
+      <input
+        type="search"
+        id="prop-search"
+        name="q"
+        value="{{ q or '' }}"
+        placeholder="Search by title, location, or category…"
+        autocomplete="off"
+        class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-charcoal/15 bg-white
+               focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold/60
+               text-sm transition placeholder:text-charcoal/40"
+      />
+      {% if q %}
+        <a href="{{ url_for('admin.properties', category=cat_filter if cat_filter and cat_filter != 'all' else None) }}"
+           class="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full
+                  flex items-center justify-center text-charcoal/40
+                  hover:text-primary hover:bg-ivory transition
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+           aria-label="Clear search">
+          <i class="fa-solid fa-xmark text-xs" aria-hidden="true"></i>
+        </a>
+      {% endif %}
+    </div>
+
+    {# Category filter #}
+    {% if categories %}
+      <div class="relative">
+        <label for="prop-category" class="sr-only">Filter by category</label>
+        <select
+          id="prop-category"
+          name="category"
+          onchange="this.form.submit()"
+          class="w-full sm:w-56 appearance-none rounded-xl border border-charcoal/15 bg-white
+                 pl-4 pr-10 py-2.5 text-sm text-charcoal
+                 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold/60
+                 transition cursor-pointer"
+        >
+          <option value="all" {% if not cat_filter or cat_filter == 'all' %}selected{% endif %}>
+            All categories
+          </option>
+          {% for c in categories %}
+            <option value="{{ c.name }}" {% if cat_filter == c.name %}selected{% endif %}>
+              {{ c.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2
+                  text-charcoal/40 text-[10px] pointer-events-none" aria-hidden="true"></i>
+      </div>
+    {% endif %}
+
+    <button type="submit"
+            class="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
+                   bg-ivory hover:bg-gold/20 text-primary border border-charcoal/15
+                   text-xs font-bold uppercase tracking-wider transition
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+      <i class="fa-solid fa-magnifying-glass text-[10px]" aria-hidden="true"></i>
+      <span>Search</span>
+    </button>
   </form>
-  <a href="{{ url_for('admin.property_create') }}" class="bg-primary text-gold hover:bg-gold hover:text-primary px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md flex items-center gap-2">
-    <i class="fa-solid fa-plus"></i> Add Property
+
+  {# Add Property CTA #}
+  <a href="{{ url_for('admin.property_create') }}"
+     class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+            bg-primary text-gold hover:bg-gold hover:text-primary
+            text-xs font-bold uppercase tracking-wider transition-all shadow-md
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+    <span>Add Property</span>
   </a>
 </div>
 
+{# ── Active filters / results count ──────────────────────────── #}
+{% if has_filters or properties %}
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <p class="text-xs text-charcoal/60" aria-live="polite">
+      {% if properties %}
+        Showing <span class="font-semibold text-primary">{{ properties|length }}</span>
+        of <span class="font-semibold text-primary">{{ pagination.total }}</span>
+        propert{{ 'y' if pagination.total == 1 else 'ies' }}
+      {% else %}
+        No matching properties
+      {% endif %}
+
+      {% if q %}
+        · matching "<span class="font-semibold text-primary">{{ q }}</span>"
+      {% endif %}
+      {% if cat_filter and cat_filter != 'all' %}
+        · in <span class="font-semibold text-primary">{{ cat_filter }}</span>
+      {% endif %}
+    </p>
+
+    {% if has_filters %}
+      <a href="{{ url_for('admin.properties') }}"
+         class="inline-flex items-center gap-1.5 text-[11px] font-semibold
+                text-gold hover:text-primary underline underline-offset-2 transition
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded">
+        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+        <span>Clear filters</span>
+      </a>
+    {% endif %}
+  </div>
+{% endif %}
+
+{# ── Table ───────────────────────────────────────────────────── #}
 <div class="bg-white rounded-2xl border border-gold/20 shadow-sm overflow-hidden">
   <div class="overflow-x-auto">
     <table class="w-full text-sm">
+      <caption class="sr-only">List of properties</caption>
       <thead class="bg-ivory-dark/60 text-primary">
         <tr class="text-left text-[11px] uppercase tracking-wider">
-          <th class="px-5 py-3 font-bold">Property</th>
-          <th class="px-5 py-3 font-bold">Category</th>
-          <th class="px-5 py-3 font-bold">Location</th>
-          <th class="px-5 py-3 font-bold">Price</th>
-          <th class="px-5 py-3 font-bold">Rating</th>
-          <th class="px-5 py-3 font-bold text-right">Actions</th>
+          <th scope="col" class="px-5 py-3 font-bold">Property</th>
+          <th scope="col" class="px-5 py-3 font-bold">Category</th>
+          <th scope="col" class="px-5 py-3 font-bold hidden md:table-cell">Location</th>
+          <th scope="col" class="px-5 py-3 font-bold">Price</th>
+          <th scope="col" class="px-5 py-3 font-bold hidden sm:table-cell">Rating</th>
+          <th scope="col" class="px-5 py-3 font-bold text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-charcoal/5">
         {% for p in properties %}
-          <tr class="hover:bg-ivory/50 transition-colors">
+          <tr class="hover:bg-ivory/50 transition-colors group">
+
+            {# Property #}
             <td class="px-5 py-3">
               <div class="flex items-center gap-3">
                 {% if p.image %}
-                  <img src="{{ p.image }}" class="w-12 h-12 rounded-lg object-cover border border-gold/20 flex-shrink-0" loading="lazy">
+                  <img src="{{ p.image }}"
+                       alt="{{ p.title or 'Property image' }}"
+                       class="w-12 h-12 rounded-lg object-cover border border-gold/20 flex-shrink-0"
+                       loading="lazy"
+                       onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0',innerHTML:'<i class=\'fa-solid fa-house-chimney text-sm\'></i>'}))">
                 {% else %}
-                  <div class="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                  <div class="w-12 h-12 rounded-lg bg-primary/10 text-primary
+                              flex items-center justify-center flex-shrink-0"
+                       aria-hidden="true">
                     <i class="fa-solid fa-house-chimney text-sm"></i>
                   </div>
                 {% endif %}
                 <div class="min-w-0">
-                  <p class="font-semibold text-primary text-sm truncate max-w-[200px]">{{ p.title }}</p>
-                  <p class="text-[11px] text-charcoal/50">{{ p.beds }} bd · {{ p.baths }} ba · {{ p.guests }} guests</p>
+                  <p class="font-semibold text-primary text-sm truncate max-w-[200px]"
+                     title="{{ p.title }}">
+                    {{ p.title or 'Untitled' }}
+                  </p>
+                  <p class="text-[11px] text-charcoal/50">
+                    {{ p.beds or 0 }} bd · {{ p.baths or 0 }} ba · {{ p.guests or 0 }} guests
+                  </p>
                 </div>
               </div>
             </td>
+
+            {# Category #}
             <td class="px-5 py-3">
-              <span class="text-[10px] font-bold uppercase text-primary bg-gold/15 px-2.5 py-1 rounded-full border border-gold/30">{{ p.category or '—' }}</span>
+              {% if p.category %}
+                <span class="text-[10px] font-bold uppercase text-primary
+                             bg-gold/15 px-2.5 py-1 rounded-full border border-gold/30
+                             whitespace-nowrap">
+                  {{ p.category }}
+                </span>
+              {% else %}
+                <span class="text-charcoal/30 text-xs">—</span>
+              {% endif %}
             </td>
-            <td class="px-5 py-3 text-xs text-charcoal/70 truncate max-w-[160px]">{{ p.location or '—' }}</td>
+
+            {# Location #}
+            <td class="px-5 py-3 text-xs text-charcoal/70 truncate max-w-[160px] hidden md:table-cell"
+                title="{{ p.location or '' }}">
+              {{ p.location or '—' }}
+            </td>
+
+            {# Price #}
             <td class="px-5 py-3">
-              <p class="font-serif text-base font-bold text-primary">{{ p.price|format_currency }}</p>
+              <p class="font-serif text-base font-bold text-primary whitespace-nowrap">
+                {{ p.price|format_currency }}
+              </p>
+              {% if p.original_price and p.original_price > p.price %}
+                <p class="text-[10px] text-charcoal/40 line-through whitespace-nowrap">
+                  {{ p.original_price|format_currency }}
+                </p>
+              {% endif %}
             </td>
-            <td class="px-5 py-3">
-              <span class="text-xs font-bold text-primary"><i class="fa-solid fa-star text-gold mr-1"></i>{{ '{:.1f}'.format(p.rating or 0) }}</span>
+
+            {# Rating #}
+            <td class="px-5 py-3 hidden sm:table-cell">
+              <span class="text-xs font-bold text-primary whitespace-nowrap">
+                <i class="fa-solid fa-star text-gold mr-1" aria-hidden="true"></i>
+                {{ '{:.1f}'.format(p.rating or 0) }}
+              </span>
+              {% if p.reviews_count %}
+                <span class="text-[10px] text-charcoal/40 ml-1">({{ p.reviews_count }})</span>
+              {% endif %}
             </td>
+
+            {# Actions #}
             <td class="px-5 py-3">
               <div class="flex items-center justify-end gap-1.5">
-                <a href="{{ url_for('admin.property_edit', pid=p.id) }}" class="w-8 h-8 rounded-lg bg-ivory hover:bg-gold text-primary flex items-center justify-center transition-all">
-                  <i class="fa-solid fa-pen text-xs"></i>
+                <a href="{{ url_for('admin.property_edit', pid=p.id) }}"
+                   class="w-8 h-8 rounded-lg bg-ivory hover:bg-gold text-primary
+                          flex items-center justify-center transition-all
+                          focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                   title="Edit property"
+                   aria-label="Edit {{ p.title or 'property' }}">
+                  <i class="fa-solid fa-pen text-xs" aria-hidden="true"></i>
                 </a>
-                <form method="POST" action="{{ url_for('admin.property_delete', pid=p.id) }}" onsubmit="return confirm('Delete this property?')" class="inline">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-500 hover:text-white text-red-500 flex items-center justify-center transition-all">
-                    <i class="fa-solid fa-trash text-xs"></i>
-                  </button>
-                </form>
+                <button
+                  type="button"
+                  class="js-delete-property w-8 h-8 rounded-lg bg-red-50
+                         hover:bg-red-500 hover:text-white text-red-500
+                         flex items-center justify-center transition-all
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                  title="Delete property"
+                  aria-label="Delete {{ p.title or 'property' }}"
+                  data-property-id="{{ p.id }}"
+                  data-property-title="{{ p.title or 'Untitled' }}"
+                  data-delete-url="{{ url_for('admin.property_delete', pid=p.id) }}"
+                >
+                  <i class="fa-solid fa-trash text-xs" aria-hidden="true"></i>
+                </button>
               </div>
             </td>
+
           </tr>
         {% else %}
           <tr>
             <td colspan="6" class="px-5 py-16 text-center">
-              <div class="w-16 h-16 mx-auto rounded-full bg-gold/10 flex items-center justify-center mb-3">
-                <i class="fa-solid fa-house-chimney text-gold text-2xl"></i>
-              </div>
-              <p class="text-sm text-charcoal/60 mb-4">No properties yet.</p>
-              <a href="{{ url_for('admin.property_create') }}" class="inline-flex items-center gap-2 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all">
-                <i class="fa-solid fa-plus"></i> Add First Property
-              </a>
+              {% if has_filters %}
+                {# Filtered empty state #}
+                <div class="w-16 h-16 mx-auto rounded-full bg-gold/10
+                            flex items-center justify-center mb-3" aria-hidden="true">
+                  <i class="fa-solid fa-magnifying-glass text-gold text-2xl"></i>
+                </div>
+                <p class="text-sm font-semibold text-primary mb-1">No matching properties</p>
+                <p class="text-xs text-charcoal/60 mb-4 max-w-sm mx-auto">
+                  Try adjusting your search or category filter.
+                </p>
+                <a href="{{ url_for('admin.properties') }}"
+                   class="inline-flex items-center gap-2 bg-primary text-gold
+                          hover:bg-gold hover:text-primary px-6 py-2.5 rounded-full
+                          text-xs font-bold uppercase tracking-wider transition-all
+                          focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+                  <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                  <span>Clear filters</span>
+                </a>
+              {% else %}
+                {# Global empty state #}
+                <div class="w-16 h-16 mx-auto rounded-full bg-gold/10
+                            flex items-center justify-center mb-3" aria-hidden="true">
+                  <i class="fa-solid fa-house-chimney text-gold text-2xl"></i>
+                </div>
+                <p class="text-sm font-semibold text-primary mb-1">No properties yet</p>
+                <p class="text-xs text-charcoal/60 mb-4 max-w-sm mx-auto">
+                  Add your first listing to start building the catalog.
+                </p>
+                <a href="{{ url_for('admin.property_create') }}"
+                   class="inline-flex items-center gap-2 bg-primary text-gold
+                          hover:bg-gold hover:text-primary px-6 py-2.5 rounded-full
+                          text-xs font-bold uppercase tracking-wider transition-all
+                          focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+                  <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                  <span>Add First Property</span>
+                </a>
+              {% endif %}
             </td>
           </tr>
         {% endfor %}
@@ -90,17 +289,248 @@
   </div>
 </div>
 
+{# ── Pagination ──────────────────────────────────────────────── #}
 {% if pagination.pages > 1 %}
-  <div class="flex items-center justify-between mt-5">
-    <p class="text-xs text-charcoal/60">Showing <b>{{ pagination.items|length }}</b> of <b>{{ pagination.total }}</b></p>
-    <div class="flex items-center gap-2">
-      <a href="?page={{ pagination.page - 1 }}{% if q %}&q={{ q }}{% endif %}"
-         class="px-4 py-2 rounded-lg border border-primary/20 bg-white text-xs font-bold uppercase {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}">Prev</a>
-      <span class="px-3 py-2 text-xs text-charcoal/60">Page {{ pagination.page }} / {{ pagination.pages }}</span>
-      <a href="?page={{ pagination.page + 1 }}{% if q %}&q={{ q }}{% endif %}"
-         class="px-4 py-2 rounded-lg border border-primary/20 bg-white text-xs font-bold uppercase {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}">Next</a>
+  {% set base_args = {} %}
+  {% if q %}{% set _ = base_args.update({'q': q}) %}{% endif %}
+  {% if cat_filter and cat_filter != 'all' %}{% set _ = base_args.update({'category': cat_filter}) %}{% endif %}
+
+  <nav class="flex flex-wrap items-center justify-between gap-3 mt-5"
+       aria-label="Pagination">
+
+    <p class="text-xs text-charcoal/60">
+      Page <span class="font-semibold text-primary">{{ pagination.page }}</span>
+      of <span class="font-semibold text-primary">{{ pagination.pages }}</span>
+      · <span class="font-semibold text-primary">{{ pagination.total }}</span> total
+    </p>
+
+    <div class="flex items-center gap-1.5">
+
+      {# First #}
+      <a href="{{ url_for('admin.properties', page=1, **base_args) }}"
+         class="px-2.5 py-2 rounded-lg border border-primary/20 bg-white text-primary
+                hover:bg-ivory text-xs transition
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}"
+         aria-label="First page"
+         {% if not pagination.has_prev %}aria-disabled="true" tabindex="-1"{% endif %}>
+        <i class="fa-solid fa-angles-left text-[10px]" aria-hidden="true"></i>
+      </a>
+
+      {# Prev #}
+      <a href="{{ url_for('admin.properties', page=pagination.page - 1, **base_args) }}"
+         class="px-3 py-2 rounded-lg border border-primary/20 bg-white text-primary
+                hover:bg-ivory text-xs font-bold uppercase tracking-wider transition
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}"
+         aria-label="Previous page"
+         {% if not pagination.has_prev %}aria-disabled="true" tabindex="-1"{% endif %}>
+        Prev
+      </a>
+
+      {# Page indicator #}
+      <span class="px-3 py-2 text-xs text-charcoal/60 tabular-nums">
+        {{ pagination.page }} / {{ pagination.pages }}
+      </span>
+
+      {# Next #}
+      <a href="{{ url_for('admin.properties', page=pagination.page + 1, **base_args) }}"
+         class="px-3 py-2 rounded-lg border border-primary/20 bg-white text-primary
+                hover:bg-ivory text-xs font-bold uppercase tracking-wider transition
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}"
+         aria-label="Next page"
+         {% if not pagination.has_next %}aria-disabled="true" tabindex="-1"{% endif %}>
+        Next
+      </a>
+
+      {# Last #}
+      <a href="{{ url_for('admin.properties', page=pagination.pages, **base_args) }}"
+         class="px-2.5 py-2 rounded-lg border border-primary/20 bg-white text-primary
+                hover:bg-ivory text-xs transition
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}"
+         aria-label="Last page"
+         {% if not pagination.has_next %}aria-disabled="true" tabindex="-1"{% endif %}>
+        <i class="fa-solid fa-angles-right text-[10px]" aria-hidden="true"></i>
+      </a>
+
     </div>
-  </div>
+  </nav>
 {% endif %}
 
+{# ── Delete confirmation modal ──────────────────────────────── #}
+<div id="deleteModal"
+     class="hidden fixed inset-0 z-50 items-center justify-center p-4
+            bg-charcoal/50 backdrop-blur-sm"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="deleteModalTitle">
+
+  <div class="bg-white rounded-2xl border border-gold/30 shadow-xl
+              max-w-md w-full p-6 animate-fade-in">
+
+    <div class="flex items-start gap-4 mb-5">
+      <div class="w-12 h-12 rounded-full bg-red-50 text-red-500
+                  flex items-center justify-center flex-shrink-0"
+           aria-hidden="true">
+        <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h3 id="deleteModalTitle" class="font-bold text-primary mb-1">
+          Delete property?
+        </h3>
+        <p class="text-sm text-charcoal/70">
+          You're about to delete
+          <span id="deleteModalName" class="font-semibold text-primary"></span>.
+          This action cannot be undone.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+      <button type="button"
+              id="deleteModalCancel"
+              class="px-4 py-2.5 rounded-xl border border-charcoal/15 bg-white
+                     text-charcoal/70 hover:bg-ivory text-xs font-bold
+                     uppercase tracking-wider transition
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+        Cancel
+      </button>
+
+      <form id="deleteForm" method="POST" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit"
+                id="deleteModalConfirm"
+                class="w-full sm:w-auto px-4 py-2.5 rounded-xl
+                       bg-red-500 hover:bg-red-600 text-white
+                       text-xs font-bold uppercase tracking-wider transition
+                       flex items-center justify-center gap-2
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400
+                       disabled:opacity-60 disabled:cursor-wait">
+          <i class="fa-solid fa-trash text-[10px]" aria-hidden="true"></i>
+          <span>Delete</span>
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  var modal       = document.getElementById('deleteModal');
+  var modalName   = document.getElementById('deleteModalName');
+  var deleteForm  = document.getElementById('deleteForm');
+  var cancelBtn   = document.getElementById('deleteModalCancel');
+  var confirmBtn  = document.getElementById('deleteModalConfirm');
+  var lastFocus   = null;
+
+  if (!modal || !deleteForm) return;
+
+  function openModal(url, title) {
+    lastFocus = document.activeElement;
+    deleteForm.setAttribute('action', url);
+    modalName.textContent = '"' + title + '"';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    // Focus the cancel button first for safety
+    setTimeout(function () { cancelBtn && cancelBtn.focus(); }, 40);
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+    if (lastFocus && typeof lastFocus.focus === 'function') {
+      lastFocus.focus();
+    }
+  }
+
+  // Delegate clicks on delete buttons
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.js-delete-property');
+    if (!btn) return;
+    e.preventDefault();
+    openModal(btn.dataset.deleteUrl, btn.dataset.propertyTitle || 'this property');
+  });
+
+  cancelBtn && cancelBtn.addEventListener('click', closeModal);
+
+  // Click outside modal closes it
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) closeModal();
+  });
+
+  // Esc closes; focus trap when Tab is pressed
+  document.addEventListener('keydown', function (e) {
+    if (modal.classList.contains('hidden')) return;
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeModal();
+      return;
+    }
+
+    if (e.key === 'Tab') {
+      var focusables = modal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusables.length) return;
+      var first = focusables[0];
+      var last  = focusables[focusables.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+
+  // Prevent double-submit
+  deleteForm.addEventListener('submit', function () {
+    if (!confirmBtn) return;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin text-[10px]" aria-hidden="true"></i>' +
+      '<span>Deleting…</span>';
+  });
+
+  // Keyboard shortcut: "/" focuses search (unless already typing)
+  var searchInput = document.getElementById('prop-search');
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+    var tag = (document.activeElement && document.activeElement.tagName) || '';
+    var typing = tag === 'INPUT' || tag === 'TEXTAREA' ||
+                 tag === 'SELECT' || document.activeElement.isContentEditable;
+    if (typing) return;
+    e.preventDefault();
+    searchInput && searchInput.focus();
+  });
+
+  // Auto-submit the search form after a short pause while typing
+  var searchForm = searchInput && searchInput.form;
+  if (searchForm && searchInput) {
+    var searchTimer;
+    searchInput.addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        // Only auto-submit if there's at least 2 chars or the field was cleared
+        var v = searchInput.value.trim();
+        if (v.length === 0 || v.length >= 2) searchForm.submit();
+      }, 700);
+    });
+  }
+})();
+</script>
 {% endblock %}

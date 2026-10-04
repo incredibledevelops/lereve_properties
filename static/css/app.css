@@ -67,3 +67,43 @@ input:focus, select:focus, textarea:focus {
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   SIDEBAR — mobile drawer + desktop column
+   ============================================================ */
+
+/* Base */
+.sidebar {
+  transition: transform .25s ease;
+  will-change: transform;
+}
+
+/* Prevent body scroll when the mobile drawer is open */
+body.sidebar-open {
+  overflow: hidden;
+}
+
+/* ---------- Mobile & tablet (below lg) ---------- */
+@media (max-width: 1023.98px) {
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, .25);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* ---------- Desktop (lg and up) ---------- */
+@media (min-width: 1024px) {
+  .sidebar {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar { transition: none; }
+}
+

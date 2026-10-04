@@ -6,6 +6,15 @@
 
 {% block content %}
 
+{% set events        = events or {} %}
+{% set events_prev   = events_prev or {} %}
+{% set page_views    = page_views or [] %}
+{% set bookings_daily = bookings_daily or [] %}
+{% set status_breakdown = status_breakdown or {} %}
+{% set top_searches  = top_searches or [] %}
+{% set top_props     = top_props or [] %}
+{% set user_growth   = user_growth or [] %}
+
 {# ============================================================
    TOOLBAR — range + refresh + export
    ============================================================ #}
@@ -30,16 +39,23 @@
 
   {# Actions #}
   <div class="flex items-center gap-2">
+    <span class="hidden sm:inline text-[10px] uppercase tracking-widest text-charcoal/40 font-bold mr-2"
+          id="analyticsUpdatedAt">
+      Updated just now
+    </span>
+
     <button type="button"
             id="analyticsRefresh"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-white
                    text-primary hover:border-gold hover:text-gold transition-all
-                   text-xs font-bold uppercase tracking-wider">
+                   text-xs font-bold uppercase tracking-wider
+                   disabled:opacity-60 disabled:cursor-wait">
       <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
       <span>Refresh</span>
     </button>
 
     <a href="{{ url_for('admin.analytics', days=days, format='csv') }}"
+       title="Download the raw analytics for the last {{ days }} days as a CSV file"
        class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-white
               text-primary hover:border-gold hover:text-gold transition-all
               text-xs font-bold uppercase tracking-wider">
@@ -53,17 +69,19 @@
    KPI ROW — with delta vs previous period
    ============================================================ #}
 {% set kpi_cards = [
-  {'key': 'page_view',      'label': 'Page Views',      'value': events.page_view     or 0},
-  {'key': 'property_view',  'label': 'Property Views',  'value': events.property_view or 0},
-  {'key': 'search',         'label': 'Searches',        'value': events.search        or 0},
-  {'key': 'register',       'label': 'New Users',       'value': events.register      or 0},
+  {'key': 'page_view',      'label': 'Page Views',      'value': events.get('page_view', 0)},
+  {'key': 'property_view',  'label': 'Property Views',  'value': events.get('property_view', 0)},
+  {'key': 'search',         'label': 'Searches',        'value': events.get('search', 0)},
+  {'key': 'register',       'label': 'New Users',       'value': events.get('register', 0)},
 ] %}
 
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
   {% for k in kpi_cards %}
-    {% set prev  = (events_prev or {}).get(k.key, 0) %}
-    {% set delta = (k.value - prev) if prev else None %}
-    {% set pct   = ((delta / prev) * 100) | round(1) if prev else None %}
+    {% set current = k.value | int %}
+    {% set prev    = events_prev.get(k.key, 0) | int %}
+    {% set delta   = current - prev if prev else None %}
+    {% set pct     = ((delta / prev) * 100) | round(0) | int if prev and prev > 0 else None %}
+    {% set pct_capped = (pct if pct is not none and pct <= 999 else 999) %}
 
     <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm
                 hover:shadow-md transition-shadow">
@@ -71,18 +89,27 @@
         {{ k.label }}
       </span>
       <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
-        {{ "{:,}".format(k.value) }}
+        {{ "{:,}".format(current) }}
       </p>
 
-      {% if pct is not none %}
+      {% if prev > 0 and pct is not none %}
         {% set positive = pct >= 0 %}
         <p class="text-[11px] mt-1 flex items-center gap-1
                   {% if positive %}text-emerald-600{% else %}text-red-600{% endif %}">
           <i class="fa-solid {% if positive %}fa-arrow-trend-up{% else %}fa-arrow-trend-down{% endif %}"
              aria-hidden="true"></i>
-          <span>{{ '+' if positive else '' }}{{ pct }}%</span>
+          <span class="tabular-nums">
+            {{ '+' if positive else '' }}{{ pct_capped }}{% if pct > 999 %}%+{% else %}%{% endif %}
+          </span>
           <span class="text-charcoal/40 font-normal">vs prev {{ days }}d</span>
         </p>
+      {% elif current > 0 and prev == 0 %}
+        <p class="text-[11px] mt-1 flex items-center gap-1 text-emerald-600">
+          <i class="fa-solid fa-sparkles" aria-hidden="true"></i>
+          <span>New this period</span>
+        </p>
+      {% elif current == 0 and prev == 0 %}
+        <p class="text-[11px] mt-1 text-charcoal/40">No data yet</p>
       {% else %}
         <p class="text-[11px] mt-1 text-charcoal/40">&nbsp;</p>
       {% endif %}
@@ -111,7 +138,7 @@
                 aria-label="Line chart of bookings and revenue over the last {{ days }} days"></canvas>
       </div>
     {% else %}
-      <div class="flex flex-col items-center justify-center py-12 text-center">
+      <div class="flex flex-col items-center justify-center py-12 text-center" aria-live="polite">
         <i class="fa-solid fa-chart-line text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
         <p class="text-xs text-charcoal/50">No bookings recorded in this period.</p>
       </div>
@@ -134,7 +161,7 @@
                 aria-label="Bar chart of page views over the last {{ days }} days"></canvas>
       </div>
     {% else %}
-      <div class="flex flex-col items-center justify-center py-12 text-center">
+      <div class="flex flex-col items-center justify-center py-12 text-center" aria-live="polite">
         <i class="fa-solid fa-chart-column text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
         <p class="text-xs text-charcoal/50">No page views recorded in this period.</p>
       </div>
@@ -153,7 +180,7 @@
       <h3 class="font-serif text-lg font-semibold text-primary">Booking Status</h3>
       {% if status_breakdown %}
         <span class="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold">
-          {{ status_breakdown.values() | sum }} total
+          {{ "{:,}".format(status_breakdown.values() | map('int') | sum) }} total
         </span>
       {% endif %}
     </div>
@@ -165,7 +192,7 @@
                 aria-label="Doughnut chart of booking statuses"></canvas>
       </div>
     {% else %}
-      <div class="flex flex-col items-center justify-center py-12 text-center">
+      <div class="flex flex-col items-center justify-center py-12 text-center" aria-live="polite">
         <i class="fa-solid fa-circle-half-stroke text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
         <p class="text-xs text-charcoal/50">No bookings yet.</p>
       </div>
@@ -188,7 +215,7 @@
                 aria-label="Line chart of new user registrations over the last {{ days }} days"></canvas>
       </div>
     {% else %}
-      <div class="flex flex-col items-center justify-center py-12 text-center">
+      <div class="flex flex-col items-center justify-center py-12 text-center" aria-live="polite">
         <i class="fa-solid fa-user-plus text-3xl text-charcoal/20 mb-3" aria-hidden="true"></i>
         <p class="text-xs text-charcoal/50">No new registrations in this period.</p>
       </div>
@@ -205,17 +232,25 @@
   <section class="bg-white rounded-2xl p-6 border border-gold/20 shadow-sm">
     <h3 class="font-serif text-lg font-semibold text-primary mb-4">Top Search Terms</h3>
 
-    {% set has_searches = top_searches and top_searches | selectattr('_id') | list %}
-    {% if has_searches %}
+    {# Build the filtered list explicitly — Jinja's selectattr('_id') is
+       not reliable for dicts with a key literally named `_id`. #}
+    {% set ns = namespace(real=[]) %}
+    {% for s in top_searches %}
+      {% if s.get('_id') %}
+        {% set _ = ns.real.append(s) %}
+      {% endif %}
+    {% endfor %}
+
+    {% if ns.real %}
       <ul class="space-y-1 text-sm">
-        {% for s in top_searches if s._id %}
+        {% for s in ns.real %}
           <li class="flex items-center justify-between gap-3 p-2.5 rounded-lg hover:bg-ivory/60 transition-colors">
             <span class="text-charcoal/80 truncate">
               <i class="fa-solid fa-magnifying-glass text-[10px] text-gold mr-2" aria-hidden="true"></i>
-              {{ s._id }}
+              {{ s.get('_id') }}
             </span>
             <span class="font-bold text-primary tabular-nums shrink-0">
-              {{ "{:,}".format(s.count or 0) }}
+              {{ "{:,}".format(s.get('count') or 0) }}
             </span>
           </li>
         {% endfor %}
@@ -238,10 +273,10 @@
           <li class="flex items-center justify-between gap-3 p-2.5 rounded-lg hover:bg-ivory/60 transition-colors">
             <span class="text-charcoal/80 truncate flex items-center gap-2 min-w-0">
               <i class="fa-solid fa-house-chimney text-[10px] text-gold shrink-0" aria-hidden="true"></i>
-              <span class="truncate">{{ p.title or 'Unknown property' }}</span>
+              <span class="truncate">{{ p.get('title') or 'Unknown property' }}</span>
             </span>
             <span class="font-bold text-primary tabular-nums shrink-0">
-              {{ "{:,}".format(p.count or 0) }}
+              {{ "{:,}".format(p.get('count') or 0) }}
             </span>
           </li>
         {% endfor %}
@@ -259,7 +294,8 @@
    ACCESSIBLE SUMMARY TABLE (screen-reader friendly)
    ============================================================ #}
 <details class="mt-8 bg-white rounded-2xl border border-gold/20 shadow-sm">
-  <summary class="cursor-pointer px-6 py-4 font-serif text-sm font-semibold text-primary
+  <summary aria-label="Analytics raw data table, collapsed"
+           class="cursor-pointer px-6 py-4 font-serif text-sm font-semibold text-primary
                   flex items-center gap-2 hover:bg-ivory/40 rounded-2xl">
     <i class="fa-solid fa-table-list text-gold" aria-hidden="true"></i>
     View raw data as a table
@@ -275,11 +311,11 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-charcoal/5">
-        {% for key, val in (events or {}).items() %}
+        {% for key, val in events.items() %}
           <tr>
             <td class="py-2 pr-3 text-charcoal/80">{{ key | replace('_', ' ') | title }}</td>
             <td class="py-2 px-3 text-right font-bold text-primary tabular-nums">
-              {{ "{:,}".format(val or 0) }}
+              {{ "{:,}".format(val | int) }}
             </td>
           </tr>
         {% else %}
@@ -296,45 +332,46 @@
 
 
 {% block scripts %}
-{# Chart.js — loaded once, with a fallback check #}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
-        integrity="sha384-9nhczxUqK87ggFh2wFvQpT9PJbLce9y27+8CqQ8F9sL3zJqz3q3T6kx0Dfzj0p1T"
-        crossorigin="anonymous"></script>
+{# Chart.js — no SRI hash here because the previous hash was for a different build
+   and silently blocked the script in Chrome. If you want SRI, generate the
+   correct hash at https://www.srihash.org/ for this exact URL. #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <script>
 (function () {
   'use strict';
 
-  // ---------- Guard: if Chart.js didn't load, show a friendly fallback ----------
+  // ---------- Guard: Chart.js failed to load ----------
   if (typeof window.Chart === 'undefined') {
-    document.querySelectorAll('canvas').forEach(cv => {
+    console.error('[analytics] Chart.js did not load. Check the CDN URL and network.');
+    document.querySelectorAll('canvas').forEach(function (cv) {
       const wrap = cv.parentElement;
       if (!wrap) return;
-      wrap.innerHTML = `
-        <div class="flex flex-col items-center justify-center h-full text-center">
-          <i class="fa-solid fa-triangle-exclamation text-2xl text-red-500 mb-2"></i>
-          <p class="text-xs text-charcoal/60">
-            Chart library failed to load.<br>
-            <button type="button" onclick="window.location.reload()"
-                    class="text-gold underline mt-2">Reload page</button>
-          </p>
-        </div>`;
+      wrap.innerHTML =
+        '<div class="flex flex-col items-center justify-center h-full text-center">' +
+          '<i class="fa-solid fa-triangle-exclamation text-2xl text-red-500 mb-2" aria-hidden="true"></i>' +
+          '<p class="text-xs text-charcoal/60">' +
+            'Chart library failed to load.<br>' +
+            '<button type="button" onclick="window.location.reload()" ' +
+                    'class="text-gold underline mt-2">Reload page</button>' +
+          '</p>' +
+        '</div>';
     });
     return;
   }
 
   // ---------- Data (injected by the view) ----------
-  const bookingsData = {{ bookings_daily|tojson }};
-  const viewsData    = {{ page_views|tojson }};
-  const statusData   = {{ status_breakdown|tojson }};
-  const usersData    = {{ user_growth|tojson }};
+  const bookingsData = {{ bookings_daily | tojson }};
+  const viewsData    = {{ page_views    | tojson }};
+  const statusData   = {{ status_breakdown | tojson }};
+  const usersData    = {{ user_growth   | tojson }};
 
   // ---------- Palette ----------
   const gold    = '#c9a84c';
   const primary = '#1a3a2a';
   const emerald = '#10b981';
 
-  // ---------- Chart.js global defaults (per-chart overrides below) ----------
+  // ---------- Chart.js global defaults ----------
   Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
   Chart.defaults.font.size   = 11;
   Chart.defaults.color       = 'rgba(44,44,42,0.55)';
@@ -347,6 +384,7 @@
   Chart.defaults.plugins.legend.labels.boxWidth      = 8;
 
   const gridColor = 'rgba(44,44,42,0.06)';
+  const nf = new Intl.NumberFormat('en-GH');
 
   // ============================================================
   // 1. Bookings & Revenue (dual axis)
@@ -355,12 +393,12 @@
   if (bookingsCanvas && bookingsData.length) {
     new Chart(bookingsCanvas, {
       data: {
-        labels: bookingsData.map(d => d._id),
+        labels: bookingsData.map(function (d) { return d._id; }),
         datasets: [
           {
             type: 'line',
             label: 'Bookings',
-            data: bookingsData.map(d => d.count || 0),
+            data: bookingsData.map(function (d) { return d.count || 0; }),
             borderColor: primary,
             backgroundColor: 'rgba(26,58,42,0.08)',
             borderWidth: 2,
@@ -373,7 +411,7 @@
           {
             type: 'line',
             label: 'Revenue (₵)',
-            data: bookingsData.map(d => d.revenue || 0),
+            data: bookingsData.map(function (d) { return d.revenue || 0; }),
             borderColor: gold,
             backgroundColor: 'rgba(201,168,76,0.08)',
             borderWidth: 2,
@@ -393,11 +431,12 @@
           legend: { position: 'top', align: 'end' },
           tooltip: {
             callbacks: {
-              label: (ctx) => {
+              label: function (ctx) {
+                const v = ctx.parsed.y || 0;
                 if (ctx.dataset.yAxisID === 'y1') {
-                  return `${ctx.dataset.label}: ₵${(ctx.parsed.y || 0).toLocaleString()}`;
+                  return ctx.dataset.label + ': ₵' + nf.format(v);
                 }
-                return `${ctx.dataset.label}: ${ctx.parsed.y || 0}`;
+                return ctx.dataset.label + ': ' + nf.format(v);
               },
             },
           },
@@ -416,7 +455,7 @@
             grid: { drawOnChartArea: false },
             beginAtZero: true,
             ticks: {
-              callback: (v) => '₵' + (v >= 1000 ? (v / 1000) + 'k' : v),
+              callback: function (v) { return '₵' + (v >= 1000 ? (v / 1000) + 'k' : v); },
             },
             title: { display: true, text: 'Revenue', font: { size: 10 } },
           },
@@ -433,10 +472,10 @@
     new Chart(viewsCanvas, {
       type: 'bar',
       data: {
-        labels: viewsData.map(d => d._id),
+        labels: viewsData.map(function (d) { return d._id; }),
         datasets: [{
           label: 'Page Views',
-          data: viewsData.map(d => d.count || 0),
+          data: viewsData.map(function (d) { return d.count || 0; }),
           backgroundColor: primary,
           hoverBackgroundColor: gold,
           borderRadius: 4,
@@ -446,7 +485,16 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                return nf.format(ctx.parsed.y || 0) + ' views';
+              },
+            },
+          },
+        },
         scales: {
           x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
           y: { grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } },
@@ -461,21 +509,32 @@
   const statusCanvas = document.getElementById('statusChart');
   if (statusCanvas && statusData && Object.keys(statusData).length) {
     const statusColors = {
-      confirmed:  emerald,
-      pending:    gold,
-      cancelled:  '#dc2626',
-      completed:  primary,
-      refunded:   '#f59e0b',
+      confirmed:               emerald,
+      pending:                 gold,
+      cancelled:               '#dc2626',
+      completed:               primary,
+      refunded:                '#f59e0b',
+      'cancellation-requested':'#f97316',
+      'refund-pending':        '#8b5cf6',
     };
+    const fallback = '#94a3b8';
+
     const labels = Object.keys(statusData);
-    const colors = labels.map(l => statusColors[l] || '#94a3b8');
+    const colors = labels.map(function (l) {
+      return statusColors[l] || fallback;
+    });
+    const total = labels.reduce(function (a, k) {
+      return a + (Number(statusData[k]) || 0);
+    }, 0);
 
     new Chart(statusCanvas, {
       type: 'doughnut',
       data: {
-        labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+        labels: labels.map(function (l) {
+          return l.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+        }),
         datasets: [{
-          data: labels.map(l => statusData[l]),
+          data: labels.map(function (l) { return statusData[l]; }),
           backgroundColor: colors,
           borderColor: '#fff',
           borderWidth: 2,
@@ -490,10 +549,10 @@
           legend: { position: 'bottom' },
           tooltip: {
             callbacks: {
-              label: (ctx) => {
-                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                const pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
-                return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+              label: function (ctx) {
+                const v = ctx.parsed || 0;
+                const pct = total ? Math.round((v / total) * 100) : 0;
+                return ctx.label + ': ' + nf.format(v) + ' (' + pct + '% of ' + nf.format(total) + ')';
               },
             },
           },
@@ -510,10 +569,10 @@
     new Chart(usersCanvas, {
       type: 'line',
       data: {
-        labels: usersData.map(d => d._id),
+        labels: usersData.map(function (d) { return d._id; }),
         datasets: [{
           label: 'New Users',
-          data: usersData.map(d => d.count || 0),
+          data: usersData.map(function (d) { return d.count || 0; }),
           borderColor: gold,
           backgroundColor: 'rgba(201,168,76,0.15)',
           borderWidth: 2,
@@ -526,7 +585,16 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                return nf.format(ctx.parsed.y || 0) + ' new user' + (ctx.parsed.y === 1 ? '' : 's');
+              },
+            },
+          },
+        },
         scales: {
           x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
           y: { grid: { color: gridColor }, beginAtZero: true, ticks: { precision: 0 } },
@@ -536,21 +604,24 @@
   }
 
   // ============================================================
-  // 5. Refresh button — soft reload
+  // 5. Refresh button — spinner + bfcache-safe restore
   // ============================================================
   const refreshBtn = document.getElementById('analyticsRefresh');
   if (refreshBtn) {
+    const original = refreshBtn.innerHTML;
     refreshBtn.addEventListener('click', function () {
-      const original = refreshBtn.innerHTML;
+      if (refreshBtn.disabled) return;
       refreshBtn.disabled = true;
       refreshBtn.innerHTML =
         '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Refreshing…</span>';
       window.location.reload();
-      // No need to restore — page unloads.
-      setTimeout(() => {
+    });
+    // If the page is restored from bfcache, unstick the button.
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) {
         refreshBtn.disabled = false;
         refreshBtn.innerHTML = original;
-      }, 4000);
+      }
     });
   }
 })();

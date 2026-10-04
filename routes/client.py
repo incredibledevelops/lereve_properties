@@ -2,13 +2,22 @@
 ============================================================
 CLIENT PORTAL ROUTES
 ============================================================
+Client-facing dashboard, bookings, wishlist, inquiries,
+concierge messages, profile, and preferences.
+
+IMPORTANT — thread_id convention:
+    Every user's concierge thread uses Message.thread_id_for_user(user_id)
+    → "user-<user_id>" (e.g. "user-6650a1b2c3d4e5f6a7b8c9d0").
+    The admin inbox reads threads via Message.latest_per_user(), which
+    groups on the same key. Never inline f"user-{current_user.id}"
+    anywhere else — always use `_current_thread_id()`.
 """
 import logging
 from datetime import datetime, timezone
 
 from flask import (
     Blueprint, render_template, redirect, url_for,
-    flash, request, jsonify, abort,
+    flash, request, jsonify, abort, current_app,
 )
 from flask_login import login_required, current_user
 
@@ -19,13 +28,15 @@ from models import (
 )
 from forms import ProfileForm, PreferencesForm, ChangePasswordForm
 from utils import client_required
-from services import track_event
 
 
 log = logging.getLogger(__name__)
 client_bp = Blueprint('client', __name__, template_folder='templates/client')
 
 
+# ============================================================
+# HELPERS
+# ============================================================
 def _to_date(s):
     """Return a date or None (never silently defaults to today)."""
     if not s:
@@ -41,6 +52,7 @@ def _to_date(s):
 
 
 def _bucket_bookings(bookings):
+    """Split bookings into (upcoming, past) for the dashboard."""
     today = datetime.now(timezone.utc).date()
     upcoming, past = [], []
     for b in bookings:
@@ -48,11 +60,13 @@ def _bucket_bookings(bookings):
         status = b.get('status')
         if status == 'confirmed' and ci and ci >= today:
             upcoming.append(b)
-        elif (ci and ci < today) or status in ('completed', 'cancelled', 'cancellation-requested'):
+        elif (ci and ci < today) or status in (
+            'completed', 'cancelled', 'cancellation-requested'
+        ):
             past.append(b)
         else:
             upcoming.append(b)
-    # Sort upcoming by check_in ascending, past by check_in descending
+
     upcoming.sort(key=lambda b: b.get('check_in') or '')
     past.sort(key=lambda b: b.get('check_in') or '', reverse=True)
     return upcoming, past
@@ -62,9 +76,13 @@ def _build_recent_activity(bookings, wish_ids, message_count):
     items = []
     for b in bookings[:3]:
         items.append({
-            'icon': 'fa-check-circle' if b.get('status') == 'completed' else 'fa-calendar-check',
+            'icon': 'fa-check-circle' if b.get('status') == 'completed'
+                    else 'fa-calendar-check',
             'color': 'emerald' if b.get('status') == 'completed' else 'primary',
-            'text': f"{'Completed stay at' if b.get('status') == 'completed' else 'Booked'} {b.get('property')}",
+            'text': (
+                f"{'Completed stay at' if b.get('status') == 'completed' else 'Booked'} "
+                f"{b.get('property')}"
+            ),
             'date': b.get('created_at'),
         })
     if wish_ids:
@@ -80,6 +98,14 @@ def _build_recent_activity(bookings, wish_ids, message_count):
             'date': utcnow().isoformat(),
         })
     return items
+
+
+def _current_thread_id():
+    """Canonical thread id for the signed-in client.
+
+    MUST match Message.latest_per_user() / admin.message_thread().
+    """
+    return Message.thread_id_for_user(current_user.id)
 
 
 # ============================================================
@@ -121,7 +147,9 @@ def bookings():
     upcoming, past = _bucket_bookings(all_bookings)
     return render_template(
         'client/bookings.html',
-        bookings=all_bookings, upcoming=upcoming, past=past,
+        bookings=all_bookings,
+        upcoming=upcoming,
+        past=past,
         active_section='bookings',
     )
 
@@ -134,7 +162,8 @@ def booking_detail(bid):
     if not b or b.get('user_id') != current_user.id:
         abort(404)
     return render_template(
-        'client/booking_detail.html', booking=b,
+        'client/booking_detail.html',
+        booking=b,
         active_section='bookings',
     )
 
@@ -152,16 +181,17 @@ def cancel_booking(bid):
 
     Booking.update(bid, {'status': 'cancellation-requested'})
 
-    # Notify admin via message thread
-    thread_id = f"user-{current_user.id}"
+    # Notify admin via the canonical message thread.
     Message.create({
-        'thread_id': thread_id,
-        'user_id': current_user.id,
+        'thread_id': _current_thread_id(),
+        'user_id':   str(current_user.id),
         'user_name': current_user.name,
         'user_email': current_user.email,
-        'sender': 'client',
-        'text': f'[System] Cancellation requested for {b.get("property")} '
-                f'({b.get("confirmation_id") or b.get("id")}).',
+        'sender':    'client',
+        'text': (
+            f'[System] Cancellation requested for {b.get("property")} '
+            f'({b.get("confirmation_id") or b.get("id")}).'
+        ),
     })
 
     flash('Cancellation request sent to concierge.', 'info')
@@ -182,7 +212,8 @@ def wishlist():
         if p:
             items.append(p)
     return render_template(
-        'client/wishlist.html', items=items,
+        'client/wishlist.html',
+        items=items,
         active_section='wishlist',
     )
 
@@ -205,7 +236,8 @@ def remove_wishlist(pid):
 def inquiries():
     items = Inquiry.by_email(current_user.email)
     return render_template(
-        'client/inquiries.html', inquiries=items,
+        'client/inquiries.html',
+        inquiries=items,
         active_section='inquiries',
     )
 
@@ -217,7 +249,7 @@ def inquiries():
 @login_required
 @client_required
 def messages():
-    thread_id = f"user-{current_user.id}"
+    thread_id = _current_thread_id()
     msgs = Message.by_thread(thread_id)
     Message.mark_read(thread_id, by='client')
     return render_template(
@@ -239,23 +271,24 @@ def send_message():
     if len(text) > 2000:
         return jsonify({'success': False, 'error': 'Message too long'}), 400
 
-    thread_id = f"user-{current_user.id}"
+    thread_id = _current_thread_id()
     Message.create({
-        'thread_id': thread_id,
-        'user_id': current_user.id,
-        'user_name': current_user.name,
+        'thread_id':  thread_id,
+        'user_id':    str(current_user.id),
+        'user_name':  current_user.name,
         'user_email': current_user.email,
-        'sender': 'client',
-        'text': text,
+        'sender':     'client',
+        'text':       text,
     })
 
-    # Notify admin by email (best-effort, async)
+    # Best-effort admin notification (never blocks the client response).
     try:
-        from flask import current_app
         from services.mailer import send_new_message_notification
         admin_email = current_app.config.get('SUPER_ADMIN_EMAIL')
         if admin_email:
-            send_new_message_notification(admin_email, current_user.name, text[:120])
+            send_new_message_notification(
+                admin_email, current_user.name, text[:120]
+            )
     except Exception:
         log.exception('Failed to notify admin about message')
 
@@ -266,14 +299,24 @@ def send_message():
 @login_required
 @client_required
 def poll_messages():
-    """Returns messages created since a given timestamp (for live chat)."""
+    """Return messages created since ?since=<iso> for the live thread."""
     since = request.args.get('since', '')
-    thread_id = f"user-{current_user.id}"
+    thread_id = _current_thread_id()
+
     all_msgs = Message.by_thread(thread_id)
     if since:
-        all_msgs = [m for m in all_msgs if (m.get('created_at') or '') > since]
-        Message.mark_read(thread_id, by='client')
-    return jsonify({'success': True, 'messages': all_msgs})
+        all_msgs = [
+            m for m in all_msgs
+            if (m.get('created_at') or '') > since
+        ]
+        if all_msgs:
+            Message.mark_read(thread_id, by='client')
+
+    return jsonify({
+        'success':   True,
+        'messages':  all_msgs,
+        'thread_id': thread_id,   # lets the client confirm the thread
+    })
 
 
 # ============================================================
@@ -289,7 +332,7 @@ def profile():
     if form.submit.data and form.validate_on_submit():
         new_email = form.email.data.lower().strip()
 
-        # Check email collision
+        # Check email collision.
         if new_email != current_user.email:
             existing = User.find_by_email(new_email)
             if existing and existing.id != current_user.id:
@@ -297,15 +340,16 @@ def profile():
                 return redirect(url_for('client.profile'))
 
         try:
+            from bson import ObjectId
             db.db['users'].update_one(
-                {'_id': __import__('bson').ObjectId(current_user.id)},
+                {'_id': ObjectId(current_user.id)},
                 {'$set': {
-                    'name': form.name.data.strip(),
-                    'email': new_email,
-                    'phone': form.phone.data or '',
+                    'name':    form.name.data.strip(),
+                    'email':   new_email,
+                    'phone':   form.phone.data or '',
                     'country': form.country.data or '',
-                    'bio': form.bio.data or '',
-                }}
+                    'bio':     form.bio.data or '',
+                }},
             )
             flash('Profile updated.', 'success')
         except Exception:
@@ -316,8 +360,11 @@ def profile():
 
     bookings = Booking.by_user(current_user.id, limit=200)
     today = datetime.now(timezone.utc).date()
-    completed = [b for b in bookings if (_to_date(b.get('check_in')) and _to_date(b['check_in']) < today)
-                 or b.get('status') == 'completed']
+    completed = [
+        b for b in bookings
+        if (_to_date(b.get('check_in')) and _to_date(b['check_in']) < today)
+        or b.get('status') == 'completed'
+    ]
 
     nights = 0
     countries = set()
@@ -331,9 +378,9 @@ def profile():
             countries.add(loc[-1].strip())
 
     stats = {
-        'member_since': current_user.member_since,
-        'total_stays': len(completed),
-        'total_nights': nights,
+        'member_since':    current_user.member_since,
+        'total_stays':     len(completed),
+        'total_nights':    nights,
         'total_countries': len(countries),
     }
     return render_template(
@@ -353,9 +400,12 @@ def change_password():
             flash('Current password is incorrect.', 'error')
         else:
             from werkzeug.security import generate_password_hash
+            from bson import ObjectId
             db.db['users'].update_one(
-                {'_id': __import__('bson').ObjectId(current_user.id)},
-                {'$set': {'password_hash': generate_password_hash(form.new.data)}}
+                {'_id': ObjectId(current_user.id)},
+                {'$set': {
+                    'password_hash': generate_password_hash(form.new.data),
+                }},
             )
             flash('Password updated successfully.', 'success')
     else:
@@ -372,33 +422,39 @@ def change_password():
 def preferences():
     prefs = current_user.preferences or {}
     form = PreferencesForm(data={
-        'type': prefs.get('type', ''),
-        'diet': prefs.get('diet', ''),
-        'amenities': ', '.join(prefs.get('amenities', [])),
+        'type':       prefs.get('type', ''),
+        'diet':       prefs.get('diet', ''),
+        'amenities':  ', '.join(prefs.get('amenities', [])),
         'newsletter': prefs.get('comm', {}).get('newsletter', True),
-        'sms': prefs.get('comm', {}).get('sms', False),
-        'promo': prefs.get('comm', {}).get('promo', True),
+        'sms':        prefs.get('comm', {}).get('sms', False),
+        'promo':      prefs.get('comm', {}).get('promo', True),
     })
 
     if form.validate_on_submit():
         new_prefs = {
             'type': form.type.data,
             'diet': form.diet.data or '',
-            'amenities': [a.strip() for a in (form.amenities.data or '').split(',') if a.strip()],
+            'amenities': [
+                a.strip()
+                for a in (form.amenities.data or '').split(',')
+                if a.strip()
+            ],
             'comm': {
                 'newsletter': form.newsletter.data,
-                'sms': form.sms.data,
-                'promo': form.promo.data,
+                'sms':        form.sms.data,
+                'promo':      form.promo.data,
             },
         }
+        from bson import ObjectId
         db.db['users'].update_one(
-            {'_id': __import__('bson').ObjectId(current_user.id)},
-            {'$set': {'preferences': new_prefs}}
+            {'_id': ObjectId(current_user.id)},
+            {'$set': {'preferences': new_prefs}},
         )
         flash('Preferences saved.', 'success')
         return redirect(url_for('client.preferences'))
 
     return render_template(
-        'client/preferences.html', form=form,
+        'client/preferences.html',
+        form=form,
         active_section='preferences',
     )

@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+{% block title %}About · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+
+<!-- ============ HERO ============ -->
+<section class="relative pt-24 pb-24 bg-primary text-soft-white overflow-hidden">
+  <div class="absolute inset-0 opacity-25 bg-cover bg-center"
+       style="background-image:url('https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=2000&q=80');"></div>
+  <div class="absolute inset-0 bg-gradient-to-b from-primary/85 via-primary/95 to-primary"></div>
+  <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <p class="why-eyebrow mb-4 animate-fade-in">Our Story</p>
+    <h1 class="font-serif text-4xl sm:text-6xl font-light text-ivory tracking-wide leading-tight max-w-4xl mx-auto mb-6 animate-fade-in" style="animation-delay:.1s">
+      A home worth <span class="italic text-gold font-normal">coming back to</span>
+    </h1>
+    <p class="text-ivory/80 text-base sm:text-lg font-light max-w-2xl mx-auto leading-relaxed mb-10 animate-fade-in" style="animation-delay:.2s">
+      Le Rêve means "the dream." And the dream is that every traveler to Africa can find a place that feels like home.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in" style="animation-delay:.3s">
+      <a href="{{ url_for('auth.stays') }}"
+         class="bg-gold text-primary hover:bg-white px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary">
+        <i class="fa-solid fa-house-chimney mr-2" aria-hidden="true"></i> Browse Stays
+      </a>
+      <a href="{{ url_for('auth.contact') }}"
+         class="border border-ivory/40 text-ivory hover:bg-ivory hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+        <i class="fa-solid fa-paper-plane mr-2" aria-hidden="true"></i> Talk to Kwame
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATS STRIP ============ -->
+<section class="py-12 bg-primary-dark text-ivory border-y border-gold/20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-to="100" data-suffix="+">0+</span>
+      <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Guests Hosted</span>
+    </div>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-to="4.98" data-decimals="2" data-suffix=" ★">0 ★</span>
+      <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Average Rating</span>
+    </div>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-to="15" data-suffix=" min">0 min</span>
+      <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">From Kotoka Airport</span>
+    </div>
+    <div data-stat>
+      <span class="font-serif text-4xl sm:text-5xl font-bold text-gold block" data-count-text="Pan-African">Pan-African</span>
+      <span class="text-[11px] text-ivory/70 uppercase tracking-[0.2em] mt-2 block">Trade &amp; Hospitality</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOUNDER ============ -->
+<section class="py-20 md:py-28 bg-ivory relative overflow-hidden">
+  <div class="kente-pattern absolute inset-0 opacity-20 pointer-events-none"></div>
+
+  <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-14 items-center">
+
+      <!-- Photo column -->
+      <div class="lg:col-span-2 reveal">
+        <div class="relative mx-auto max-w-sm">
+          <!-- Decorative frame -->
+          <div class="absolute -inset-4 rounded-3xl border border-gold/30 rotate-3"></div>
+          <div class="absolute -inset-4 rounded-3xl border border-gold/20 -rotate-2"></div>
+
+          <div class="relative rounded-3xl overflow-hidden shadow-luxury border-2 border-gold/40 bg-primary">
+            <img src="{{ url_for('static', filename='images/kwame-boakye.jpg') }}"
+                 alt="Kwame Boakye, Founder of Le Rêve Properties"
+                 width="800" height="1000"
+                 loading="lazy"
+                 class="w-full h-auto object-cover"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="hidden w-full aspect-[4/5] items-center justify-center bg-gradient-to-br from-primary via-primary-dark to-primary">
+              <div class="text-center">
+                <div class="w-24 h-24 mx-auto rounded-full bg-gold text-primary flex items-center justify-center font-serif text-4xl font-bold mb-4">KB</div>
+                <p class="font-serif text-2xl text-ivory">Kwame Boakye</p>
+                <p class="text-gold text-xs uppercase tracking-[0.25em] mt-2">Founder</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Badge -->
+          <div class="absolute -bottom-4 -right-4 bg-gold text-primary rounded-2xl px-5 py-3 shadow-luxury border-2 border-ivory">
+            <p class="text-[10px] uppercase tracking-widest font-bold opacity-70">Since</p>
+            <p class="font-serif text-2xl font-bold leading-none">2019</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bio column -->
+      <div class="lg:col-span-3 reveal" data-delay="100">
+        <p class="why-eyebrow mb-4 text-gold-dark">Meet the Founder</p>
+        <h2 class="font-serif text-3xl sm:text-4xl lg:text-5xl font-light text-primary leading-tight mb-6">
+          Hi — I'm <span class="italic text-gold font-normal">Kwame Boakye</span>
+        </h2>
+
+        <div class="space-y-5 text-charcoal/80 leading-relaxed text-[15px] font-light">
+          <p>
+            <strong class="font-semibold text-primary">Mr. Dave Africa</strong> — founder of Le Rêve Properties and a
+            Pan-African entrepreneur based in Accra, Ghana. I started Le Rêve with a simple belief: that everyone who
+            comes to Africa deserves a place that feels like home — comfortable, welcoming, and genuinely affordable.
+            Not a transaction. A real experience.
+          </p>
+
+          <p>
+            I've personally hosted over <strong class="font-semibold text-primary">100 guests</strong> from across
+            Ghana and around the world — business travelers, families, diaspora returning home, explorers arriving
+            for the first time. Every single one of them has taught me something about what great hospitality
+            actually means. That's why Le Rêve exists: not just as a place to stay, but as a space where people feel
+            seen, valued, and genuinely taken care of.
+          </p>
+
+          <p>
+            Beyond hospitality, I work as a <strong class="font-semibold text-primary">Pan-African trade connector</strong>
+            — helping African businesses expand across borders, build trusted partnerships, and access new markets.
+            That wider mission shapes everything about Le Rêve: we're not just renting rooms, we're building the
+            hospitality infrastructure Africa deserves — one home, one partnership, one guest at a time.
+          </p>
+        </div>
+
+        <!-- Signature quote -->
+        <blockquote class="mt-8 pl-5 border-l-2 border-gold">
+          <p class="font-serif italic text-lg text-primary leading-relaxed">
+            "We're not building a rental business. We're building a reason to come home to Africa."
+          </p>
+          <footer class="mt-2 text-xs uppercase tracking-[0.2em] text-gold-dark font-semibold">
+            — Kwame Boakye, Founder
+          </footer>
+        </blockquote>
+
+        <!-- Contact shortcuts -->
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="https://wa.me/233547975252?text=Hi%20Kwame%2C%20I%27d%20like%20to%20talk."
+             target="_blank" rel="noopener"
+             class="inline-flex items-center gap-2 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+            <i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Message Kwame
+          </a>
+          <a href="{{ url_for('auth.contact') }}"
+             class="inline-flex items-center gap-2 border border-primary/30 text-primary hover:border-gold hover:text-gold px-6 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Send an Inquiry
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT MAKES THIS HOME UNIQUE ============ -->
+<section class="relative py-20 md:py-28 bg-primary overflow-hidden">
+  <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
+
+  <div class="relative max-w-5xl mx-auto px-6 md:px-10 text-center">
+    <div class="reveal">
+      <p class="why-eyebrow mb-4">What Makes This Home Unique</p>
+    </div>
+
+    <div class="reveal" data-delay="100">
+      <blockquote class="relative inline-block">
+        <i class="fa-solid fa-quote-left absolute -top-6 -left-2 text-4xl text-gold/25" aria-hidden="true"></i>
+        <p class="font-serif italic text-2xl sm:text-3xl lg:text-4xl text-ivory leading-snug font-light max-w-3xl mx-auto">
+          "A budget-friendly space that never compromises on warmth, comfort, or the feeling that you truly belong here."
+        </p>
+        <i class="fa-solid fa-quote-right absolute -bottom-6 -right-2 text-4xl text-gold/25" aria-hidden="true"></i>
+      </blockquote>
+    </div>
+
+    <!-- Three-pillar strip -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 text-left">
+      <div class="why-card reveal" data-delay="0">
+        <div class="why-icon"><i class="fa-solid fa-heart" aria-hidden="true"></i></div>
+        <div class="why-num">01</div>
+        <h3 class="why-title">Warmth first</h3>
+        <p class="why-body">You're greeted, not processed. Every stay begins with a real conversation about what you need.</p>
+      </div>
+      <div class="why-card reveal" data-delay="80">
+        <div class="why-icon"><i class="fa-solid fa-couch" aria-hidden="true"></i></div>
+        <div class="why-num">02</div>
+        <h3 class="why-title">Comfort, uncompromised</h3>
+        <p class="why-body">Reliable Wi-Fi, quality linens, a kitchen that works, a bed you'll actually want to sleep in.</p>
+      </div>
+      <div class="why-card reveal" data-delay="160">
+        <div class="why-icon"><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i></div>
+        <div class="why-num">03</div>
+        <h3 class="why-title">Belonging, not booking</h3>
+        <p class="why-body">By the time you leave, you'll know the best spot for breakfast, the fastest route downtown, and someone here who's got your back.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MISSION ============ -->
+<section class="py-20 md:py-28 bg-ivory relative overflow-hidden">
+  <div class="kente-pattern absolute inset-0 opacity-20 pointer-events-none"></div>
+
+  <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-14 reveal max-w-2xl mx-auto">
+      <p class="why-eyebrow mb-4 text-gold-dark">Our Mission</p>
+      <h2 class="font-serif text-3xl sm:text-4xl lg:text-5xl font-light text-primary leading-tight">
+        Building the hospitality <span class="italic text-gold font-normal">infrastructure Africa deserves</span>
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white rounded-3xl p-7 border border-gold/20 shadow-luxury reveal" data-delay="0">
+        <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-5">
+          <i class="fa-solid fa-globe text-lg" aria-hidden="true"></i>
+        </div>
+        <h3 class="font-serif text-xl font-semibold text-primary mb-3">Cross-border connection</h3>
+        <p class="text-sm text-charcoal/70 leading-relaxed font-light">
+          We help African businesses expand across borders, build trusted partnerships, and access new markets —
+          starting with the world's most underrated hospitality destination: our own.
+        </p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-7 border border-gold/20 shadow-luxury reveal" data-delay="80">
+        <div class="w-12 h-12 rounded-2xl bg-gold/20 text-gold-dark flex items-center justify-center mb-5">
+          <i class="fa-solid fa-seedling text-lg" aria-hidden="true"></i>
+        </div>
+        <h3 class="font-serif text-xl font-semibold text-primary mb-3">Local roots, global standard</h3>
+        <p class="text-sm text-charcoal/70 leading-relaxed font-light">
+          Every home is sourced, furnished, and managed by people who live here. The standard is international; the
+          soul is unmistakably Ghanaian.
+        </p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-7 border border-gold/20 shadow-luxury reveal" data-delay="160">
+        <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-5">
+          <i class="fa-solid fa-people-roof text-lg" aria-hidden="true"></i>
+        </div>
+        <h3 class="font-serif text-xl font-semibold text-primary mb-3">One guest at a time</h3>
+        <p class="text-sm text-charcoal/70 leading-relaxed font-light">
+          Growth isn't measured in rooms — it's measured in returns. Guests who come back, guests who refer friends,
+          guests who eventually call this place home.
+        </p>
+      </div>
+    </div>
+
+    <div class="text-center mt-12 reveal">
+      <a href="{{ url_for('auth.why_us') }}"
+         class="inline-flex items-center gap-2 border border-gold/50 text-primary hover:bg-gold hover:text-primary px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Read the Le Rêve Difference
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TESTIMONIALS ============ -->
+{% if reviews %}
+<section class="py-20 md:py-28 bg-ivory-dark/40 relative overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12 reveal">
+    <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">In Their Own Words</span>
+    <h2 class="font-serif text-3xl sm:text-4xl font-light text-primary">
+      Guests who <span class="italic text-gold">became family</span>
+    </h2>
+  </div>
+
+  <div class="relative">
+    <div class="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-ivory-dark/40 to-transparent z-10" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-ivory-dark/40 to-transparent z-10" aria-hidden="true"></div>
+
+    <div class="carousel-wrap px-4">
+      <div class="carousel-track" id="aboutReviewsTrack">
+        <div class="flex gap-6 shrink-0" id="aboutReviewsSource">
+          {% for r in reviews %}
+            {% set rating = (r.rating or 0)|int %}
+            {% set avatar_url = r.avatar or ('https://ui-avatars.com/api/?name=' ~ ((r.name or 'Guest')|urlencode) ~ '&background=c9a84c&color=1a3a2a') %}
+            <article class="w-[320px] sm:w-[380px] flex-shrink-0 bg-white rounded-3xl p-7 border border-gold/20 shadow-luxury flex flex-col justify-between relative">
+              <i class="fa-solid fa-quote-left text-4xl text-gold/20 absolute top-5 right-5" aria-hidden="true"></i>
+              <div>
+                <div class="flex items-center gap-1 text-gold text-xs mb-4">
+                  {% for i in range(5) %}<i class="fa-solid fa-star {% if i < rating %}text-gold{% else %}text-charcoal/20{% endif %}" aria-hidden="true"></i>{% endfor %}
+                  <span class="text-charcoal/60 text-[11px] ml-2 font-medium">Verified</span>
+                </div>
+                <p class="text-charcoal/80 text-sm leading-relaxed italic mb-6 line-clamp-2">"{{ r.text|e }}"</p>
+              </div>
+              <div class="flex items-center gap-4 pt-4 border-t border-charcoal/5">
+                <img src="{{ avatar_url|e }}" alt="{{ r.name or 'Guest' }}"
+                     class="w-12 h-12 rounded-full object-cover border-2 border-gold" loading="lazy"
+                     onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ (r.name or 'Guest')|urlencode }}&amp;background=c9a84c&amp;color=1a3a2a';">
+                <div class="min-w-0">
+                  <h4 class="font-serif text-base font-semibold text-primary truncate">{{ r.name|e or 'Anonymous' }}</h4>
+                  <p class="text-xs text-gold truncate">{{ r.property|e or '—' }}</p>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ============ FINAL CTA ============ -->
+<section class="py-20 md:py-24 bg-primary relative overflow-hidden">
+  <div class="kente-pattern absolute inset-0 opacity-40 pointer-events-none"></div>
+  <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
+    <span class="text-gold text-xs uppercase tracking-[0.25em] font-semibold block mb-3">Come as a Guest</span>
+    <h2 class="font-serif text-3xl sm:text-5xl font-light text-ivory mb-6">
+      Return as <span class="italic text-gold">family.</span>
+    </h2>
+    <p class="text-ivory/70 text-base font-light max-w-2xl mx-auto mb-10 leading-relaxed">
+      Reserve your sanctuary, or speak with Kwame or one of our private advisors to design your perfect Accra stay.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="{{ url_for('auth.stays') }}"
+         class="bg-gold text-primary hover:bg-white px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary">
+        <i class="fa-solid fa-house-chimney mr-2" aria-hidden="true"></i> Browse Stays
+      </a>
+      <a href="https://wa.me/233547975252?text=Hi%20Le%20R%C3%AAve%2C%20I%27d%20like%20to%20talk%20to%20a%20concierge."
+         target="_blank" rel="noopener"
+         class="border border-ivory/40 text-ivory hover:bg-ivory hover:text-primary px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+        <i class="fa-brands fa-whatsapp mr-2" aria-hidden="true"></i> Chat on WhatsApp
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BACK TO TOP ============ -->
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})"
+        class="fixed bottom-6 right-6 z-30 w-11 h-11 rounded-full bg-primary text-gold border border-gold/40 shadow-luxury flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+        aria-label="Back to top">
+  <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+</button>
+
+<!-- ============ PAGE-SCOPED STYLES ============ -->
+<style>
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Founder photo tilt on hover */
+  .reveal img {
+    transition: transform .5s ease;
+  }
+  .reveal:hover img {
+    transform: scale(1.02);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .reveal:hover img { transform: none; }
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ============================================================
+   ABOUT PAGE — page-specific only.
+   ============================================================ */
+
+function initScrollReveal() {
+  const els = document.querySelectorAll('.reveal');
+  if (!els.length || !('IntersectionObserver' in window)) {
+    els.forEach(el => el.classList.add('is-visible'));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const delay = parseInt(entry.target.dataset.delay || '0', 10);
+        setTimeout(() => entry.target.classList.add('is-visible'), delay);
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+  els.forEach(el => io.observe(el));
+}
+
+function setupStatsCounters() {
+  const blocks = document.querySelectorAll('[data-stat]');
+  if (blocks.length === 0 || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target.querySelector('[data-count-to]');
+      if (!el) { io.unobserve(entry.target); return; }
+      const target = parseFloat(el.dataset.countTo);
+      const decimals = parseInt(el.dataset.decimals || '0', 10);
+      const suffix = el.dataset.suffix || '';
+      animateNumber(el, target, decimals, suffix, 1400);
+      io.unobserve(entry.target);
+    });
+  }, { threshold: 0.4 });
+  blocks.forEach(b => io.observe(b));
+}
+function animateNumber(el, target, decimals, suffix, duration) {
+  const start = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = target * eased;
+    el.textContent = val.toFixed(decimals) + suffix;
+    if (t < 1) requestAnimationFrame(tick);
+    else el.textContent = target.toFixed(decimals) + suffix;
+  }
+  requestAnimationFrame(tick);
+}
+
+function initReviewsMarquee() {
+  const track  = document.getElementById('aboutReviewsTrack');
+  const source = document.getElementById('aboutReviewsSource');
+  if (!track || !source || source.children.length === 0) return;
+  if (typeof buildEndlessMarquee === 'function') {
+    buildEndlessMarquee('aboutReviewsTrack', 'aboutReviewsSource', { speed: 65 });
+  }
+}
+
+function setupBackToTop() {
+  const btn = document.getElementById('backToTop');
+  if (!btn) return;
+  const onScroll = () => {
+    const show = window.scrollY > 400;
+    btn.classList.toggle('opacity-0', !show);
+    btn.classList.toggle('pointer-events-none', !show);
+    btn.classList.toggle('opacity-100', show);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initScrollReveal();
+  setupStatsCounters();
+  setupBackToTop();
+
+  initReviewsMarquee();
+  setTimeout(initReviewsMarquee, 400);
+  setTimeout(initReviewsMarquee, 1200);
+
+  let rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(rt);
+    rt = setTimeout(initReviewsMarquee, 250);
+  });
+  if (document.fonts?.ready) document.fonts.ready.then(() => setTimeout(initReviewsMarquee, 300));
+});
+</script>
+{% endblock %}

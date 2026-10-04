@@ -181,6 +181,8 @@ tailwind.config = {
          class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors {% if request.endpoint == 'auth.stays' %}text-gold font-semibold{% endif %}">Stays</a>
       <a href="{{ url_for('auth.why_us') }}"
          class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors {% if request.endpoint == 'auth.why_us' %}text-gold font-semibold{% endif %}">Why Us</a>
+      <a href="{{ url_for('auth.about') }}"
+         class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors {% if request.endpoint == 'auth.about' %}text-gold font-semibold{% endif %}">About</a>
       <a href="{{ url_for('auth.reviews_page') }}"
          class="hover:text-gold focus:outline-none focus-visible:text-gold transition-colors {% if request.endpoint == 'auth.reviews_page' %}text-gold font-semibold{% endif %}">Reviews</a>
       <a href="{{ url_for('auth.contact') }}"
@@ -222,6 +224,7 @@ tailwind.config = {
       <a href="{{ url_for('auth.index') }}"        onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.index' %}text-gold{% endif %}">Home</a>
       <a href="{{ url_for('auth.stays') }}"        onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.stays' %}text-gold{% endif %}">Stays</a>
       <a href="{{ url_for('auth.why_us') }}"       onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.why_us' %}text-gold{% endif %}">Why Us</a>
+      <a href="{{ url_for('auth.about') }}"        onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.about' %}text-gold{% endif %}">About</a>
       <a href="{{ url_for('auth.reviews_page') }}" onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.reviews_page' %}text-gold{% endif %}">Reviews</a>
       <a href="{{ url_for('auth.contact') }}"      onclick="toggleMobileMenu()" class="py-2 border-b border-gold/10 hover:text-gold {% if request.endpoint == 'auth.contact' %}text-gold{% endif %}">Contact</a>
       <div class="pt-4 flex flex-col gap-3">
@@ -294,6 +297,7 @@ tailwind.config = {
         <h4 class="font-serif text-lg font-semibold text-gold mb-4">Company</h4>
         <ul class="space-y-2 text-xs text-ivory/70 font-light">
           <li><a href="{{ url_for('auth.contact') }}"      class="hover:text-gold transition-colors">Contact</a></li>
+          <li><a href="{{ url_for('auth.about') }}"        class="hover:text-gold transition-colors">About Kwame</a></li>
           <li><a href="{{ url_for('auth.why_us') }}"       class="hover:text-gold transition-colors">Why Le Rêve</a></li>
           <li><a href="{{ url_for('auth.reviews_page') }}" class="hover:text-gold transition-colors">Reviews</a></li>
         </ul>
@@ -358,11 +362,33 @@ const CURRENT_USER    = {
   email: {{ (current_user.email if current_user.is_authenticated else '')|tojson }}
 };
 
+/* ============================================================
+   EXPOSE GLOBALS ON window
+   ------------------------------------------------------------
+   `const` / `function` at the top level of a classic <script>
+   create lexical bindings, NOT properties on `window`. External
+   scripts such as booking.js, chat.js, and shared.js read these
+   via `window.*`, so we mirror them here.
+   ============================================================ */
+window.CSRF_TOKEN          = CSRF_TOKEN;
+window.CURRENCY_SYMBOL     = CURRENCY_SYMBOL;
+window.IS_LOGGED_IN        = IS_LOGGED_IN;
+window.IS_ADMIN            = IS_ADMIN;
+window.CURRENT_USER        = CURRENT_USER;
+window.escapeHtml          = escapeHtml;
+window.formatGHS           = formatGHS;
+window.showToast           = showToast;
+window.openModal           = openModal;
+window.closeModal          = closeModal;
+window.closeQuickViewModal = closeQuickViewModal;
+window.closeBookingModal   = closeBookingModal;
+
 const URLS = {
   apiJournal:  "{{ url_for('api.journal_subscribe') if 'api.journal_subscribe' is defined else '/api/journal' }}",
   apiWishlist: "{{ url_for('api.wishlist_toggle')   if 'api.wishlist_toggle'   is defined else '/api/wishlist' }}",
   authStays:   "{{ url_for('auth.stays') }}"
 };
+window.URLS = URLS;
 
 function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -382,7 +408,6 @@ function openModal(el) {
   if (!el) return;
   el.classList.remove('hidden'); el.classList.add('flex');
   document.body.classList.add('modal-open');
-  // focus trap: focus first focusable element
   const focusable = el.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
   if (focusable) focusable.focus();
 }
@@ -424,7 +449,6 @@ document.addEventListener('DOMContentLoaded', () => {
     {% endif %}
   {% endwith %}
 
-  // Initialize favorites from localStorage
   try {
     const stored = localStorage.getItem('leReveFavorites');
     if (stored) {
@@ -469,7 +493,6 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeQuickViewModal();
     closeBookingModal();
-    // close mobile drawer on escape
     const drawer = document.getElementById('mobileDrawer');
     if (drawer && !drawer.classList.contains('hidden')) toggleMobileMenu();
   }

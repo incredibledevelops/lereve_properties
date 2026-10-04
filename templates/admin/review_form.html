@@ -1,0 +1,770 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit' if review else 'Add' }} Review · Admin Console{% endblock %}
+{% set active_section = 'reviews' %}
+{% block page_title %}{{ 'Edit Review' if review else 'Add Review' }}{% endblock %}
+{% block page_subtitle %}
+  {{ 'Update guest feedback details' if review else 'Publish a curated guest review' }}
+{% endblock %}
+
+{% block content %}
+
+{# ── Breadcrumb ──────────────────────────────────────────────── #}
+<nav class="flex items-center gap-2 text-xs text-charcoal/60 mb-5"
+     aria-label="Breadcrumb">
+  <a href="{{ url_for('admin.reviews') }}"
+     class="hover:text-gold transition-colors focus:outline-none
+            focus-visible:ring-2 focus-visible:ring-gold rounded">
+    Reviews
+  </a>
+  <i class="fa-solid fa-chevron-right text-[9px] text-charcoal/30" aria-hidden="true"></i>
+  <span class="text-primary font-semibold" aria-current="page">
+    {{ 'Edit' if review else 'New' }}
+  </span>
+</nav>
+
+<div class="max-w-2xl mx-auto bg-white rounded-3xl border border-gold/20 shadow-sm overflow-hidden">
+  <form method="POST" id="reviewForm" enctype="multipart/form-data"
+        action="{{ url_for('admin.review_edit', rid=review.id) if review else url_for('admin.review_create') }}"
+        class="p-6 sm:p-8 space-y-5" novalidate>
+    {{ form.hidden_tag() }}
+    <input type="hidden" id="formAction" name="action" value="save">
+
+    {# ── Form-level errors ──────────────────────────────────── #}
+    {% if form.errors %}
+      <div class="rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3"
+           role="alert">
+        <i class="fa-solid fa-circle-exclamation text-red-500 mt-0.5" aria-hidden="true"></i>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-red-700 mb-1">
+            Please fix {{ form.errors|length }}
+            issue{{ 's' if form.errors|length != 1 else '' }} below.
+          </p>
+          <ul class="text-xs text-red-600 list-disc list-inside space-y-0.5">
+            {% for field, errs in form.errors.items() %}
+              {% for err in errs %}
+                <li>
+                  <span class="font-semibold">{{ form[field].label.text if form[field] is defined else field }}:</span>
+                  {{ err }}
+                </li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+
+    {# ============================================================
+       Section: Guest & Property
+       ============================================================ #}
+    <section>
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-user text-[10px]"></i>
+        </div>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-primary">
+          Guest &amp; Stay
+        </h2>
+      </header>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="{{ form.name.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Guest Name <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2
+                      text-charcoal/30 text-xs pointer-events-none" aria-hidden="true"></i>
+            {{ form.name(
+              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition
+                     {% if form.name.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+              required=true,
+              autofocus=(not review),
+              maxlength=120,
+              placeholder="e.g. Amara Okafor"
+            ) }}
+          </div>
+          {% if form.name.errors %}
+            <p class="text-[11px] text-red-600 mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation text-[9px]" aria-hidden="true"></i>
+              {{ form.name.errors[0] }}
+            </p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.property.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Property <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <div class="relative">
+            <i class="fa-solid fa-house-chimney absolute left-3.5 top-1/2 -translate-y-1/2
+                      text-charcoal/30 text-xs pointer-events-none" aria-hidden="true"></i>
+            {{ form.property(
+              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition
+                     {% if form.property.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+              required=true,
+              maxlength=200,
+              placeholder="e.g. Villa Serena"
+            ) }}
+          </div>
+          {% if form.property.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.property.errors[0] }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Section: Rating & Status
+       ============================================================ #}
+    <section>
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-star text-[10px]"></i>
+        </div>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-primary">
+          Rating &amp; Status
+        </h2>
+      </header>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {# Rating #}
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Rating <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+
+          <div class="relative">
+            <div class="sr-only">
+              {{ form.rating(
+                id="ratingInput",
+                required=true,
+                min=1, max=5, step=1
+              ) }}
+            </div>
+
+            <div id="starPicker"
+                 class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl
+                        border border-charcoal/15 bg-ivory/40"
+                 role="radiogroup"
+                 aria-label="Rating from 1 to 5 stars">
+              {% for i in range(1, 6) %}
+                <button type="button"
+                        class="star-btn w-8 h-8 rounded-lg flex items-center justify-center
+                               text-2xl text-charcoal/20
+                               hover:bg-gold/10 transition-all
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                        data-value="{{ i }}"
+                        role="radio"
+                        aria-checked="false"
+                        aria-label="{{ i }} star{{ 's' if i != 1 else '' }}"
+                        tabindex="{{ 0 if i == 1 else -1 }}">
+                  <i class="fa-solid fa-star" aria-hidden="true"></i>
+                </button>
+              {% endfor %}
+              <span id="ratingLabel"
+                    class="text-xs text-charcoal/60 ml-2 whitespace-nowrap">
+                Tap to rate
+              </span>
+            </div>
+          </div>
+
+          {% if form.rating.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.rating.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        {# Status #}
+        <div>
+          <label for="{{ form.status.id }}"
+                 class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Status <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <div class="relative">
+            {{ form.status(
+              class="w-full appearance-none pl-4 pr-10 py-2.5 rounded-xl
+                     border border-charcoal/15 bg-ivory/40
+                     focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                     text-sm transition cursor-pointer
+                     {% if form.status.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+              required=true,
+              id="statusSelect"
+            ) }}
+            <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2
+                      text-charcoal/40 text-[10px] pointer-events-none" aria-hidden="true"></i>
+          </div>
+
+          <p id="statusHint" class="text-[11px] text-charcoal/50 mt-1 flex items-center gap-1">
+            <i class="fa-solid fa-circle-info text-[9px]" aria-hidden="true"></i>
+            <span></span>
+          </p>
+
+          {% if form.status.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.status.errors[0] }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Section: Content
+       ============================================================ #}
+    <section>
+      <header class="flex items-center gap-2 mb-4">
+        <div class="w-6 h-6 rounded-full bg-gold/15 text-gold
+                    flex items-center justify-center" aria-hidden="true">
+          <i class="fa-solid fa-comment-dots text-[10px]"></i>
+        </div>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-primary">
+          Review Content
+        </h2>
+      </header>
+
+      <div class="space-y-4">
+        {# ── Avatar upload ──────────────────────────────────── #}
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1.5">
+            Guest Avatar
+            <span class="text-charcoal/40 normal-case tracking-normal font-normal ml-1">(optional)</span>
+          </label>
+
+          <div id="avatarDropzone"
+               class="relative rounded-2xl border-2 border-dashed border-charcoal/20
+                      bg-ivory/40 hover:bg-ivory/60 hover:border-gold/50
+                      transition-colors cursor-pointer
+                      focus-within:ring-2 focus-within:ring-gold/60"
+               tabindex="0"
+               role="button"
+               aria-label="Upload avatar image">
+
+            {{ form.avatar(
+              id="avatarInput",
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer",
+              accept="image/png,image/jpeg,image/webp,image/gif"
+            ) }}
+
+            <div id="avatarPrompt"
+                 class="flex flex-col items-center justify-center gap-2 p-5 text-center pointer-events-none">
+              <div class="w-12 h-12 rounded-full bg-gold/15 text-gold
+                          flex items-center justify-center">
+                <i class="fa-solid fa-cloud-arrow-up text-lg" aria-hidden="true"></i>
+              </div>
+              <p class="text-sm font-semibold text-primary">
+                Click or drag an image to upload
+              </p>
+              <p class="text-[11px] text-charcoal/50">
+                PNG, JPG, WEBP, or GIF · up to 8 MB
+              </p>
+            </div>
+
+            <div id="avatarPreviewWrap"
+                 class="hidden items-center gap-4 p-4">
+              <div class="w-20 h-20 rounded-full overflow-hidden flex-shrink-0
+                          bg-primary/10 ring-2 ring-gold/30">
+                <img id="avatarPreview"
+                     src=""
+                     alt=""
+                     class="w-full h-full object-cover">
+              </div>
+              <div class="min-w-0 flex-1 pointer-events-none">
+                <p id="avatarFileName"
+                   class="text-sm font-semibold text-primary truncate">
+                  avatar.jpg
+                </p>
+                <p id="avatarFileMeta"
+                   class="text-[11px] text-charcoal/50">
+                  120 KB
+                </p>
+                <p class="text-[11px] text-charcoal/50 mt-1">
+                  Click to replace, or remove below.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div id="avatarRemoveRow" class="hidden mt-2 flex items-center justify-between">
+            <p id="avatarStatus" class="text-[11px] text-charcoal/50"></p>
+            <button type="button"
+                    id="avatarRemoveBtn"
+                    class="inline-flex items-center gap-1.5 text-[11px] font-semibold
+                           text-red-500 hover:text-red-600 underline underline-offset-2
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded">
+              <i class="fa-solid fa-trash text-[10px]" aria-hidden="true"></i>
+              <span>Remove avatar</span>
+            </button>
+          </div>
+
+          {% if form.avatar.errors %}
+            <p class="text-[11px] text-red-600 mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation text-[9px]" aria-hidden="true"></i>
+              {{ form.avatar.errors[0] }}
+            </p>
+          {% endif %}
+        </div>
+
+        {# ── Review text ────────────────────────────────────── #}
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="{{ form.text.id }}"
+                   class="block text-xs font-bold uppercase tracking-wider text-primary/80">
+              Review Text <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <span id="textCounter"
+                  class="text-[10px] text-charcoal/50 tabular-nums">
+              {{ (form.text.data or '')|length }}/2000
+            </span>
+          </div>
+          {{ form.text(
+            rows=5,
+            maxlength=2000,
+            required=true,
+            class="w-full px-4 py-3 rounded-xl border border-charcoal/15 bg-ivory/40
+                   focus:bg-white focus:ring-2 focus:ring-gold focus:border-gold/60
+                   text-sm resize-y transition leading-relaxed
+                   {% if form.text.errors %}border-red-400 ring-1 ring-red-300{% endif %}",
+            placeholder="Describe the guest's experience — what made their stay memorable?",
+            id="reviewText"
+          ) }}
+          {% if form.text.errors %}
+            <p class="text-[11px] text-red-600 mt-1">{{ form.text.errors[0] }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    {# ============================================================
+       Sticky action bar
+       ============================================================ #}
+    <div class="sticky bottom-0 -mx-6 sm:-mx-8 px-6 sm:px-8 py-4
+                bg-white/95 backdrop-blur border-t border-charcoal/10
+                flex flex-wrap items-center justify-end gap-3">
+
+      <a href="{{ url_for('admin.reviews') }}"
+         class="px-5 py-3 rounded-xl border border-charcoal/15 text-sm font-semibold
+                hover:bg-ivory transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+        Cancel
+      </a>
+
+      {% if not review %}
+        <button type="submit"
+                data-action="save_and_new"
+                class="js-submit border border-primary text-primary
+                       hover:bg-primary hover:text-gold
+                       px-5 py-3 rounded-xl text-sm font-bold uppercase tracking-wider
+                       transition-all flex items-center gap-2
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                       disabled:opacity-60 disabled:cursor-wait">
+          <i class="fa-solid fa-plus text-xs" aria-hidden="true"></i>
+          <span>Save &amp; Add Another</span>
+        </button>
+      {% endif %}
+
+      <button type="submit"
+              data-action="save"
+              class="js-submit bg-primary text-gold hover:bg-gold hover:text-primary
+                     px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider
+                     transition-all shadow-md flex items-center gap-2
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                     disabled:opacity-60 disabled:cursor-wait">
+        <i class="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+        <span>{{ 'Update' if review else 'Create' }} Review</span>
+      </button>
+
+    </div>
+  </form>
+</div>
+
+{# ── Unsaved changes warning bar ─────────────────────────────── #}
+<div id="unsavedBar"
+     class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40
+            bg-primary text-ivory px-4 py-2.5 rounded-xl shadow-xl
+            text-xs font-semibold flex items-center gap-3 border border-gold/40">
+  <i class="fa-solid fa-circle-exclamation text-gold" aria-hidden="true"></i>
+  <span>You have unsaved changes.</span>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+
+  var form = document.getElementById('reviewForm');
+  if (!form) return;
+
+  var formAction     = document.getElementById('formAction');
+  var ratingInput    = document.getElementById('ratingInput');
+  var starBtns       = form.querySelectorAll('.star-btn');
+  var ratingLabel    = document.getElementById('ratingLabel');
+  var statusSelect   = document.getElementById('statusSelect');
+  var statusHint     = document.getElementById('statusHint');
+  var reviewText     = document.getElementById('reviewText');
+  var textCounter    = document.getElementById('textCounter');
+  var unsavedBar     = document.getElementById('unsavedBar');
+
+  // Avatar upload elements
+  var dropzone       = document.getElementById('avatarDropzone');
+  var avatarInput    = document.getElementById('avatarInput');
+  var avatarPrompt   = document.getElementById('avatarPrompt');
+  var previewWrap    = document.getElementById('avatarPreviewWrap');
+  var previewImg     = document.getElementById('avatarPreview');
+  var fileNameEl     = document.getElementById('avatarFileName');
+  var fileMetaEl     = document.getElementById('avatarFileMeta');
+  var removeRow      = document.getElementById('avatarRemoveRow');
+  var removeBtn      = document.getElementById('avatarRemoveBtn');
+  var avatarStatus   = document.getElementById('avatarStatus');
+
+  var existingAvatar = {{ (review.avatar if review and review.avatar else '') | tojson }};
+  var removeExistingFlag = false;
+  var objectUrl      = null;
+
+  var dirty = false;
+  var submitting = false;
+
+  /* ============================================================
+     Utilities
+     ============================================================ */
+  function formatBytes(bytes) {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function revokeObjectUrl() {
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+      objectUrl = null;
+    }
+  }
+
+  function showPreview(src, name, meta) {
+    if (!previewImg || !previewWrap || !avatarPrompt) return;
+    previewImg.src = src;
+    if (fileNameEl) fileNameEl.textContent = name || 'avatar';
+    if (fileMetaEl) fileMetaEl.textContent = meta || '';
+    previewWrap.classList.remove('hidden');
+    previewWrap.classList.add('flex');
+    avatarPrompt.classList.add('hidden');
+    if (removeRow) removeRow.classList.remove('hidden');
+  }
+
+  function hidePreview() {
+    if (!previewImg || !previewWrap || !avatarPrompt) return;
+    revokeObjectUrl();
+    previewImg.removeAttribute('src');
+    previewWrap.classList.add('hidden');
+    previewWrap.classList.remove('flex');
+    avatarPrompt.classList.remove('hidden');
+    if (removeRow) removeRow.classList.add('hidden');
+    if (avatarStatus) {
+      avatarStatus.textContent = '';
+      avatarStatus.className = 'text-[11px] text-charcoal/50';
+    }
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+
+    var MAX = 8 * 1024 * 1024;
+    if (file.size > MAX) {
+      if (avatarStatus) {
+        avatarStatus.textContent = '⚠ File is larger than 8 MB.';
+        avatarStatus.className = 'text-[11px] text-red-600';
+      }
+      avatarInput.value = '';
+      return;
+    }
+
+    var ok = /^image\/(png|jpe?g|webp|gif)$/i.test(file.type);
+    if (!ok) {
+      if (avatarStatus) {
+        avatarStatus.textContent = '⚠ Only PNG, JPG, WEBP, or GIF are allowed.';
+        avatarStatus.className = 'text-[11px] text-red-600';
+      }
+      avatarInput.value = '';
+      return;
+    }
+
+    revokeObjectUrl();
+    objectUrl = URL.createObjectURL(file);
+    removeExistingFlag = false;
+
+    showPreview(objectUrl, file.name, formatBytes(file.size));
+    if (avatarStatus) {
+      avatarStatus.textContent = 'Ready to upload on save.';
+      avatarStatus.className = 'text-[11px] text-emerald-600';
+    }
+
+    markDirty();
+  }
+
+  /* ============================================================
+     File input + drag-and-drop
+     ============================================================ */
+  if (avatarInput) {
+    avatarInput.addEventListener('change', function () {
+      handleFile(avatarInput.files && avatarInput.files[0]);
+    });
+  }
+
+  if (dropzone) {
+    ['dragenter', 'dragover'].forEach(function (evt) {
+      dropzone.addEventListener(evt, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add('border-gold', 'bg-gold/5');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(function (evt) {
+      dropzone.addEventListener(evt, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('border-gold', 'bg-gold/5');
+      });
+    });
+
+    dropzone.addEventListener('drop', function (e) {
+      var dt = e.dataTransfer;
+      if (!dt || !dt.files || !dt.files.length) return;
+      var file = dt.files[0];
+      try {
+        var dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        avatarInput.files = dataTransfer.files;
+      } catch (err) {
+        console.warn('[avatar] could not assign dropped file to input');
+      }
+      handleFile(file);
+    });
+  }
+
+  /* ============================================================
+     Remove button
+     ============================================================ */
+  if (removeBtn) {
+    removeBtn.addEventListener('click', function () {
+      if (avatarInput) avatarInput.value = '';
+
+      if (existingAvatar) {
+        removeExistingFlag = true;
+      }
+
+      hidePreview();
+      if (avatarStatus) {
+        if (existingAvatar) {
+          avatarStatus.textContent = 'Avatar will be removed when you save.';
+          avatarStatus.className = 'text-[11px] text-amber-600';
+        } else {
+          avatarStatus.textContent = '';
+        }
+      }
+      markDirty();
+    });
+  }
+
+  if (existingAvatar) {
+    showPreview(existingAvatar, existingAvatar.split('/').pop() || 'avatar', '');
+  }
+
+  /* ============================================================
+     Rating picker
+     ============================================================ */
+  var RATING_LABELS = { 1: 'Poor', 2: 'Fair', 3: 'Good', 4: 'Great', 5: 'Exceptional' };
+
+  function paintStars(value) {
+    starBtns.forEach(function (btn) {
+      var v = parseInt(btn.dataset.value, 10);
+      var active = v <= value;
+      btn.classList.toggle('text-gold', active);
+      btn.classList.toggle('text-charcoal/20', !active);
+      btn.setAttribute('aria-checked', v === value ? 'true' : 'false');
+      btn.setAttribute('tabindex', v === value ? '0' : '-1');
+    });
+    if (ratingLabel) {
+      ratingLabel.textContent = value
+        ? value + ' · ' + RATING_LABELS[value]
+        : 'Tap to rate';
+    }
+  }
+
+  function setRating(value) {
+    value = Math.max(1, Math.min(5, parseInt(value, 10) || 0));
+    if (ratingInput) ratingInput.value = value;
+    paintStars(value);
+    markDirty();
+  }
+
+  starBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      setRating(parseInt(btn.dataset.value, 10));
+    });
+    btn.addEventListener('keydown', function (e) {
+      var current = parseInt(btn.dataset.value, 10);
+      var next = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') next = current < 5 ? current + 1 : 1;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') next = current > 1 ? current - 1 : 5;
+      else if (e.key === 'Home') next = 1;
+      else if (e.key === 'End') next = 5;
+      if (next !== null) {
+        e.preventDefault();
+        setRating(next);
+        var target = form.querySelector('.star-btn[data-value="' + next + '"]');
+        target && target.focus();
+      }
+    });
+  });
+
+  paintStars(parseInt(ratingInput && ratingInput.value, 10) || 0);
+
+  /* ============================================================
+     Status hint
+     ============================================================ */
+  var STATUS_HINTS = {
+    pending:   'Awaiting moderation before appearing on the site.',
+    published: 'Visible publicly on the property page.',
+    rejected:  'Hidden from the public site.',
+  };
+
+  function updateStatusHint() {
+    if (!statusSelect || !statusHint) return;
+    var hint = STATUS_HINTS[statusSelect.value] || '';
+    statusHint.querySelector('span').textContent = hint;
+    statusHint.classList.toggle('hidden', !hint);
+  }
+  if (statusSelect) {
+    statusSelect.addEventListener('change', updateStatusHint);
+    updateStatusHint();
+  }
+
+  /* ============================================================
+     Text character counter
+     ============================================================ */
+  function updateTextCounter() {
+    if (!reviewText || !textCounter) return;
+    var len = (reviewText.value || '').length;
+    textCounter.textContent = len + '/2000';
+    textCounter.classList.toggle('text-amber-600', len >= 1600 && len < 1900);
+    textCounter.classList.toggle('text-red-600',   len >= 1900);
+    textCounter.classList.toggle('text-charcoal/50', len < 1600);
+  }
+  if (reviewText) {
+    reviewText.addEventListener('input', updateTextCounter);
+    updateTextCounter();
+  }
+
+  /* ============================================================
+     Dirty tracking
+     ============================================================ */
+  function markDirty() {
+    if (dirty || submitting) return;
+    dirty = true;
+    if (unsavedBar) unsavedBar.classList.remove('hidden');
+  }
+
+  form.addEventListener('input', markDirty, { passive: true });
+  form.addEventListener('change', markDirty, { passive: true });
+
+  /* ============================================================
+     Submit handling — the FIX
+     ------------------------------------------------------------
+     We must NOT disable the submit button inside its own `click`
+     handler: a disabled submit button cancels the native form
+     submission in all modern browsers. That was the bug — the
+     button showed "Saving…" but the request never fired.
+
+     Instead:
+       1. `click` on a submit button only records which action
+          the user chose and injects the avatar__clear flag if
+          needed. It does NOT disable the button.
+       2. The form's `submit` event shows the spinner AFTER the
+          browser has begun submitting, using setTimeout(…, 0).
+       3. `submitting = true` guards against double-clicks.
+     ============================================================ */
+  form.querySelectorAll('.js-submit').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (submitting) return;
+      var action = btn.dataset.action || 'save';
+      if (formAction) formAction.value = action;
+
+      // If the user removed the existing avatar and picked no new
+      // file, tell the server via a hidden field. Done before the
+      // native submit fires so the server sees it.
+      if (removeExistingFlag && avatarInput && !avatarInput.files.length) {
+        var clearInput = form.querySelector('input[name="avatar__clear"]');
+        if (!clearInput) {
+          clearInput = document.createElement('input');
+          clearInput.type = 'hidden';
+          clearInput.name = 'avatar__clear';
+          form.appendChild(clearInput);
+        }
+        clearInput.value = '1';
+      }
+
+      dirty = false;
+      if (unsavedBar) unsavedBar.classList.add('hidden');
+    });
+  });
+
+  // Spinner is applied only after the browser has dispatched `submit`.
+  form.addEventListener('submit', function () {
+    if (submitting) return;   // second submit event — block duplicates
+    submitting = true;
+
+    setTimeout(function () {
+      form.querySelectorAll('.js-submit').forEach(function (b) {
+        b.disabled = true;
+        if (b.dataset.action === (formAction && formAction.value)) {
+          b.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin text-xs" aria-hidden="true"></i>' +
+            '<span>Saving…</span>';
+        }
+      });
+    }, 0);
+  });
+
+  // bfcache restore — reset the spinner state
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) {
+      submitting = false;
+      form.querySelectorAll('.js-submit').forEach(function (b) {
+        b.disabled = false;
+      });
+      location.reload();
+    }
+  });
+
+  window.addEventListener('beforeunload', function (e) {
+    if (dirty && !submitting) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  /* ============================================================
+     Keyboard: Ctrl/Cmd+S saves
+     ============================================================ */
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      var saveBtn = form.querySelector('.js-submit[data-action="save"]');
+      saveBtn && saveBtn.click();
+    }
+  });
+
+  window.addEventListener('pagehide', revokeObjectUrl);
+
+})();
+</script>
+{% endblock %}

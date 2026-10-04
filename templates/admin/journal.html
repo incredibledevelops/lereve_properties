@@ -7,6 +7,15 @@
 {% block content %}
 
 {# ============================================================
+   Defensive locals
+   ============================================================ #}
+{% set q_val = q if q is defined and q else '' %}
+{% set has_filters = (q_val or from_date or to_date) %}
+{# global_total is unfiltered; total_count is filtered. Prefer global. #}
+{% set total_display = global_total if global_total is defined and global_total is not none else total_count %}
+{% set total_display = total_display | default(0) %}
+
+{# ============================================================
    Flash messages
    ============================================================ #}
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -35,58 +44,67 @@
    ============================================================ #}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
-  {# Total — always global, never filtered #}
+  {# --- Total (global) --- #}
   <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
     <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
       Total Subscribers
     </span>
     <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
-      {{ "{:,}".format(global_total|default(total_count, true)) }}
+      {{ "{:,}".format(total_display) }}
     </p>
+    {% if has_filters and pagination.total != total_display %}
+      <p class="text-[10px] text-charcoal/40 mt-1 tabular-nums">
+        {{ "{:,}".format(pagination.total or 0) }} matching current filters
+      </p>
+    {% endif %}
   </div>
 
-  {# This month #}
+  {# --- This Month --- #}
   <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
     <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
       This Month
     </span>
     <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
-      {{ "{:,}".format(this_month_count|default(0)) }}
+      {{ "{:,}".format(this_month_count or 0) }}
     </p>
   </div>
 
-  {# Last 7 days — new metric, useful for growth tracking #}
+  {# --- Last 7 Days --- #}
   <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
     <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
       Last 7 Days
     </span>
     <p class="font-serif text-3xl font-bold text-primary mt-2 tabular-nums">
-      {{ "{:,}".format(last_7_days|default(0)) }}
+      {{ "{:,}".format(last_7_days or 0) }}
     </p>
   </div>
 
-  {# Actions — copy emails + export #}
+  {# --- Actions --- #}
   <div class="bg-white rounded-2xl p-5 border border-gold/20 shadow-sm">
     <span class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
       Actions
     </span>
     <div class="flex gap-2 mt-3">
-      <a href="{{ url_for('admin.journal', format='csv', q=q, from=from_date, to=to_date) }}"
+      <a href="{{ url_for('admin.journal', format='csv', q=q_val, from=from_date, to=to_date) }}"
          class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
                 bg-primary text-gold hover:bg-gold hover:text-primary
-                text-[10px] font-bold uppercase tracking-wider transition-all"
-         title="Download current list as CSV">
+                text-[10px] font-bold uppercase tracking-wider transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+         title="Download current filtered list as a CSV">
         <i class="fa-solid fa-file-csv" aria-hidden="true"></i>
         <span>Export</span>
       </a>
       <button type="button"
               id="copyEmailsBtn"
+              data-count="{{ subscribers | length }}"
               class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
                      border border-charcoal/15 hover:border-gold hover:text-gold
-                     text-[10px] font-bold uppercase tracking-wider text-charcoal/70 transition-all"
-              title="Copy all emails on this page to clipboard">
+                     text-[10px] font-bold uppercase tracking-wider text-charcoal/70 transition-all
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Copy every email on this page to the clipboard">
         <i class="fa-regular fa-copy" aria-hidden="true"></i>
-        <span>Copy</span>
+        <span id="copyEmailsLabel">Copy</span>
       </button>
     </div>
   </div>
@@ -99,17 +117,19 @@
   <form method="GET"
         action="{{ url_for('admin.journal') }}"
         role="search"
+        id="journalFilterForm"
         class="flex flex-wrap items-center gap-2">
 
     {# Search #}
-    <div class="relative flex-1 min-w-[200px]">
+    <div class="relative flex-1 w-full sm:w-auto sm:min-w-[200px]">
       <label for="journalSearch" class="sr-only">Search subscribers</label>
       <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2
                 text-charcoal/30 text-xs pointer-events-none" aria-hidden="true"></i>
       <input id="journalSearch"
              name="q"
              type="search"
-             value="{{ q|default('') }}"
+             enterkeyhint="search"
+             value="{{ q_val }}"
              placeholder="Search by email…"
              autocomplete="off"
              class="w-full pl-8 pr-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
@@ -118,43 +138,49 @@
 
     {# Date from #}
     <div class="flex items-center gap-1.5">
-      <label for="journalFrom" class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      <label for="journalFrom"
+             class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
         From
       </label>
       <input id="journalFrom"
              name="from"
              type="date"
-             value="{{ from_date|default('') }}"
+             value="{{ from_date|default('', true) }}"
              class="px-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
                     focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
     </div>
 
     {# Date to #}
     <div class="flex items-center gap-1.5">
-      <label for="journalTo" class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
+      <label for="journalTo"
+             class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">
         To
       </label>
       <input id="journalTo"
              name="to"
              type="date"
-             value="{{ to_date|default('') }}"
+             value="{{ to_date|default('', true) }}"
              class="px-3 py-2.5 text-xs rounded-xl border border-charcoal/15 bg-ivory/40
                     focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
     </div>
 
     <button type="submit"
+            id="journalFilterApply"
             class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
                    bg-primary text-gold hover:bg-gold hover:text-primary
-                   text-[10px] font-bold uppercase tracking-wider transition-all">
+                   text-[10px] font-bold uppercase tracking-wider transition-all
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
+                   disabled:opacity-60 disabled:cursor-wait">
       <i class="fa-solid fa-filter" aria-hidden="true"></i>
       <span>Apply</span>
     </button>
 
-    {% if q or from_date or to_date %}
+    {% if has_filters %}
       <a href="{{ url_for('admin.journal') }}"
          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
                 border border-charcoal/15 hover:border-red-300 hover:text-red-600
-                text-[10px] font-bold uppercase tracking-wider text-charcoal/60 transition-all">
+                text-[10px] font-bold uppercase tracking-wider text-charcoal/60 transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400">
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         <span>Clear</span>
       </a>
@@ -169,8 +195,14 @@
   <div class="overflow-x-auto">
     <table class="w-full text-sm">
       <caption class="sr-only">
-        Journal subscribers{% if q %} matching "{{ q }}"{% endif %}
+        Journal subscribers{% if q_val %} matching "{{ q_val }}"{% endif %}
       </caption>
+
+      <colgroup>
+        <col style="width: 55%;">
+        <col class="hidden sm:table-column" style="width: 30%;">
+        <col style="width: 15%;">
+      </colgroup>
 
       <thead class="bg-ivory-dark/60 text-primary">
         <tr class="text-left text-[11px] uppercase tracking-wider">
@@ -193,7 +225,10 @@
                   <i class="fa-solid fa-at text-xs"></i>
                 </div>
                 <div class="min-w-0">
-                  <p class="text-sm text-primary truncate">{{ s.email }}</p>
+                  <p class="text-sm text-primary truncate"
+                     title="{{ s.email }}">
+                    {{ s.email }}
+                  </p>
                   {# Absolute date — needed for GDPR / audit purposes #}
                   {% if s.subscribed_at %}
                     <p class="text-[10px] text-charcoal/40 mt-0.5 sm:hidden">
@@ -222,33 +257,35 @@
                 <button type="button"
                         class="w-9 h-9 rounded-lg bg-ivory hover:bg-gold text-primary
                                flex items-center justify-center transition-all
-                               focus:outline-none focus:ring-2 focus:ring-gold"
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
                         data-copy-email="{{ s.email }}"
                         title="Copy email"
-                        aria-label="Copy {{ s.email }}">
+                        aria-label="Copy email {{ s.email }}">
                   <i class="fa-regular fa-copy text-[11px]" aria-hidden="true"></i>
                 </button>
 
-                <a href="mailto:{{ s.email|urlencode }}"
+                <a href="mailto:{{ s.email | urlencode }}"
                    class="w-9 h-9 rounded-lg bg-ivory hover:bg-gold text-primary
                           flex items-center justify-center transition-all
-                          focus:outline-none focus:ring-2 focus:ring-gold"
+                          focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
                    title="Send email"
                    aria-label="Send email to {{ s.email }}">
                   <i class="fa-solid fa-envelope text-[11px]" aria-hidden="true"></i>
                 </a>
 
-                <button type="button"
-                        class="w-9 h-9 rounded-lg bg-red-50 hover:bg-red-500 hover:text-white
-                               text-red-500 flex items-center justify-center transition-all
-                               focus:outline-none focus:ring-2 focus:ring-red-400"
-                        data-delete-subscriber
-                        data-subscriber-id="{{ s.id }}"
-                        data-subscriber-email="{{ s.email }}"
-                        title="Remove subscriber"
-                        aria-label="Remove {{ s.email }}">
-                  <i class="fa-solid fa-trash text-[11px]" aria-hidden="true"></i>
-                </button>
+                {% if s.id %}
+                  <button type="button"
+                          class="w-9 h-9 rounded-lg bg-red-50 hover:bg-red-500 hover:text-white
+                                 text-red-500 flex items-center justify-center transition-all
+                                 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                          data-delete-subscriber
+                          data-subscriber-id="{{ s.id }}"
+                          data-subscriber-email="{{ s.email }}"
+                          title="Remove subscriber"
+                          aria-label="Remove {{ s.email }} from the journal">
+                    <i class="fa-solid fa-user-minus text-[11px]" aria-hidden="true"></i>
+                  </button>
+                {% endif %}
               </div>
             </td>
           </tr>
@@ -259,25 +296,30 @@
                 <i class="fa-solid fa-pen-nib text-3xl text-charcoal/20 mb-3"
                    aria-hidden="true"></i>
                 <p class="text-sm font-semibold text-primary mb-1">
-                  {% if q or from_date or to_date %}
+                  {% if has_filters %}
                     No subscribers match your filters.
                   {% else %}
                     No subscribers yet.
                   {% endif %}
                 </p>
                 <p class="text-xs text-charcoal/50 mb-4 max-w-md">
-                  {% if q or from_date or to_date %}
-                    Try widening the date range or clearing the search.
+                  {% if has_filters %}
+                    {% if from_date and to_date and from_date > to_date %}
+                      Your "From" date is after your "To" date. Try swapping them.
+                    {% else %}
+                      Try widening the date range or clearing the search.
+                    {% endif %}
                   {% else %}
-                    When visitors subscribe to the private journal from the footer, their
-                    emails will appear here.
+                    When visitors subscribe to the private journal from the footer,
+                    their emails will appear here.
                   {% endif %}
                 </p>
-                {% if q or from_date or to_date %}
+                {% if has_filters %}
                   <a href="{{ url_for('admin.journal') }}"
                      class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl
                             bg-primary text-gold hover:bg-gold hover:text-primary
-                            text-[10px] font-bold uppercase tracking-wider transition-all">
+                            text-[10px] font-bold uppercase tracking-wider transition-all
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                     Clear filters
                   </a>
@@ -297,18 +339,19 @@
 {% if pagination.pages > 1 %}
   <div class="flex flex-wrap items-center justify-between gap-3 mt-5">
     <p class="text-xs text-charcoal/60">
-      Showing <b>{{ pagination.items|length }}</b>
-      of <b>{{ pagination.total }}</b>
-      {% if q %} · filtered{% endif %}
+      Showing <b>{{ pagination.items | length }}</b>
+      of <b>{{ "{:,}".format(pagination.total or 0) }}</b>
+      {% if has_filters %}matching{% endif %}
     </p>
 
     <div class="flex items-center gap-2">
       <a href="{{ url_for('admin.journal',
                           page=pagination.page - 1,
-                          q=q, from=from_date, to=to_date) }}"
+                          q=q_val, from=from_date, to=to_date) }}"
          class="px-4 py-2 rounded-lg border border-primary/20 bg-white
                 text-xs font-bold uppercase text-primary
                 hover:border-gold hover:text-gold transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
                 {% if not pagination.has_prev %}opacity-40 pointer-events-none{% endif %}"
          aria-label="Previous page">
         <i class="fa-solid fa-chevron-left text-[10px]" aria-hidden="true"></i>
@@ -321,10 +364,11 @@
 
       <a href="{{ url_for('admin.journal',
                           page=pagination.page + 1,
-                          q=q, from=from_date, to=to_date) }}"
+                          q=q_val, from=from_date, to=to_date) }}"
          class="px-4 py-2 rounded-lg border border-primary/20 bg-white
                 text-xs font-bold uppercase text-primary
                 hover:border-gold hover:text-gold transition-all
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
                 {% if not pagination.has_next %}opacity-40 pointer-events-none{% endif %}"
          aria-label="Next page">
         <span class="mr-1">Next</span>
@@ -335,15 +379,17 @@
 {% endif %}
 
 {# ============================================================
-   Hidden delete forms
+   Hidden delete forms (never rendered visually)
    ============================================================ #}
-<div class="hidden">
+<div class="hidden" aria-hidden="true">
   {% for s in subscribers %}
-    <form id="delete-subscriber-{{ s.id }}"
-          method="POST"
-          action="{{ url_for('admin.journal_delete', sid=s.id) }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    </form>
+    {% if s.id %}
+      <form id="delete-subscriber-{{ s.id }}"
+            method="POST"
+            action="{{ url_for('admin.journal_delete', sid=s.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      </form>
+    {% endif %}
   {% endfor %}
 </div>
 
@@ -360,76 +406,155 @@
     else document.addEventListener('DOMContentLoaded', fn);
   }
 
+  // ------------------------------------------------------------
+  // Shared helpers
+  // ------------------------------------------------------------
+  function copyToClipboard(text) {
+    // Prefer the modern async API when available AND we're on HTTPS.
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(
+        function () { return true; },
+        function () { return false; }
+      );
+    }
+    // Fallback for HTTP/localhost/old browsers.
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      ta.style.pointerEvents = 'none';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return Promise.resolve(!!ok);
+    } catch (e) {
+      return Promise.resolve(false);
+    }
+  }
+
+  function toast(message, type) {
+    var container = document.getElementById('adminToast');
+    if (!container) {
+      // eslint-disable-next-line no-alert
+      window.alert(message);
+      return;
+    }
+
+    var styles = {
+      error:   'bg-red-600 text-white border-red-400',
+      info:    'bg-gold text-primary border-primary',
+      success: 'bg-primary text-gold border-gold',
+    };
+    var icons = {
+      error:   'fa-circle-exclamation',
+      info:    'fa-circle-info',
+      success: 'fa-circle-check',
+    };
+    var cls  = styles[type] || styles.info;
+    var icon = icons[type] || icons.info;
+
+    var el = document.createElement('div');
+    el.className =
+      'pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl border ' +
+      'shadow-2xl text-xs font-semibold animate-fade-in ' + cls;
+    el.setAttribute('role', 'status');
+    el.innerHTML =
+      '<i class="fa-solid ' + icon + ' text-lg" aria-hidden="true"></i><span></span>';
+    el.querySelector('span').textContent = message;
+
+    container.appendChild(el);
+    setTimeout(function () {
+      el.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+      setTimeout(function () { el.remove(); }, 300);
+    }, 4000);
+  }
+
+  // ------------------------------------------------------------
+  // Page boot
+  // ------------------------------------------------------------
   ready(function () {
 
     // ============================================================
-    // 1. Copy single email
+    // 1. Copy a single email
     // ============================================================
     document.querySelectorAll('[data-copy-email]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var email = btn.dataset.copyEmail || '';
-        if (!email || !navigator.clipboard) return;
+        if (!email) return;
 
-        navigator.clipboard.writeText(email).then(function () {
-          var original = btn.innerHTML;
-          btn.innerHTML = '<i class="fa-solid fa-check text-[11px]" aria-hidden="true"></i>';
-          btn.classList.add('bg-emerald-50', 'text-emerald-600');
-          setTimeout(function () {
-            btn.innerHTML = original;
-            btn.classList.remove('bg-emerald-50', 'text-emerald-600');
-          }, 1200);
-        }).catch(function () {});
+        var original = btn.innerHTML;
+        copyToClipboard(email).then(function (ok) {
+          if (!ok) {
+            toast('Could not copy — copy the email manually.', 'error');
+            return;
+          }
+          btn.innerHTML =
+            '<i class="fa-solid fa-check text-[11px] text-emerald-600" aria-hidden="true"></i>';
+          setTimeout(function () { btn.innerHTML = original; }, 1200);
+        });
       });
     });
 
     // ============================================================
-    // 2. Copy all emails on this page
+    // 2. Copy every email on the current page
     // ============================================================
-    var copyAllBtn = document.getElementById('copyEmailsBtn');
+    var copyAllBtn   = document.getElementById('copyEmailsBtn');
+    var copyAllLabel = document.getElementById('copyEmailsLabel');
     if (copyAllBtn) {
       copyAllBtn.addEventListener('click', function () {
-        var emails = Array.from(
-          document.querySelectorAll('[data-copy-email]')
-        ).map(function (el) { return el.dataset.copyEmail; })
-         .filter(Boolean);
+        var emails = Array.prototype.slice
+          .call(document.querySelectorAll('[data-copy-email]'))
+          .map(function (el) { return el.dataset.copyEmail; })
+          .filter(Boolean);
 
         if (!emails.length) {
-          window.alert('No subscribers on this page.');
+          toast('No subscribers on this page.', 'info');
           return;
         }
 
         var text = emails.join(', ');
+        var originalHTML = copyAllBtn.innerHTML;
 
-        function done() {
-          var original = copyAllBtn.innerHTML;
+        copyAllBtn.disabled = true;
+        copyToClipboard(text).then(function (ok) {
+          copyAllBtn.disabled = false;
+
+          if (!ok) {
+            copyAllBtn.innerHTML = originalHTML;
+            toast('Could not copy — your browser blocked the clipboard.', 'error');
+            return;
+          }
+
           copyAllBtn.innerHTML =
             '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
             '<span>Copied ' + emails.length + '</span>';
           copyAllBtn.classList.add('border-emerald-300', 'text-emerald-600');
+
           setTimeout(function () {
-            copyAllBtn.innerHTML = original;
+            copyAllBtn.innerHTML = originalHTML;
             copyAllBtn.classList.remove('border-emerald-300', 'text-emerald-600');
           }, 1600);
-        }
-
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(text).then(done).catch(function () {});
-        } else {
-          // Fallback for old browsers / insecure contexts
-          var ta = document.createElement('textarea');
-          ta.value = text;
-          ta.style.position = 'fixed';
-          ta.style.opacity = '0';
-          document.body.appendChild(ta);
-          ta.select();
-          try { document.execCommand('copy'); done(); } catch (e) {}
-          document.body.removeChild(ta);
-        }
+        });
       });
+
+      // Show the count on hover so the admin knows what will be copied.
+      var count = copyAllBtn.dataset.count;
+      if (copyAllLabel && count) {
+        var original = 'Copy';
+        copyAllBtn.addEventListener('mouseenter', function () {
+          if (parseInt(count, 10) > 0) copyAllLabel.textContent = 'Copy ' + count;
+        });
+        copyAllBtn.addEventListener('mouseleave', function () {
+          if (!copyAllBtn.disabled) copyAllLabel.textContent = original;
+        });
+      }
     }
 
     // ============================================================
-    // 3. Delete subscriber with typed confirmation
+    // 3. Remove a subscriber
     // ============================================================
     document.querySelectorAll('[data-delete-subscriber]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -438,18 +563,47 @@
         var form  = document.getElementById('delete-subscriber-' + id);
         if (!form) return;
 
-        // Simple confirm — less friction than typed for a low-value record,
-        // but we still name the email so a mis-click is obvious.
-        if (!window.confirm(
+        var confirmed = window.confirm(
           'Remove ' + email + ' from the journal?\n\n' +
-          'They will no longer receive the private newsletter.'
-        )) return;
+          'They will stop receiving the private newsletter. ' +
+          'This cannot be undone, but they can re-subscribe later.'
+        );
+        if (!confirmed) return;
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-[11px]" aria-hidden="true"></i>';
+        btn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin text-[11px]" aria-hidden="true"></i>';
         form.submit();
       });
     });
+
+    // ============================================================
+    // 4. Filter form: Escape clears, submit shows a spinner
+    // ============================================================
+    var filterForm  = document.getElementById('journalFilterForm');
+    var filterApply = document.getElementById('journalFilterApply');
+    var searchInput = document.getElementById('journalSearch');
+
+    if (filterForm && searchInput) {
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && searchInput.value !== '') {
+          searchInput.value = '';
+          filterForm.submit();
+        }
+      });
+    }
+
+    if (filterForm && filterApply) {
+      filterForm.addEventListener('submit', function () {
+        if (!filterForm.checkValidity()) return;
+        if (!filterApply.disabled) {
+          filterApply.disabled = true;
+          filterApply.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>' +
+            '<span>Applying…</span>';
+        }
+      });
+    }
   });
 })();
 </script>

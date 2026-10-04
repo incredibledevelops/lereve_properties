@@ -18,12 +18,37 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 
-{# Chart.js is only needed on pages that ask for it. #}
 {% block vendor_scripts %}{% endblock %}
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 
-{# Per-page head additions (preconnect hints, meta tags, etc.) #}
+{# ============================================================
+   SIDEBAR RESPONSIVENESS — required for the mobile drawer
+   ============================================================ #}
+<style>
+  .sidebar {
+    transition: transform .25s ease;
+    will-change: transform;
+  }
+  body.sidebar-open { overflow: hidden; }
+
+  @media (max-width: 1023.98px) {
+    .sidebar {
+      transform: translateX(-100%);
+      box-shadow: 4px 0 24px rgba(0, 0, 0, .25);
+    }
+    .sidebar.open { transform: translateX(0); }
+  }
+
+  @media (min-width: 1024px) {
+    .sidebar { transform: none; box-shadow: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar { transition: none; }
+  }
+</style>
+
 {% block head_extra %}{% endblock %}
 
 <script>
@@ -53,7 +78,6 @@ tailwind.config = {
 };
 </script>
 
-{# Tell the shell which section is active, so sidebar highlight + breadcrumbs work. #}
 <script>
 window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }};
 </script>
@@ -79,7 +103,6 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
          class="sidebar fixed lg:static inset-y-0 left-0 z-40 w-64 bg-primary text-ivory flex flex-col"
          aria-label="Admin navigation">
 
-    {# --- Brand --- #}
     <div class="h-20 px-6 flex items-center gap-3 border-b border-gold/20 shrink-0">
       <div class="w-9 h-9 rounded-full bg-gold flex items-center justify-center text-primary font-serif font-bold text-lg"
            aria-hidden="true">R</div>
@@ -88,7 +111,7 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
         <span class="text-[9px] tracking-[0.25em] uppercase text-gold">Admin</span>
       </div>
       <button type="button"
-              onclick="LeReve.closeSidebar()"
+              id="sidebarCloseBtn"
               class="lg:hidden ml-auto p-1.5 text-ivory/60 hover:text-gold rounded-full"
               aria-label="Close navigation">
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
@@ -97,7 +120,6 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
 
     {% set _active = active_section if active_section is defined and active_section else 'dashboard' %}
 
-    {# --- Nav --- #}
     <nav class="flex-1 py-4 overflow-y-auto" aria-label="Main">
       {% set nav = [
         ('dashboard',  'Dashboard',    'fa-chart-pie',      url_for('admin.dashboard')),
@@ -137,10 +159,9 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
       {% endfor %}
     </nav>
 
-    {# --- Footer actions --- #}
     <div class="p-4 border-t border-gold/20 space-y-1 shrink-0">
       <a href="{{ PUBLIC_SITE_URL }}"
-         target="_blank" rel="noopener"
+         target="_blank" rel="noopener noreferrer"
          class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-ivory/70 hover:text-gold hover:bg-gold/10 transition-all">
         <i class="fa-solid fa-arrow-up-right-from-square w-4" aria-hidden="true"></i>
         <span>Public Site</span>
@@ -159,7 +180,6 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
 
   {# --- Mobile overlay --- #}
   <div id="sidebarOverlay"
-       onclick="LeReve.closeSidebar()"
        class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden"
        aria-hidden="true"></div>
 
@@ -168,13 +188,10 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
      ============================================================ #}
   <div class="flex-1 flex flex-col min-w-0">
 
-    {# ---------- Header ---------- #}
     <header class="h-20 bg-white border-b border-gold/20 flex items-center justify-between gap-3 px-4 sm:px-6 sticky top-0 z-20">
 
-      {# Left: sidebar toggle + title + breadcrumbs #}
       <div class="flex items-center gap-3 min-w-0">
         <button type="button"
-                onclick="LeReve.toggleSidebar()"
                 id="sidebarToggleBtn"
                 class="lg:hidden p-2 text-primary rounded-lg hover:bg-ivory transition-colors"
                 aria-label="Open navigation"
@@ -206,10 +223,8 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
         </div>
       </div>
 
-      {# Right: search + messages + user menu #}
       <div class="flex items-center gap-2 sm:gap-3">
 
-        {# --- Global search --- #}
         <form action="{{ url_for('admin.users') }}"
               method="GET"
               role="search"
@@ -220,13 +235,13 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
           <input id="adminGlobalSearch"
                  name="q"
                  type="search"
+                 enterkeyhint="search"
                  autocomplete="off"
                  placeholder="Search…"
                  class="w-40 lg:w-56 pl-8 pr-3 py-2 text-xs rounded-full border border-charcoal/10 bg-ivory/50
                         focus:bg-white focus:border-gold focus:ring-2 focus:ring-gold/30 transition-all">
         </form>
 
-        {# --- Messages --- #}
         <a href="{{ url_for('admin.messages') }}"
            class="relative w-10 h-10 rounded-full border border-charcoal/10 hover:border-gold text-primary
                   flex items-center justify-center transition-all"
@@ -238,7 +253,6 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
           {% endif %}
         </a>
 
-        {# --- User dropdown --- #}
         <div class="relative" id="adminUserMenu">
           <button type="button"
                   id="adminUserBtn"
@@ -279,7 +293,7 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
               <i class="fa-solid fa-gear w-4 text-gold" aria-hidden="true"></i> Settings
             </a>
             <a href="{{ PUBLIC_SITE_URL }}"
-               target="_blank" rel="noopener"
+               target="_blank" rel="noopener noreferrer"
                role="menuitem"
                class="flex items-center gap-2 px-4 py-2.5 text-xs text-charcoal/80 hover:bg-ivory/60 transition-colors">
               <i class="fa-solid fa-arrow-up-right-from-square w-4 text-gold" aria-hidden="true"></i> Public Site
@@ -297,10 +311,8 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
       </div>
     </header>
 
-    {# ---------- Main ---------- #}
     <main id="main-content" class="flex-1 p-4 sm:p-6 overflow-x-hidden">
 
-      {# Flash messages with dismiss + ARIA #}
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <div id="flashContainer"
@@ -319,8 +331,8 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
                    aria-hidden="true"></i>
                 <span class="flex-1">{{ msg }}</span>
                 <button type="button"
-                        onclick="this.closest('.flash-msg').remove()"
-                        class="shrink-0 p-0.5 rounded hover:bg-black/5 transition-colors"
+                        data-dismiss-flash
+                        class="shrink-0 p-1 rounded hover:bg-black/5 transition-colors"
                         aria-label="Dismiss message">
                   <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                 </button>
@@ -335,13 +347,11 @@ window.__ADMIN_SECTION__ = {{ (active_section | default('dashboard')) | tojson }
   </div>
 </div>
 
-{# Toast container — used by LeReve.toast() #}
 <div id="adminToast"
      class="fixed top-24 right-5 z-[60] flex flex-col gap-3 pointer-events-none max-w-sm"
      aria-live="polite"
      aria-atomic="false"></div>
 
-{# ---------- Bootstrap config for JS ---------- #}
 <script>
 window.LeReveConfig = {
   csrf:          {{ csrf_token()|tojson }},
@@ -359,51 +369,148 @@ window.LeReveConfig = {
 
 <script src="{{ url_for('static', filename='js/shared.js') }}"></script>
 
-{# Small shell interactions that only matter on admin pages #}
 <script>
 (function () {
   'use strict';
 
-  // ---------- User dropdown ----------
-  const btn  = document.getElementById('adminUserBtn');
-  const menu = document.getElementById('adminUserDropdown');
-  if (btn && menu) {
-    function closeMenu() {
-      menu.classList.add('hidden');
-      btn.setAttribute('aria-expanded', 'false');
+  // ============================================================
+  // SIDEBAR — self-contained toggle / open / close
+  // ============================================================
+  var sidebar  = document.getElementById('sidebar');
+  var overlay  = document.getElementById('sidebarOverlay');
+  var openBtn  = document.getElementById('sidebarToggleBtn');
+  var closeBtn = document.getElementById('sidebarCloseBtn');
+
+  function isMobileNav() {
+    return window.matchMedia('(max-width: 1023.98px)').matches;
+  }
+
+  function openSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.add('open');
+    if (overlay) overlay.classList.remove('hidden');
+    document.body.classList.add('sidebar-open');
+    if (openBtn) openBtn.setAttribute('aria-expanded', 'true');
+    // Focus the close button so keyboard users can dismiss immediately
+    if (closeBtn) setTimeout(function () { closeBtn.focus(); }, 60);
+  }
+
+  function closeSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.remove('open');
+    if (overlay) overlay.classList.add('hidden');
+    document.body.classList.remove('sidebar-open');
+    if (openBtn) openBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleSidebar() {
+    if (!sidebar) return;
+    if (sidebar.classList.contains('open')) closeSidebar();
+    else openSidebar();
+  }
+
+  if (openBtn)  openBtn.addEventListener('click', toggleSidebar);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if (overlay)  overlay.addEventListener('click', closeSidebar);
+
+  // Escape closes the drawer
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
+      closeSidebar();
     }
-    function openMenu() {
-      menu.classList.remove('hidden');
-      btn.setAttribute('aria-expanded', 'true');
+  });
+
+  // Simple focus trap while the mobile drawer is open
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    if (!isMobileNav()) return;
+    if (!sidebar || !sidebar.classList.contains('open')) return;
+
+    var focusables = sidebar.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusables.length) return;
+
+    var first = focusables[0];
+    var last  = focusables[focusables.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
     }
-    btn.addEventListener('click', function (e) {
+  });
+
+  // Swipe-left to close on mobile
+  var touchStartX = 0, touchEndX = 0, touchStarted = false;
+  if (sidebar) {
+    sidebar.addEventListener('touchstart', function (e) {
+      if (!isMobileNav() || !sidebar.classList.contains('open')) return;
+      touchStarted = true;
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    sidebar.addEventListener('touchend', function (e) {
+      if (!touchStarted) return;
+      touchStarted = false;
+      touchEndX = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : touchStartX;
+      if (touchStartX - touchEndX > 60) closeSidebar();
+    }, { passive: true });
+  }
+
+  // Auto-close on mobile when a nav link is tapped
+  document.querySelectorAll('#sidebar a[href]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      if (isMobileNav()) closeSidebar();
+    });
+  });
+
+  // Close the drawer if the user resizes past lg
+  var wasMobile = isMobileNav();
+  window.addEventListener('resize', function () {
+    var nowMobile = isMobileNav();
+    if (wasMobile !== nowMobile && !nowMobile) closeSidebar();
+    wasMobile = nowMobile;
+  });
+
+  // Expose for legacy inline handlers and any other code
+  window.LeReve = window.LeReve || {};
+  window.LeReve.toggleSidebar = toggleSidebar;
+  window.LeReve.openSidebar   = openSidebar;
+  window.LeReve.closeSidebar  = closeSidebar;
+
+  // ============================================================
+  // USER DROPDOWN
+  // ============================================================
+  var userBtn  = document.getElementById('adminUserBtn');
+  var userMenu = document.getElementById('adminUserDropdown');
+  if (userBtn && userMenu) {
+    var closeMenu = function () {
+      userMenu.classList.add('hidden');
+      userBtn.setAttribute('aria-expanded', 'false');
+    };
+    var openMenu = function () {
+      userMenu.classList.remove('hidden');
+      userBtn.setAttribute('aria-expanded', 'true');
+    };
+    userBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      menu.classList.contains('hidden') ? openMenu() : closeMenu();
+      if (userMenu.classList.contains('hidden')) openMenu();
+      else closeMenu();
     });
     document.addEventListener('click', function (e) {
-      if (!menu.contains(e.target) && e.target !== btn) closeMenu();
+      if (!userMenu.contains(e.target) && e.target !== userBtn) closeMenu();
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeMenu();
     });
   }
 
-  // ---------- Sidebar toggle: sync aria-expanded ----------
-  const toggle = document.getElementById('sidebarToggleBtn');
-  if (toggle) {
-    const observer = new MutationObserver(() => {
-      const sidebar = document.getElementById('sidebar');
-      const isOpen = sidebar && sidebar.classList.contains('open');
-      toggle.setAttribute('aria-expanded', String(!!isOpen));
-    });
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar) observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-  }
-
-  // ---------- Cmd/Ctrl+K → focus global search ----------
+  // ============================================================
+  // Cmd/Ctrl+K → focus global search
+  // ============================================================
   document.addEventListener('keydown', function (e) {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-      const input = document.getElementById('adminGlobalSearch');
+    if ((e.metaKey || e.ctrlKey) && e.key && e.key.toLowerCase() === 'k') {
+      var input = document.getElementById('adminGlobalSearch');
       if (input) {
         e.preventDefault();
         input.focus();
@@ -412,14 +519,31 @@ window.LeReveConfig = {
     }
   });
 
-  // ---------- Auto-dismiss flash messages after 8s ----------
-  document.querySelectorAll('#flashContainer .flash-msg').forEach(el => {
-    setTimeout(() => {
+  // ============================================================
+  // Flash messages — auto-dismiss + keyboard dismiss
+  // ============================================================
+  document.querySelectorAll('#flashContainer .flash-msg').forEach(function (el) {
+    var timer = setTimeout(function () {
       el.style.transition = 'opacity .4s, transform .4s';
       el.style.opacity = '0';
       el.style.transform = 'translateY(-4px)';
-      setTimeout(() => el.remove(), 400);
+      setTimeout(function () { el.remove(); }, 400);
     }, 8000);
+
+    var btn = el.querySelector('[data-dismiss-flash]');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        clearTimeout(timer);
+        el.remove();
+      });
+    }
+
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        clearTimeout(timer);
+        el.remove();
+      }
+    });
   });
 })();
 </script>

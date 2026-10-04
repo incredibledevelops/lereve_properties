@@ -53,7 +53,7 @@
     <i class="fa-solid fa-triangle-exclamation mt-0.5" aria-hidden="true"></i>
     <div class="flex-1">
       <p class="font-bold">Session expired</p>
-      <p class="mt-0.5">Your security token has expired. Reload to continue.</p>
+      <p class="mt-0.5">Your security token has expired. Reload the page to try again.</p>
       <button type="button"
               onclick="window.location.reload()"
               class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-red-700 hover:text-red-900 underline">
@@ -66,7 +66,7 @@
 {# ============================================================
    Two-column layout: form + live preview
    ============================================================ #}
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-20 lg:pb-0">
 
   {# ============================================================
      LEFT — form
@@ -105,25 +105,26 @@
               Name <span class="text-gold">*</span>
             </label>
             <span id="nameCounter"
-                  class="text-[10px] text-charcoal/40 tabular-nums"
+                  class="text-[10px] text-charcoal/40 tabular-nums transition-colors"
                   aria-live="polite">0 / 80</span>
           </div>
 
           {{ form.name(
               id=form.name.id,
-              autofocus=true,
               required=true,
               maxlength="80",
               autocomplete="off",
+              spellcheck="false",
+              data_autofocus="true",
               aria_invalid="true" if form.name.errors else "false",
-              aria_describedby="nameHelp nameError",
+              aria_describedby=("nameError" if form.name.errors else "nameHelp"),
               class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm transition-all "
                     + ("border-red-300 bg-red-50" if form.name.errors else "border-charcoal/15"),
               placeholder="e.g. Beachfront Bungalows"
           ) }}
 
           <p id="nameHelp" class="text-[11px] text-charcoal/50 mt-1.5">
-            Shown to guests in filters and listings.
+            Shown to guests in filters and listings. Keep it short — under 25 characters reads best on mobile.
           </p>
 
           {% if form.name.errors %}
@@ -147,7 +148,7 @@
               Description
             </label>
             <span id="descCounter"
-                  class="text-[10px] text-charcoal/40 tabular-nums"
+                  class="text-[10px] text-charcoal/40 tabular-nums transition-colors"
                   aria-live="polite">0 / 500</span>
           </div>
 
@@ -156,14 +157,14 @@
               rows=3,
               maxlength="500",
               aria_invalid="true" if form.description.errors else "false",
-              aria_describedby="descHelp descError",
+              aria_describedby=("descError" if form.description.errors else "descHelp"),
               class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm resize-none transition-all "
                     + ("border-red-300 bg-red-50" if form.description.errors else "border-charcoal/15"),
               placeholder="A short description guests will see when browsing this category."
           ) }}
 
           <p id="descHelp" class="text-[11px] text-charcoal/50 mt-1.5">
-            Optional. Keep it under 2 sentences for the best mobile display.
+            Optional. Two short sentences is plenty — long descriptions are truncated on category cards.
           </p>
 
           {% if form.description.errors %}
@@ -196,7 +197,7 @@
                   spellcheck="false",
                   maxlength="80",
                   aria_invalid="true" if form.icon.errors else "false",
-                  aria_describedby="iconHelp iconError",
+                  aria_describedby=("iconError" if form.icon.errors else "iconHelp"),
                   class="w-full pl-4 pr-12 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm font-mono transition-all "
                         + ("border-red-300 bg-red-50" if form.icon.errors else "border-charcoal/15"),
                   placeholder="fa-house-chimney"
@@ -213,8 +214,9 @@
             </div>
 
             <p id="iconHelp" class="text-[11px] text-charcoal/50 mt-1.5">
-              A Font Awesome 6 class, e.g.
+              A Font Awesome 6 class like
               <code class="text-[10px] bg-ivory px-1 py-0.5 rounded">fa-house-chimney</code>.
+              If the preview looks empty, the icon doesn't exist.
             </p>
 
             {% if form.icon.errors %}
@@ -230,8 +232,12 @@
 
             {# --- Quick-pick icons --- #}
             <div class="mt-3">
-              <p class="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold mb-1.5">
+              <p class="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold mb-1.5
+                        flex items-center gap-1">
                 Suggested
+                <i class="fa-solid fa-circle-question text-[9px]"
+                   title="Click to fill the Icon field with this class"
+                   aria-hidden="true"></i>
               </p>
               <div class="flex flex-wrap gap-1.5" role="listbox" aria-label="Suggested icons">
                 {% set suggestions = [
@@ -242,12 +248,12 @@
                 {% for s in suggestions %}
                   <button type="button"
                           data-icon-pick="{{ s }}"
-                          title="{{ s }}"
+                          title="Use {{ s }}"
                           aria-label="Use icon {{ s }}"
-                          class="w-8 h-8 rounded-lg border border-charcoal/10 bg-ivory/40
+                          class="icon-pick w-8 h-8 rounded-lg border border-charcoal/10 bg-ivory/40
                                  hover:border-gold hover:bg-gold/10 hover:text-gold
                                  text-charcoal/60 flex items-center justify-center
-                                 transition-all focus:outline-none focus:ring-2 focus:ring-gold">
+                                 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
                     <i class="fa-solid {{ s }} text-xs" aria-hidden="true"></i>
                   </button>
                 {% endfor %}
@@ -270,13 +276,16 @@
                 step="1",
                 inputmode="numeric",
                 aria_invalid="true" if form.order.errors else "false",
-                aria_describedby="orderHelp orderError",
+                aria_describedby=("orderError" if form.order.errors else "orderHelp"),
                 class="w-full px-4 py-2.5 rounded-xl border bg-ivory/40 focus:bg-white focus:ring-2 focus:ring-gold text-sm tabular-nums transition-all "
                       + ("border-red-300 bg-red-50" if form.order.errors else "border-charcoal/15")
             ) }}
 
             <p id="orderHelp" class="text-[11px] text-charcoal/50 mt-1.5">
-              Lower numbers appear first. Leave 0 to sort alphabetically.
+              Lower numbers appear first.
+              <code class="text-[10px] bg-ivory px-1 py-0.5 rounded">1</code> comes before
+              <code class="text-[10px] bg-ivory px-1 py-0.5 rounded">2</code>.
+              Leave as <code class="text-[10px] bg-ivory px-1 py-0.5 rounded">0</code> to sort alphabetically.
             </p>
 
             {% if form.order.errors %}
@@ -294,21 +303,28 @@
 
       </div>
 
-      {# ---------- Actions ---------- #}
+      {# ---------- Actions (sticky on mobile) ---------- #}
       <div class="px-6 py-4 border-t border-charcoal/5 bg-ivory/30
-                  flex flex-wrap items-center justify-end gap-3">
+                  flex flex-wrap items-center justify-end gap-3
+                  sticky bottom-0 z-10 lg:static
+                  shadow-[0_-4px_12px_-6px_rgba(26,58,42,0.15)] lg:shadow-none">
         <a href="{{ url_for('admin.categories') }}"
+           data-allow-leave
            class="px-5 py-2.5 rounded-xl border border-charcoal/15
                   text-sm font-semibold text-charcoal/70
-                  hover:bg-ivory transition-all">
+                  hover:border-gold hover:text-gold transition-all
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
           Cancel
         </a>
 
         <button type="submit"
                 id="categorySubmitBtn"
+                data-label-save="{{ 'Update Category' if category else 'Create Category' }}"
+                data-label-busy="{{ 'Updating…' if category else 'Creating…' }}"
                 class="bg-primary text-gold hover:bg-gold hover:text-primary
                        px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider
                        transition-all shadow-md flex items-center gap-2
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-gold
                        disabled:opacity-70 disabled:cursor-wait">
           <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
           <span>{{ 'Update Category' if category else 'Create Category' }}</span>
@@ -342,7 +358,8 @@
               <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary
                           flex items-center justify-center shrink-0"
                    aria-hidden="true">
-                <i id="previewIcon" class="fa-solid {{ form.icon.data or 'fa-house-chimney' }} text-lg"></i>
+                <i id="previewIcon"
+                   class="fa-solid {{ form.icon.data or 'fa-house-chimney' }} text-lg"></i>
               </div>
               <div class="text-right shrink-0">
                 <p class="text-[10px] uppercase tracking-widest text-charcoal/50 font-bold">Order</p>
@@ -353,18 +370,27 @@
             </div>
 
             <h3 id="previewName"
-                class="font-serif text-xl font-semibold text-primary truncate">
+                class="font-serif text-xl font-semibold text-primary truncate"
+                title="{{ form.name.data or 'Category Name' }}">
               {{ form.name.data or 'Category Name' }}
             </h3>
             <p id="previewDesc"
-               class="text-xs text-charcoal/60 mt-1 line-clamp-3 leading-relaxed min-h-[3rem]">
+               class="text-xs text-charcoal/60 mt-1 line-clamp-3 leading-relaxed min-h-[3.75rem]"
+               title="{{ form.description.data or '' }}">
               {{ form.description.data or 'No description.' }}
             </p>
 
             <div class="mt-4 pt-4 border-t border-charcoal/5 flex items-center justify-between">
               <span class="text-xs text-charcoal/60 flex items-center gap-1.5">
                 <i class="fa-solid fa-house-chimney text-gold" aria-hidden="true"></i>
-                <span>0 properties</span>
+                <span>
+                  {% if category and category.property_count is defined %}
+                    {{ category.property_count }}
+                    propert{% if category.property_count == 1 %}y{% else %}ies{% endif %}
+                  {% else %}
+                    0 properties
+                  {% endif %}
+                </span>
               </span>
             </div>
           </div>
@@ -372,7 +398,7 @@
       </div>
     </div>
 
-    {# ---------- Helper card ---------- #}
+    {# ---------- Tips ---------- #}
     <div class="bg-ivory/60 rounded-2xl border border-gold/20 p-5">
       <h4 class="text-xs font-bold uppercase tracking-widest text-primary/80 mb-3
                  flex items-center gap-2">
@@ -382,11 +408,11 @@
       <ul class="text-[11px] text-charcoal/60 space-y-2 leading-relaxed">
         <li class="flex items-start gap-2">
           <i class="fa-solid fa-check text-gold mt-0.5 shrink-0" aria-hidden="true"></i>
-          <span>Keep names short — they appear as filter pills on mobile.</span>
+          <span>Keep names short — they become filter pills on mobile.</span>
         </li>
         <li class="flex items-start gap-2">
           <i class="fa-solid fa-check text-gold mt-0.5 shrink-0" aria-hidden="true"></i>
-          <span>Pick an icon that clearly conveys the category at a glance.</span>
+          <span>Use the <strong>Suggested</strong> icons if you're not sure of a Font Awesome class name.</span>
         </li>
         <li class="flex items-start gap-2">
           <i class="fa-solid fa-check text-gold mt-0.5 shrink-0" aria-hidden="true"></i>
@@ -425,68 +451,136 @@
     var descPreview   = document.getElementById('previewDesc');
     var orderInput    = document.getElementById('{{ form.order.id }}');
     var orderPreview  = document.getElementById('previewOrder');
+    var cancelLink    = document.querySelector('[data-allow-leave]');
+    var bypassGuard   = false;
 
-    // ============================================================
-    // 1. Live icon preview + quick-pick
-    // ============================================================
+    /* ============================================================
+       Autofocus the name field on desktop only.
+       On mobile, autofocus fights the on-screen keyboard, so we
+       honour the data-autofocus attribute only above 640px.
+       ============================================================ */
+    if (nameInput && nameInput.dataset.autofocus === 'true') {
+      if (window.matchMedia('(min-width: 640px)').matches) {
+        // Small delay so the browser finishes layout first
+        setTimeout(function () { nameInput.focus(); }, 50);
+      }
+    }
+
+    /* ============================================================
+       1. Live icon preview + quick-pick
+       ============================================================ */
     function normalizeIcon(v) {
       if (!v) return 'fa-house-chimney';
-      v = v.trim();
+      v = String(v).trim();
+      // Strip any 'fa-solid ' prefix the user might have typed
+      v = v.replace(/^fa-(solid|regular|brands)\s+/, '');
       return v.startsWith('fa-') ? v : 'fa-' + v;
     }
 
+    // Font Awesome 6 ships with a font that has a specific glyph for
+    // every icon. We can't check the glyph directly from JS without
+    // pulling in the FA JS API, but we CAN test whether the computed
+    // font-family resolves to the Font Awesome webfont. If the icon
+    // class is invalid, browsers render a blank box but the font is
+    // still loaded. So we instead compare the rendered box-size against
+    // a known empty icon. Simple approach: mark invalid icons with a
+    // distinct color and a data attribute for CSS to render '?'.
     function updateIconPreview() {
       if (!iconInput) return;
       var cls = normalizeIcon(iconInput.value);
-      if (iconPreview) iconPreview.className = 'fa-solid ' + cls + ' text-sm';
-      if (previewIcon) previewIcon.className = 'fa-solid ' + cls + ' text-lg';
+
+      if (iconPreview) {
+        iconPreview.className = 'fa-solid ' + cls + ' text-sm';
+      }
+      if (previewIcon) {
+        previewIcon.className = 'fa-solid ' + cls + ' text-lg';
+      }
+
+      // Best-effort heuristic: if the icon renders as an empty box
+      // (width 0 or height 0), it's invalid. We check after a frame.
+      requestAnimationFrame(function () {
+        [iconPreview, previewIcon].forEach(function (el) {
+          if (!el) return;
+          var rect = el.getBoundingClientRect();
+          var invalid = (rect.width < 4 || rect.height < 4);
+          el.parentElement.classList.toggle('ring-1', invalid);
+          el.parentElement.classList.toggle('ring-red-300', invalid);
+        });
+      });
     }
 
     if (iconInput) {
       iconInput.addEventListener('input', updateIconPreview);
+      updateIconPreview();
     }
 
-    // Quick-pick buttons
+    // Quick-pick buttons — fill the input and briefly flash the button
     document.querySelectorAll('[data-icon-pick]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         if (!iconInput) return;
         iconInput.value = btn.dataset.iconPick;
         iconInput.dispatchEvent(new Event('input', { bubbles: true }));
         iconInput.focus();
+        btn.classList.add('bg-gold/20', 'border-gold');
+        setTimeout(function () {
+          btn.classList.remove('bg-gold/20', 'border-gold');
+        }, 300);
       });
     });
 
-    // ============================================================
-    // 2. Name preview + character counter
-    // ============================================================
+    /* ============================================================
+       2. Name preview + character counter
+       ============================================================ */
     function updateName() {
       if (!nameInput) return;
       var v = nameInput.value || '';
-      if (nameCounter) nameCounter.textContent = v.length + ' / 80';
-      if (namePreview) namePreview.textContent = v || 'Category Name';
+      var len = v.length;
+
+      if (nameCounter) {
+        nameCounter.textContent = len + ' / 80';
+        nameCounter.classList.toggle('text-amber-600', len >= 60 && len < 76);
+        nameCounter.classList.toggle('text-red-600',  len >= 76);
+        nameCounter.classList.toggle('text-charcoal/40', len < 60);
+      }
+
+      if (namePreview) {
+        namePreview.textContent = v || 'Category Name';
+        namePreview.title = v || '';
+      }
     }
     if (nameInput) {
       nameInput.addEventListener('input', updateName);
       updateName();
     }
 
-    // ============================================================
-    // 3. Description preview + counter
-    // ============================================================
+    /* ============================================================
+       3. Description preview + counter
+       ============================================================ */
     function updateDesc() {
       if (!descInput) return;
       var v = descInput.value || '';
-      if (descCounter) descCounter.textContent = v.length + ' / 500';
-      if (descPreview) descPreview.textContent = v || 'No description.';
+      var len = v.length;
+
+      if (descCounter) {
+        descCounter.textContent = len + ' / 500';
+        descCounter.classList.toggle('text-amber-600', len >= 400 && len < 476);
+        descCounter.classList.toggle('text-red-600',  len >= 476);
+        descCounter.classList.toggle('text-charcoal/40', len < 400);
+      }
+
+      if (descPreview) {
+        descPreview.textContent = v || 'No description.';
+        descPreview.title = v || '';
+      }
     }
     if (descInput) {
       descInput.addEventListener('input', updateDesc);
       updateDesc();
     }
 
-    // ============================================================
-    // 4. Order preview
-    // ============================================================
+    /* ============================================================
+       4. Order preview + numeric clamp
+       ============================================================ */
     function updateOrder() {
       if (!orderInput || !orderPreview) return;
       var v = orderInput.value === '' ? 0 : orderInput.value;
@@ -494,21 +588,45 @@
     }
     if (orderInput) {
       orderInput.addEventListener('input', updateOrder);
+      orderInput.addEventListener('blur', function () {
+        // Clamp to a sane non-negative integer
+        var n = parseInt(orderInput.value, 10);
+        if (isNaN(n) || n < 0) n = 0;
+        orderInput.value = String(n);
+        updateOrder();
+      });
       updateOrder();
     }
 
-    // ============================================================
-    // 5. Submit loading state + native validation
-    // ============================================================
+    /* ============================================================
+       5. Submit loading state + native validation
+       ============================================================ */
+    var originalHTML = submitBtn ? submitBtn.innerHTML : '';
+    var busyLabel    = submitBtn ? submitBtn.dataset.labelBusy : 'Saving…';
+
     if (form && submitBtn) {
-      var originalHTML = submitBtn.innerHTML;
-      form.addEventListener('submit', function () {
-        if (!form.checkValidity()) return;
+      form.addEventListener('submit', function (e) {
+        // Native validation first (name is required)
+        if (!form.checkValidity()) {
+          e.preventDefault();
+          var firstInvalid = form.querySelector(':invalid');
+          if (firstInvalid) {
+            firstInvalid.focus();
+            firstInvalid.classList.add('ring-2', 'ring-red-400');
+            setTimeout(function () {
+              firstInvalid.classList.remove('ring-2', 'ring-red-400');
+            }, 1500);
+          }
+          return;
+        }
+
         if (!submitBtn.disabled) {
           submitBtn.disabled = true;
+          submitBtn.setAttribute('aria-busy', 'true');
           submitBtn.innerHTML =
             '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>' +
-            '<span>Saving…</span>';
+            '<span></span>';
+          submitBtn.querySelector('span').textContent = busyLabel;
         }
       });
 
@@ -516,22 +634,28 @@
       window.addEventListener('pageshow', function (e) {
         if (e.persisted) {
           submitBtn.disabled = false;
+          submitBtn.removeAttribute('aria-busy');
           submitBtn.innerHTML = originalHTML;
         }
       });
     }
 
-    // ============================================================
-    // 6. Unsaved-changes guard
-    // ============================================================
+    /* ============================================================
+       6. Unsaved-changes guard
+       ============================================================ */
     if (form) {
       var initialState = new URLSearchParams(new FormData(form)).toString();
       var submitting   = false;
 
       form.addEventListener('submit', function () { submitting = true; });
 
+      // Cancel link explicitly bypasses the guard
+      if (cancelLink) {
+        cancelLink.addEventListener('click', function () { bypassGuard = true; });
+      }
+
       window.addEventListener('beforeunload', function (e) {
-        if (submitting) return;
+        if (submitting || bypassGuard) return;
         var currentState = new URLSearchParams(new FormData(form)).toString();
         if (currentState === initialState) return;
         e.preventDefault();

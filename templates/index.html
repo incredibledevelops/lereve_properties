@@ -31,7 +31,6 @@
       </a>
     </div>
 
-    <!-- Scroll cue -->
     <button onclick="document.getElementById('searchBar').scrollIntoView({behavior:'smooth',block:'center'})"
             class="mt-12 inline-flex flex-col items-center gap-1 text-ivory/50 hover:text-gold transition-colors focus:outline-none focus-visible:text-gold animate-fade-in"
             style="animation-delay:.5s" aria-label="Scroll to search">
@@ -81,7 +80,6 @@
         </div>
       </form>
 
-      <!-- Active filter chips -->
       <div id="activeFilters" class="hidden flex-wrap gap-2 mt-4 pt-4 border-t border-gold/20"></div>
     </div>
   </div>
@@ -363,11 +361,9 @@
 
 <!-- ============ PAGE STYLES ============ -->
 <style>
-  /* Reveal on scroll */
   .reveal { opacity: 0; transform: translateY(20px); transition: opacity .6s ease, transform .6s ease; }
   .reveal.is-visible { opacity: 1; transform: translateY(0); }
 
-  /* Skeleton loading */
   .skeleton-card {
     background: #fff;
     border-radius: 1.5rem;
@@ -380,11 +376,9 @@
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .85; } }
 
-  /* Field states */
   .field-input.invalid { border-color: #dc2626 !important; }
   .field-input.valid   { border-color: #10b981 !important; }
 
-  /* Filter chip */
   .filter-chip {
     display: inline-flex; align-items: center; gap: 0.4rem;
     padding: 0.35rem 0.75rem;
@@ -400,7 +394,6 @@
   }
   .filter-chip button:hover { background: #c9a84c; color: #1a3a2a; }
 
-  /* Category button active state */
   .category-btn.active {
     background: #1a3a2a; color: #c9a84c; border-color: #1a3a2a;
   }
@@ -416,28 +409,51 @@
 </style>
 {% endblock %}
 
+
 {% block scripts %}
+<!-- ============================================================
+     Shared booking modal (Paystack flow) — one source of truth
+     ============================================================ -->
+<script src="{{ url_for('static', filename='js/booking.js') }}"></script>
+
 <script>
 /* ============================================================
-   HOMEPAGE — index.html
-   Uses shared globals from base.html
+   HOMEPAGE — featured listings + reviews marquee
+   Uses shared globals from base.html.
    ============================================================ */
 const RAW_PROPERTIES = {{ properties|tojson }};
 const WISHLIST_IDS   = {{ wishlist_ids|tojson }};
 
+/* Give the booking engine the endpoint URLs it needs. */
+LeReve.configureBooking({
+  paystackInitUrl:     "{{ url_for('paystack.initialize') }}",
+  paystackCallbackUrl: "{{ url_for('paystack.callback') }}",
+  loginUrl:            "{{ url_for('auth.login') }}",
+  registerUrl:         "{{ url_for('auth.register') }}",
+  inquiryUrl:          "{{ url_for('api.create_inquiry') }}",
+});
+
 function normalizeProperty(p) {
   return {
-    id: p.id || p._id, title: p.title || '', category: p.category || '',
-    location: p.location || '', original_price: Number(p.original_price ?? 0),
-    price: Number(p.price ?? 0), rating: Number(p.rating ?? 5),
-    reviews_count: Number(p.reviews_count ?? 0), beds: Number(p.beds ?? 0),
-    baths: Number(p.baths ?? 0), guests: Number(p.guests ?? 0),
-    image: p.image || '', gallery: Array.isArray(p.gallery) ? p.gallery : [],
+    id: p.id || p._id,
+    title: p.title || '',
+    category: p.category || '',
+    location: p.location || '',
+    original_price: Number(p.original_price ?? 0),
+    price: Number(p.price ?? 0),
+    rating: Number(p.rating ?? 5),
+    reviews_count: Number(p.reviews_count ?? 0),
+    beds: Number(p.beds ?? 0),
+    baths: Number(p.baths ?? 0),
+    guests: Number(p.guests ?? 0),
+    image: p.image || '',
+    gallery: Array.isArray(p.gallery) ? p.gallery : [],
     amenities: Array.isArray(p.amenities) ? p.amenities : [],
     description: p.description || ''
   };
 }
 const PROPERTIES = RAW_PROPERTIES.map(normalizeProperty);
+const PROPERTIES_BY_ID = Object.fromEntries(PROPERTIES.map(p => [String(p.id), p]));
 
 WISHLIST_IDS.forEach(id => favorites.add(String(id)));
 try {
@@ -452,6 +468,56 @@ let isFirstRender  = true;
 function debouncedRender() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(renderPropertyListings, 250);
+}
+
+/* ---------- Booking entry point (proxies to shared engine) ---------- */
+function openBookingModal(propertyId) {
+  const prop = PROPERTIES_BY_ID[String(propertyId)];
+  LeReve.openBookingModal(prop);
+}
+function openQuickView(id) {
+  const prop = PROPERTIES_BY_ID[String(id)];
+  if (!prop) return;
+  const modal = document.getElementById('quickViewModal');
+  document.getElementById('quickViewContent').innerHTML = `
+    <div class="grid grid-cols-1 lg:grid-cols-2">
+      <div class="p-6 bg-primary text-ivory">
+        <div class="aspect-[4/3] rounded-2xl overflow-hidden mb-4 border border-gold/30">
+          <img id="modalMainImg" src="${escapeHtml(prop.image)}" alt="${escapeHtml(prop.title)}" class="w-full h-full object-cover">
+        </div>
+        ${prop.gallery.length > 1 ? `<div class="flex gap-2 flex-wrap">${prop.gallery.map(u => `
+          <button onclick="document.getElementById('modalMainImg').src='${escapeHtml(u)}'" class="w-16 h-16 rounded-lg overflow-hidden border border-gold/30 hover:border-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gold" aria-label="View image"><img src="${escapeHtml(u)}" class="w-full h-full object-cover" alt=""></button>`).join('')}</div>` : ''}
+        <div class="mt-6 pt-6 border-t border-gold/20">
+          <span class="text-xs uppercase tracking-widest text-gold block mb-1">Location</span>
+          <p class="font-serif text-xl">${escapeHtml(prop.location)}</p>
+        </div>
+      </div>
+      <div class="p-8 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-2 mb-2 flex-wrap">
+            <span class="bg-gold/20 text-gold-dark text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-gold/40">${escapeHtml(prop.category)}</span>
+            <span class="text-xs font-bold text-primary"><i class="fa-solid fa-star text-gold" aria-hidden="true"></i> ${prop.rating}</span>
+          </div>
+          <h2 class="font-serif text-3xl font-semibold text-primary mb-3">${escapeHtml(prop.title)}</h2>
+          <p class="text-charcoal/80 text-sm leading-relaxed mb-6 font-light">${escapeHtml(prop.description)}</p>
+          <div class="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-ivory border border-gold/20 text-center mb-6">
+            <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Beds</span><span class="font-serif text-xl font-bold text-primary">${prop.beds}</span></div>
+            <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Baths</span><span class="font-serif text-xl font-bold text-primary">${prop.baths}</span></div>
+            <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Guests</span><span class="font-serif text-xl font-bold text-primary">${prop.guests}</span></div>
+          </div>
+          ${prop.amenities.length ? `<h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Inclusive Privileges</h4>
+            <div class="flex flex-wrap gap-2 mb-8">${prop.amenities.map(a => `<span class="bg-primary/5 text-primary text-xs px-3 py-1.5 rounded-xl border border-primary/10 flex items-center gap-1.5"><i class="fa-solid fa-check text-gold text-xs" aria-hidden="true"></i> ${escapeHtml(a)}</span>`).join('')}</div>` : ''}
+        </div>
+        <div class="pt-4 border-t border-charcoal/10 flex items-center justify-between gap-3 flex-wrap">
+          <div><span class="font-serif text-3xl font-bold text-primary">${formatGHS(prop.price)}</span> <span class="text-xs text-charcoal/70">/ night</span></div>
+          <button onclick="closeQuickViewModal(); openBookingModal('${prop.id}');"
+                  class="bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
+            Book This Estate
+          </button>
+        </div>
+      </div>
+    </div>`;
+  openModal(modal);
 }
 
 /* ---------- URL sync ---------- */
@@ -542,8 +608,6 @@ function renderSkeletons(count = 6) {
 
 document.addEventListener('DOMContentLoaded', () => {
   readFiltersFromURL();
-
-  /* Show skeletons on first load, then render after a beat */
   renderSkeletons();
   setTimeout(() => {
     isFirstRender = false;
@@ -552,29 +616,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updateFavoritesBadge();
 
-  /* Reviews carousel */
   const rt = document.getElementById('reviewsCarouselTrack');
   const rs = document.getElementById('reviewsSource');
-  if (rt && rs && rs.children.length > 0) {
+  if (rt && rs && rs.children.length > 0 && typeof buildEndlessMarquee === 'function') {
     buildEndlessMarquee('reviewsCarouselTrack', 'reviewsSource', { speed: 70 });
     setTimeout(() => buildEndlessMarquee('reviewsCarouselTrack', 'reviewsSource', { speed: 70 }), 400);
     setTimeout(() => buildEndlessMarquee('reviewsCarouselTrack', 'reviewsSource', { speed: 70 }), 1200);
   }
 
-  /* Reveal on scroll */
   setupRevealOnScroll();
-
-  /* Stats counter */
   setupStatsCounters();
-
-  /* Back-to-top */
   setupBackToTop();
 
-  /* Restore filters on back/forward */
   window.addEventListener('popstate', () => { readFiltersFromURL(); renderPropertyListings(); });
 });
 
-/* ---------- Reveal on scroll ---------- */
 function setupRevealOnScroll() {
   const els = document.querySelectorAll('.reveal');
   if (!('IntersectionObserver' in window) || els.length === 0) {
@@ -592,12 +648,9 @@ function setupRevealOnScroll() {
   els.forEach(el => io.observe(el));
 }
 
-/* ---------- Stats counters ---------- */
 function setupStatsCounters() {
   const blocks = document.querySelectorAll('[data-stat]');
-  if (blocks.length === 0) return;
-  if (!('IntersectionObserver' in window)) return;
-
+  if (blocks.length === 0 || !('IntersectionObserver' in window)) return;
   const io = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
@@ -614,11 +667,10 @@ function setupStatsCounters() {
 }
 function animateNumber(el, target, decimals, suffix, duration) {
   const start = performance.now();
-  const initial = 0;
   function tick(now) {
     const t = Math.min(1, (now - start) / duration);
     const eased = 1 - Math.pow(1 - t, 3);
-    const val = initial + (target - initial) * eased;
+    const val = target * eased;
     el.textContent = val.toFixed(decimals) + suffix;
     if (t < 1) requestAnimationFrame(tick);
     else el.textContent = target.toFixed(decimals) + suffix;
@@ -626,7 +678,6 @@ function animateNumber(el, target, decimals, suffix, duration) {
   requestAnimationFrame(tick);
 }
 
-/* ---------- Back to top ---------- */
 function setupBackToTop() {
   const btn = document.getElementById('backToTop');
   if (!btn) return;
@@ -640,7 +691,6 @@ function setupBackToTop() {
   onScroll();
 }
 
-/* ---------- Render listings ---------- */
 function renderPropertyListings() {
   const grid      = document.getElementById('propertyGrid');
   const noResults = document.getElementById('noResults');
@@ -695,7 +745,6 @@ function renderPropertyListings() {
             <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" aria-hidden="true"></i>
           </button>
           ${savingsPct > 0 ? `<div class="absolute bottom-4 left-4 bg-gold text-primary font-bold text-xs px-3 py-1 rounded-lg shadow-md">Save ${savingsPct}%</div>` : ''}
-          <!-- Quick view overlay button on image -->
           <button onclick="openQuickView('${prop.id}')" aria-label="Quick view ${escapeHtml(prop.title)}"
                   class="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-white/90 text-primary hover:bg-gold hover:text-primary backdrop-blur-sm flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold">
             <i class="fa-solid fa-expand text-sm" aria-hidden="true"></i>
@@ -764,223 +813,6 @@ function resetAllFilters() {
   renderPropertyListings();
 }
 
-/* ---------- Quick view ---------- */
-function openQuickView(id) {
-  const prop = PROPERTIES.find(p => String(p.id) === String(id));
-  if (!prop) return;
-  const modal = document.getElementById('quickViewModal');
-  document.getElementById('quickViewContent').innerHTML = `
-    <div class="grid grid-cols-1 lg:grid-cols-2">
-      <div class="p-6 bg-primary text-ivory">
-        <div class="aspect-[4/3] rounded-2xl overflow-hidden mb-4 border border-gold/30">
-          <img id="modalMainImg" src="${escapeHtml(prop.image)}" alt="${escapeHtml(prop.title)}" class="w-full h-full object-cover">
-        </div>
-        ${prop.gallery.length > 1 ? `<div class="flex gap-2 flex-wrap">${prop.gallery.map(u => `
-          <button onclick="document.getElementById('modalMainImg').src='${escapeHtml(u)}'" class="w-16 h-16 rounded-lg overflow-hidden border border-gold/30 hover:border-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gold" aria-label="View image"><img src="${escapeHtml(u)}" class="w-full h-full object-cover" alt=""></button>`).join('')}</div>` : ''}
-        <div class="mt-6 pt-6 border-t border-gold/20">
-          <span class="text-xs uppercase tracking-widest text-gold block mb-1">Location</span>
-          <p class="font-serif text-xl">${escapeHtml(prop.location)}</p>
-        </div>
-      </div>
-      <div class="p-8 flex flex-col justify-between">
-        <div>
-          <div class="flex items-center gap-2 mb-2 flex-wrap">
-            <span class="bg-gold/20 text-gold-dark text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-gold/40">${escapeHtml(prop.category)}</span>
-            <span class="text-xs font-bold text-primary"><i class="fa-solid fa-star text-gold" aria-hidden="true"></i> ${prop.rating}</span>
-          </div>
-          <h2 class="font-serif text-3xl font-semibold text-primary mb-3">${escapeHtml(prop.title)}</h2>
-          <p class="text-charcoal/80 text-sm leading-relaxed mb-6 font-light">${escapeHtml(prop.description)}</p>
-          <div class="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-ivory border border-gold/20 text-center mb-6">
-            <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Beds</span><span class="font-serif text-xl font-bold text-primary">${prop.beds}</span></div>
-            <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Baths</span><span class="font-serif text-xl font-bold text-primary">${prop.baths}</span></div>
-            <div><span class="text-[10px] uppercase text-charcoal/60 block font-semibold">Guests</span><span class="font-serif text-xl font-bold text-primary">${prop.guests}</span></div>
-          </div>
-          ${prop.amenities.length ? `<h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3">Inclusive Privileges</h4>
-            <div class="flex flex-wrap gap-2 mb-8">${prop.amenities.map(a => `<span class="bg-primary/5 text-primary text-xs px-3 py-1.5 rounded-xl border border-primary/10 flex items-center gap-1.5"><i class="fa-solid fa-check text-gold text-xs" aria-hidden="true"></i> ${escapeHtml(a)}</span>`).join('')}</div>` : ''}
-        </div>
-        <div class="pt-4 border-t border-charcoal/10 flex items-center justify-between gap-3 flex-wrap">
-          <div><span class="font-serif text-3xl font-bold text-primary">${formatGHS(prop.price)}</span> <span class="text-xs text-charcoal/70">/ night</span></div>
-          <button onclick="closeQuickViewModal(); openBookingModal('${prop.id}');"
-                  class="bg-primary text-gold hover:bg-gold hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-gold px-8 py-3.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all shadow-luxury">
-            Book This Estate
-          </button>
-        </div>
-      </div>
-    </div>`;
-  openModal(modal);
-}
-
-/* ---------- Booking ---------- */
-function openBookingModal(propertyId) {
-  const prop = PROPERTIES.find(p => String(p.id) === String(propertyId));
-  if (!prop) { showToast('Property not found.', 'error'); return; }
-  if (IS_ADMIN) { showToast('Admins cannot book via the guest portal.', 'info'); return; }
-
-  const modal = document.getElementById('bookingModal');
-  const content = document.getElementById('bookingModalContent');
-
-  if (!IS_LOGGED_IN) {
-    content.innerHTML = `
-      <div class="p-8 sm:p-10 text-center">
-        <div class="w-16 h-16 mx-auto rounded-full bg-gold/15 text-gold flex items-center justify-center mb-4">
-          <i class="fa-solid fa-lock text-2xl" aria-hidden="true"></i>
-        </div>
-        <h3 class="font-serif text-3xl font-semibold text-primary mb-2">Sign In to Book</h3>
-        <p class="text-sm text-charcoal/70 mb-6 max-w-sm mx-auto">
-          Create a free account or sign in to reserve <strong>${escapeHtml(prop.title)}</strong>.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-3">
-          <a href="{{ url_for('auth.login') }}" class="flex-1 bg-primary text-gold hover:bg-gold hover:text-primary px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
-            <i class="fa-solid fa-right-to-bracket mr-1" aria-hidden="true"></i> Sign In
-          </a>
-          <a href="{{ url_for('auth.register') }}" class="flex-1 bg-gold text-primary hover:bg-primary hover:text-gold px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
-            <i class="fa-solid fa-user-plus mr-1" aria-hidden="true"></i> Create Account
-          </a>
-        </div>
-        <p class="text-[10px] text-charcoal/40 mt-5">
-          Or <button onclick="switchToGuestInquiry('${prop.id}')" class="text-gold hover:underline font-semibold">submit a guest inquiry without an account</button>
-        </p>
-      </div>`;
-    openModal(modal);
-    return;
-  }
-  switchToLoggedInBooking(prop);
-  openModal(modal);
-}
-
-function switchToGuestInquiry(propertyId) {
-  const prop = PROPERTIES.find(p => String(p.id) === String(propertyId));
-  if (!prop) return;
-  document.getElementById('bookingModalContent').innerHTML = buildInquiryFormHTML(prop, { name:'', email:'', phone:'', isGuest:true });
-  bindInquiryFormEvents();
-  focusFirstField();
-}
-function switchToLoggedInBooking(prop) {
-  document.getElementById('bookingModalContent').innerHTML = buildInquiryFormHTML(prop, { name: CURRENT_USER.name || '', email: CURRENT_USER.email || '', phone:'', isGuest:false });
-  bindInquiryFormEvents();
-  focusFirstField();
-}
-function focusFirstField() {
-  requestAnimationFrame(() => document.querySelector('#bookingInquiryForm input[name="name"]')?.focus());
-}
-
-function buildInquiryFormHTML(prop, defaults) {
-  const today    = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-  return `
-    <div class="p-6 sm:p-8">
-      <div class="flex items-start gap-4 mb-6">
-        <div class="w-16 h-16 rounded-xl border border-gold/30 flex-shrink-0 bg-primary-dark overflow-hidden">
-          <img src="${escapeHtml(prop.image)}" alt="" class="w-full h-full object-cover">
-        </div>
-        <div class="min-w-0">
-          <span class="text-[10px] uppercase tracking-widest text-gold font-bold">Book This Estate</span>
-          <h3 class="font-serif text-2xl font-semibold text-primary leading-tight mt-1">${escapeHtml(prop.title)}</h3>
-          <p class="text-xs text-charcoal/60 mt-0.5"><i class="fa-solid fa-location-dot text-gold mr-1" aria-hidden="true"></i>${escapeHtml(prop.location)}</p>
-        </div>
-      </div>
-      <div class="p-3 rounded-xl bg-ivory border border-gold/20 mb-5 flex items-center justify-between">
-        <span class="text-xs text-charcoal/60">Nightly rate</span>
-        <span class="font-serif text-lg font-bold text-primary">${formatGHS(prop.price)}</span>
-      </div>
-      <form id="bookingInquiryForm" class="space-y-4" novalidate>
-        <input type="hidden" name="property"    value="${escapeHtml(prop.title)}">
-        <input type="hidden" name="property_id" value="${escapeHtml(prop.id)}">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label for="bookingName"  class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Full Name *</label>
-            <input type="text"  id="bookingName"  name="name"  required maxlength="120" value="${escapeHtml(defaults.name)}"  class="field-input w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
-          <div><label for="bookingEmail" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Email *</label>
-            <input type="email" id="bookingEmail" name="email" required maxlength="200" value="${escapeHtml(defaults.email)}" class="field-input w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
-        </div>
-        <div><label for="bookingPhone" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Phone *</label>
-          <input type="tel" id="bookingPhone" name="phone" required maxlength="40" value="${escapeHtml(defaults.phone)}" placeholder="+233 XX XXX XXXX" class="field-input w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
-        <div class="grid grid-cols-2 gap-4">
-          <div><label for="bookingCheckIn"  class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Check-In *</label>
-            <input type="date" id="bookingCheckIn"  name="check_in"  required min="${today}"    value="${tomorrow}" class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
-          <div><label for="bookingCheckOut" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Check-Out *</label>
-            <input type="date" id="bookingCheckOut" name="check_out" required min="${tomorrow}" class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm"></div>
-        </div>
-        <div><label for="bookingGuests" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Guests</label>
-          <select id="bookingGuests" name="guests" class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm">
-            <option value="1-2 Guests">1-2 Guests</option>
-            <option value="3-5 Guests">3-5 Guests</option>
-            <option value="6-10 Guests">6-10 Guests</option>
-            <option value="10+ Guests">10+ Guests (Private Charter)</option>
-          </select></div>
-        <div><label for="bookingMessage" class="block text-xs font-bold uppercase tracking-wider text-primary/80 mb-1">Special Requests</label>
-          <textarea id="bookingMessage" name="message" rows="3" maxlength="2000" placeholder="Chef dietary requirements, airport transfers, extended-stay questions..." class="w-full px-4 py-2.5 rounded-xl border border-charcoal/15 bg-ivory/40 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gold text-sm resize-none"></textarea></div>
-        <button type="submit" id="bookingSubmitBtn"
-                class="w-full bg-primary text-gold hover:bg-gold hover:text-primary py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gold transition-all shadow-luxury flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
-          <i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Submit Reservation Request</span>
-        </button>
-      </form>
-    </div>`;
-}
-
-function bindInquiryFormEvents() {
-  const form = document.getElementById('bookingInquiryForm');
-  if (!form) return;
-
-  /* Live check-out min update */
-  const checkIn  = form.querySelector('#bookingCheckIn');
-  const checkOut = form.querySelector('#bookingCheckOut');
-  if (checkIn && checkOut) {
-    checkIn.addEventListener('change', () => {
-      if (checkIn.value) {
-        const next = new Date(checkIn.value);
-        next.setDate(next.getDate() + 1);
-        checkOut.min = next.toISOString().split('T')[0];
-        if (checkOut.value && checkOut.value <= checkIn.value) checkOut.value = checkOut.min;
-      }
-    });
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('bookingSubmitBtn');
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Sending…</span>';
-    const fd = new FormData(form);
-    const payload = {
-      name:      (fd.get('name')      || '').toString().trim(),
-      email:     (fd.get('email')     || '').toString().trim(),
-      phone:     (fd.get('phone')     || '').toString().trim(),
-      property:  (fd.get('property')  || '').toString().trim(),
-      check_in:  (fd.get('check_in')  || '').toString(),
-      check_out: (fd.get('check_out') || '').toString(),
-      guests:    (fd.get('guests')    || '1-2 Guests').toString(),
-      message:   (fd.get('message')   || '').toString().trim()
-    };
-    if (!payload.name || !payload.email || !payload.phone || !payload.check_in || !payload.check_out) {
-      showToast('Please fill in all required fields.', 'error');
-      btn.disabled = false; btn.innerHTML = original; return;
-    }
-    if (payload.check_out <= payload.check_in) {
-      showToast('Check-out must be after check-in.', 'error');
-      btn.disabled = false; btn.innerHTML = original; return;
-    }
-    try {
-      const res = await fetch('{{ url_for("api.create_inquiry") }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(`Thank you, ${payload.name.split(' ')[0]}! Your inquiry has been sent.`, 'success');
-        closeBookingModal();
-      } else {
-        showToast(data.error || 'Submission failed. Please try again.', 'error');
-      }
-    } catch (err) {
-      showToast('Network error. Please try again.', 'error');
-    } finally {
-      btn.disabled = false; btn.innerHTML = original;
-    }
-  });
-}
-
 /* ---------- Contact form validation ---------- */
 function validateField(input) {
   const wrap = input.closest('div');
@@ -1046,7 +878,6 @@ async function handleContactSubmit(e) {
   finally { btn.disabled = false; btn.innerHTML = original; }
 }
 
-/* Attach contact form validation on load */
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('contactForm');
   if (!form) return;
